@@ -1,0 +1,2033 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.company_name if customer else 'Customer' }} - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+    {% else %}
+    
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 dark:text-white font-medium">{{ customer.company_name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Autosave indicator -->
+    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span>Saved</span>
+    </div>
+
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-8">
+        <div class="flex items-center">
+            <div class="w-16 h-16 bg-bb-blue rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
+                {{ customer.company_name[0] | upper }}
+            </div>
+            <div class="ml-4">
+                <!-- Display mode -->
+                <div id="customer-display-mode">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ customer.company_name }}</h1>
+                    <div class="flex items-center mt-1 space-x-3">
+                        {% if customer.domain %}
+                        <span class="text-gray-500 dark:text-gray-400">{{ customer.domain }}</span>
+                        {% endif %}
+                        {% if customer.industry %}
+                        <span class="badge-blue">{{ customer.industry }}</span>
+                        {% endif %}
+                        {% if customer.size %}
+                        <span class="badge-gray">{{ customer.size }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Edit mode -->
+                <div id="customer-edit-mode" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Company Name</label>
+                        <input type="text" id="edit-company-name" 
+                               class="input-field text-xl font-bold" 
+                               value="{{ customer.company_name }}"
+                               placeholder="Company Name">
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Domain</label>
+                            <input type="text" id="edit-domain" 
+                                   class="input-field text-sm" 
+                                   value="{{ customer.domain or '' }}"
+                                   placeholder="example.com">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Industry</label>
+                            <input type="text" id="edit-industry" 
+                                   class="input-field text-sm" 
+                                   value="{{ customer.industry or '' }}"
+                                   placeholder="SaaS, FinTech, etc.">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Size</label>
+                            <select id="edit-size" class="input-field text-sm">
+                                <option value="">Select size</option>
+                                <option value="startup" {% if customer.size == 'startup' %}selected{% endif %}>Startup</option>
+                                <option value="smb" {% if customer.size == 'smb' %}selected{% endif %}>SMB</option>
+                                <option value="mid_market" {% if customer.size == 'mid_market' %}selected{% endif %}>Mid-Market</option>
+                                <option value="enterprise" {% if customer.size == 'enterprise' %}selected{% endif %}>Enterprise</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button id="edit-customer-btn"
+                    class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                    title="Edit customer">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+            </button>
+            <button id="delete-customer-btn"
+                    class="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                    title="Delete customer"
+                    data-assistant-id="{{ customer.assistant_id }}"
+                    data-company-name="{{ customer.company_name }}">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+        <a href="/customer/{{ customer.assistant_id }}/contacts" class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer">
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Contacts</div>
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_contacts }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {{ stats.champions }} champions
+            </div>
+        </a>
+        <a href="/customer/{{ customer.assistant_id }}/opportunities" class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer">
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Opportunities</div>
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_opportunities }}</div>
+        </a>
+        <div class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors relative group">
+            <button onclick="showNewMeetingModal(event)" 
+                    class="w-6 h-6 rounded-full bg-bb-blue hover:bg-bb-blueDark text-white flex items-center justify-center shadow-md transition-all z-10"
+                    style="position: absolute; top: 0.75rem; right: 0.75rem;"
+                    title="Add new meeting">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+            </button>
+            <a href="/customer/{{ customer.assistant_id }}/activities" class="block">
+                <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Activities</div>
+                <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_activities }}</div>
+            </a>
+        </div>
+        <a href="/customer/{{ customer.assistant_id }}/action-items" class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer">
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Action Items</div>
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_action_items or 0 }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {{ stats.pending_action_items or 0 }} pending
+            </div>
+        </a>
+        <div class="card">
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Sales Value</div>
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
+                {% if total_sales_value %}${{ "{:,.0f}".format(total_sales_value) }}{% else %}--{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Next Follow-up & Products Discussed Row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <!-- Next Follow-up -->
+        <div class="card" id="followup-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Next Follow-up</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white mt-1" id="followup-display">
+                        {% if next_followup_date %}
+                            {{ next_followup_date }}
+                            <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-2">
+                                {% if customer.next_followup_date %}(set manually){% else %}(auto: 2 weeks from last meeting){% endif %}
+                            </span>
+                        {% else %}
+                            <span class="text-gray-400 dark:text-gray-500">No meetings yet</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="date" 
+                           id="followup-date-input" 
+                           class="input-field text-sm hidden" 
+                           value="{{ next_followup_date or '' }}"
+                           data-assistant-id="{{ customer.assistant_id }}">
+                    <button id="edit-followup-btn" 
+                            class="btn-secondary text-sm py-1 px-3"
+                            onclick="toggleFollowupEdit()">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        Set Date
+                    </button>
+                    <button id="save-followup-btn" 
+                            class="btn-primary text-sm py-1 px-3 hidden"
+                            onclick="saveFollowupDate()">
+                        Save
+                    </button>
+                    <button id="cancel-followup-btn" 
+                            class="btn-secondary text-sm py-1 px-3 hidden"
+                            onclick="cancelFollowupEdit()">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Discussed -->
+        <div class="card" id="products-card" data-assistant-id="{{ customer.assistant_id }}">
+            <div class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">
+                Products Discussed (<span id="products-count">{{ all_products|length if all_products else 0 }}</span>)
+            </div>
+            <div id="products-container" class="flex flex-wrap gap-2">
+                {% if all_products %}
+                {% set pill_colors = ['badge-blue', 'badge-green', 'badge-purple', 'badge-yellow', 'badge-red'] %}
+                {% for product in all_products %}
+                <span class="product-pill {{ pill_colors[loop.index0 % 5] }} group relative cursor-pointer pr-2 transition-all"
+                      data-product="{{ product }}"
+                      data-color-index="{{ loop.index0 % 5 }}"
+                      onclick="editProduct(this)">
+                    <span class="product-name">{{ product }}</span>
+                    <button class="delete-product-btn absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-500 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-sm"
+                            onclick="event.stopPropagation(); deleteProduct(this.parentElement)"
+                            title="Remove product">
+                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </span>
+                {% endfor %}
+                {% else %}
+                <p id="no-products-message" class="text-gray-400 dark:text-gray-500 text-sm">None yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Opportunities -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Opportunities</h2>
+                    <a href="/customer/{{ customer.assistant_id }}/opportunities" class="text-sm text-bb-blue dark:text-bb-blue hover:underline">View all</a>
+                </div>
+                {% if opportunities %}
+                <div class="space-y-4">
+                    {% for opp in opportunities %}
+                    <a href="/customer/{{ customer.assistant_id }}/opportunity/{{ opp.id }}" class="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="font-medium text-gray-900 dark:text-white">{{ opp.name }}</h3>
+                                <div class="flex items-center mt-1 space-x-3 text-sm">
+                                    {% if opp.stage == 'discovery' %}
+                                    <span class="badge-blue">Discovery</span>
+                                    {% elif opp.stage == 'qualification' %}
+                                    <span class="badge-yellow">Qualified</span>
+                                    {% elif opp.stage == 'proposal' %}
+                                    <span class="badge-blue">Proposal</span>
+                                    {% elif opp.stage == 'negotiation' %}
+                                    <span class="badge-yellow">Negotiation</span>
+                                    {% elif opp.stage == 'closed_won' %}
+                                    <span class="badge-green">Sold</span>
+                                    {% elif opp.stage == 'closed_lost' %}
+                                    <span class="badge-red">Closed Lost</span>
+                                    {% elif opp.stage == 'delivered' %}
+                                    <span class="badge-purple">Delivered</span>
+                                    {% elif opp.stage == 'blocked' %}
+                                    <span class="badge-red">Blocked</span>
+                                    {% endif %}
+                                    
+                                    {% if opp.value %}
+                                    <span class="text-gray-500 dark:text-gray-400">${{ "{:,.0f}".format(opp.value) }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-lg font-semibold text-gray-900 dark:text-white">{{ opp.confidence }}%</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">confidence</div>
+                            </div>
+                        </div>
+                        {% if opp.competitors %}
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Competitors: </span>
+                            {% for comp in opp.competitors %}
+                            <span class="badge-red text-xs ml-1">{{ comp }}</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-8">No opportunities yet</p>
+                {% endif %}
+            </div>
+
+            <!-- Recent Meetings -->
+            <div class="card">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Recent Meetings</h2>
+                {% if meetings %}
+                <div class="space-y-4" id="meetings-list">
+                    {% for meeting in meetings %}
+                    <div class="meeting-card group relative p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-bb-blue dark:hover:border-bb-blue transition-colors {% if loop.index0 >= 3 %}hidden-meeting hidden{% endif %}"
+                         data-thread-id="{{ meeting.thread_id }}"
+                         data-assistant-id="{{ customer.assistant_id }}"
+                         data-labels='{{ meeting.labels | tojson }}'>
+                        <!-- Delete button (shown on hover) -->
+                        <button class="delete-meeting-btn absolute top-2 right-2 p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-200 dark:hover:bg-red-900/50"
+                                title="Delete meeting">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                        <a href="/meeting/{{ customer.assistant_id }}/{{ meeting.thread_id }}" class="block">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1 pr-8">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ meeting.summary[:100] }}{% if meeting.summary|length > 100 %}...{% endif %}</p>
+                                    {% if meeting.products_discussed %}
+                                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Products:</span>
+                                        {% for product in meeting.products_discussed[:3] %}
+                                        <span class="badge-blue text-xs">{{ product }}</span>
+                                        {% endfor %}
+                                        {% if meeting.products_discussed|length > 3 %}
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">+{{ meeting.products_discussed|length - 3 }}</span>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                    {% if meeting.sales_value %}
+                                    <div class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                        Sales value: ${{ "{:,.0f}".format(meeting.sales_value) }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="ml-4 text-right">
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">{{ meeting.date[:10] if meeting.date else '' }}</span>
+                                    {% if meeting.sentiment == 'positive' %}
+                                    <span class="block mt-1 badge-green">Positive</span>
+                                    {% elif meeting.sentiment == 'negative' %}
+                                    <span class="block mt-1 badge-red">Negative</span>
+                                    {% else %}
+                                    <span class="block mt-1 badge-gray">Neutral</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        <!-- Editable Labels -->
+                        <div class="meeting-labels flex flex-wrap items-center mt-2 gap-2" onclick="event.stopPropagation()">
+                            {% for label in meeting.labels[:5] %}
+                            <span class="label-pill badge-gray text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                  onclick="editLabel(this, '{{ meeting.thread_id }}', {{ loop.index0 }})">{{ label }}</span>
+                            {% endfor %}
+                            <button class="add-label-btn text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-2 py-0.5 rounded border border-dashed border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors"
+                                    onclick="addNewLabel(this, '{{ meeting.thread_id }}')">
+                                + Add
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if meetings|length > 3 %}
+                <button id="show-more-meetings" 
+                        onclick="toggleMoreMeetings()"
+                        class="mt-4 w-full py-2 text-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors flex items-center justify-center gap-1">
+                    <span class="show-more-text">Show {{ meetings|length - 3 }} more</span>
+                    <span class="show-less-text hidden">Show less</span>
+                    <svg class="w-4 h-4 show-more-icon transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-8">No meetings recorded yet</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-8">
+            <!-- Action Items -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Action Items</h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="showAddActionItemModal()" class="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors" title="Add action item">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                        </button>
+                        <a href="/customer/{{ customer.assistant_id }}/action-items" class="text-sm text-bb-blue dark:text-bb-blue hover:underline">View all</a>
+                    </div>
+                </div>
+                {% if recent_action_items %}
+                <div class="space-y-3">
+                    {% for item in recent_action_items %}
+                    <div class="group flex items-start p-2 -mx-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors" data-action-item-id="{{ item.id }}">
+                        <input type="checkbox" 
+                               class="action-item-checkbox mt-0.5 w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-800"
+                               data-assistant-id="{{ customer.assistant_id }}"
+                               data-item-id="{{ item.id }}"
+                               {% if item.is_completed %}checked{% endif %}>
+                        <a href="/customer/{{ customer.assistant_id }}/action-item/{{ item.id }}" class="ml-3 flex-1 min-w-0">
+                            <p class="text-sm text-gray-900 dark:text-white {% if item.is_completed %}line-through text-gray-500 dark:text-gray-400{% endif %}">
+                                {{ item.description[:60] }}{% if item.description|length > 60 %}...{% endif %}
+                            </p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {% if item.owner %}{{ item.owner }} - {% endif %}{{ item.created_at[:10] if item.created_at else '' }}
+                            </p>
+                        </a>
+                        <div class="flex items-center ml-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <a href="/customer/{{ customer.assistant_id }}/action-item/{{ item.id }}?edit=true" 
+                               class="p-1 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                               title="Edit">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                            <button class="dismiss-action-item-btn p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                    data-assistant-id="{{ customer.assistant_id }}"
+                                    data-item-id="{{ item.id }}"
+                                    title="Dismiss">
+                                <svg class="dismiss-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                                <svg class="dismiss-spinner hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">No action items yet</p>
+                {% endif %}
+            </div>
+
+            <!-- Contacts -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Contacts</h2>
+                    <a href="/customer/{{ customer.assistant_id }}/contacts" class="text-sm text-bb-blue dark:text-bb-blue hover:underline">View all</a>
+                </div>
+                {% if contacts %}
+                <div class="space-y-2">
+                    {% for contact in contacts %}
+                    <div class="p-2 -mx-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <a href="/customer/{{ customer.assistant_id }}/contact/{{ contact.id }}" class="flex items-start">
+                            <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-600 dark:text-gray-300 font-medium text-sm flex-shrink-0">
+                                {{ contact.name[0] | upper }}
+                            </div>
+                            <div class="ml-2 flex-1 min-w-0">
+                                <div class="flex items-center flex-wrap gap-1">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ contact.name }}</p>
+                                    {% if contact.is_champion %}
+                                    <span class="badge-green text-[10px] px-1.5 py-0.5">Champion</span>
+                                    {% endif %}
+                                    {% if contact.is_decision_maker %}
+                                    <span class="badge-blue text-[10px] px-1.5 py-0.5">DM</span>
+                                    {% endif %}
+                                </div>
+                                {% if contact.role %}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ contact.role }}</p>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <!-- Contact Info -->
+                        <div class="mt-1 flex flex-wrap items-center gap-2 text-xs" style="margin-left: 40px;">
+                            {% if contact.email %}
+                            <a href="mailto:{{ contact.email }}" class="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-bb-blue dark:hover:text-bb-blue" onclick="event.stopPropagation();">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="truncate max-w-[120px]">{{ contact.email }}</span>
+                                {% if contact.preferred_contact_method == 'email' %}
+                                <span class="badge-green text-[9px] px-1 py-0">Preferred</span>
+                                {% endif %}
+                            </a>
+                            {% endif %}
+                            {% if contact.phone %}
+                            <a href="tel:{{ contact.phone }}" class="flex items-center gap-1 text-gray-600 dark:text-gray-400 hover:text-bb-blue dark:hover:text-bb-blue" onclick="event.stopPropagation();">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                </svg>
+                                <span>{{ contact.phone }}</span>
+                                {% if contact.preferred_contact_method == 'call' %}
+                                <span class="badge-green text-[9px] px-1 py-0">Preferred</span>
+                                {% endif %}
+                            </a>
+                            {% endif %}
+                            {% if contact.preferred_contact_method == 'text' %}
+                            <span class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                                </svg>
+                                <span class="badge-green text-[9px] px-1 py-0">Text Preferred</span>
+                            </span>
+                            {% endif %}
+                            {% if contact.preferred_contact_method == 'whatsapp' %}
+                            <span class="flex items-center gap-1 text-gray-600 dark:text-gray-400">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                </svg>
+                                <span class="badge-green text-[9px] px-1 py-0">WhatsApp</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">No contacts yet</p>
+                {% endif %}
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Activities</h2>
+                    <a href="/customer/{{ customer.assistant_id }}/activities" class="text-sm text-bb-blue dark:text-bb-blue hover:underline">View all</a>
+                </div>
+                {% if recent_activities %}
+                <div class="space-y-3">
+                    {% for activity in recent_activities %}
+                    <a href="/customer/{{ customer.assistant_id }}/activity/{{ activity.id }}" class="flex items-start p-2 -mx-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <div class="w-8 h-8 rounded-full bg-bb-blue/10 dark:bg-bb-blue/20 flex items-center justify-center flex-shrink-0">
+                            {% if activity.activity_type == 'meeting' %}
+                            <svg class="w-4 h-4 text-bb-blue dark:text-bb-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            {% elif activity.activity_type == 'call' %}
+                            <svg class="w-4 h-4 text-bb-blue dark:text-bb-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                            {% else %}
+                            <svg class="w-4 h-4 text-bb-blue dark:text-bb-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <div class="ml-3 flex-1 min-w-0">
+                            <p class="text-sm text-gray-900 dark:text-white truncate">{{ activity.summary[:50] }}{% if activity.summary|length > 50 %}...{% endif %}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ activity.date[:10] if activity.date else '' }}</p>
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-4">No activities yet</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- New Meeting Modal -->
+<div id="new-meeting-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideNewMeetingModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-2xl w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">New Meeting</h3>
+                <button onclick="hideNewMeetingModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Mode Toggle -->
+            <div class="flex items-center justify-center mb-6">
+                <div class="bg-gray-100 dark:bg-gray-800 rounded-lg p-1 flex">
+                    <button id="mode-record-btn" onclick="setMeetingMode('record')" 
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                        </svg>
+                        Record
+                    </button>
+                    <button id="mode-paste-btn" onclick="setMeetingMode('paste')" 
+                            class="px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Paste Transcript
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Record Mode Content -->
+            <div id="record-mode-content" class="space-y-6">
+                <!-- Device Selection -->
+                <div>
+                    <label for="meeting-mic-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Microphone
+                    </label>
+                    <select id="meeting-mic-select" class="input-field w-full" onchange="updateMeetingDevice()">
+                        <option value="">Loading devices...</option>
+                    </select>
+                </div>
+                
+                <!-- Waveform Display -->
+                <div class="bg-gray-900 rounded-lg p-2">
+                    <canvas id="meeting-waveform-canvas" width="400" height="80" class="w-full"></canvas>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>Input Level:</span>
+                        <span id="meeting-level-indicator" class="font-mono">-- dB</span>
+                    </div>
+                </div>
+                
+                <!-- Status indicator -->
+                <div id="meeting-record-status" class="text-center">
+                    <div id="meeting-status-idle" class="space-y-2">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Select your microphone and click to start recording</p>
+                    </div>
+                    
+                    <div id="meeting-status-recording" class="space-y-2 hidden">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                            <p class="text-sm font-medium text-red-600 dark:text-red-400">
+                                Recording... <span id="meeting-record-time">00:00</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div id="meeting-status-transcribing" class="space-y-4 hidden">
+                        <div class="flex items-center justify-center gap-3">
+                            <svg class="w-5 h-5 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Transcribing audio...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="flex justify-center gap-4">
+                    <button id="meeting-record-btn" onclick="toggleMeetingRecording()" class="btn-primary px-8 py-3 text-lg">
+                        <span id="meeting-record-btn-text">Start Recording</span>
+                    </button>
+                </div>
+                
+                <!-- Or upload -->
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-bb-cloud dark:bg-bb-phantom text-gray-500 dark:text-gray-400">or upload audio file</span>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center">
+                    <label class="btn-secondary cursor-pointer inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        Upload Audio
+                        <input type="file" id="meeting-audio-upload" accept="audio/*,.webm,.mp3,.wav,.m4a,.ogg" class="hidden" onchange="handleMeetingAudioUpload(event)">
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Paste Mode Content -->
+            <div id="paste-mode-content" class="hidden">
+                <form id="meeting-ingest-form" onsubmit="submitMeetingIngest(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="meeting-transcript" class="label">Transcript</label>
+                            <textarea id="meeting-transcript" name="transcript" rows="8" required
+                                      class="input-field" placeholder="Paste your meeting transcript here..."></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="meeting-company-hint" class="label">Company Name</label>
+                                <input type="text" id="meeting-company-hint" name="company_hint" class="input-field" 
+                                       value="{{ customer.company_name }}" readonly>
+                            </div>
+                            <div>
+                                <label for="meeting-call-type" class="label">Call Type</label>
+                                <select id="meeting-call-type" name="call_type" class="input-field">
+                                    <option value="meeting">Meeting</option>
+                                    <option value="call">Call</option>
+                                    <option value="demo">Demo</option>
+                                    <option value="discovery">Discovery</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="meeting-contact-hints" class="label">Participants (comma separated)</label>
+                            <input type="text" id="meeting-contact-hints" name="contact_hints" class="input-field"
+                                   placeholder="John Smith, Jane Doe">
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="hideNewMeetingModal()" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary" id="meeting-ingest-submit">
+                            <span id="meeting-ingest-submit-text">Process Transcript</span>
+                            <svg id="meeting-ingest-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Action Item Modal -->
+<div id="add-action-item-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideAddActionItemModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add Action Item</h3>
+                <button onclick="hideAddActionItemModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="add-action-item-form" onsubmit="submitAddActionItemForm(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label for="action-item-description" class="label">Description</label>
+                        <textarea id="action-item-description" name="description" rows="3" required
+                                  class="input-field" placeholder="What needs to be done?"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="action-item-owner" class="label">Owner (optional)</label>
+                            <input type="text" id="action-item-owner" name="owner" class="input-field" 
+                                   placeholder="Who is responsible?">
+                        </div>
+                        <div>
+                            <label for="action-item-due-date" class="label">Due Date (optional)</label>
+                            <input type="date" id="action-item-due-date" name="due_date" class="input-field">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideAddActionItemModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary" id="add-action-item-submit">
+                        <span id="add-action-item-submit-text">Add Item</span>
+                        <svg id="add-action-item-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ========================================
+    // Add Action Item Modal
+    // ========================================
+    function showAddActionItemModal() {
+        document.getElementById('add-action-item-modal').classList.remove('hidden');
+    }
+
+    function hideAddActionItemModal() {
+        document.getElementById('add-action-item-modal').classList.add('hidden');
+        document.getElementById('add-action-item-form').reset();
+    }
+
+    async function submitAddActionItemForm(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = document.getElementById('add-action-item-submit');
+        const submitText = document.getElementById('add-action-item-submit-text');
+        const spinner = document.getElementById('add-action-item-spinner');
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitText.textContent = 'Adding...';
+        spinner.classList.remove('hidden');
+        
+        const payload = {
+            description: form.description.value,
+            owner: form.owner.value || null,
+            due_date: form.due_date.value || null
+        };
+        
+        try {
+            const response = await fetch('/api/action-items/{{ customer.assistant_id }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast('Action item added', 'success');
+                hideAddActionItemModal();
+                // Reload page to show new item
+                window.location.reload();
+            } else {
+                showToast(data.error || 'Failed to add action item', 'error');
+            }
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitText.textContent = 'Add Item';
+            spinner.classList.add('hidden');
+        }
+    }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const assistantId = '{{ customer.assistant_id }}';
+    
+    // ========================================
+    // Customer Edit with Autosave
+    // ========================================
+    const editCustomerBtn = document.getElementById('edit-customer-btn');
+    const displayMode = document.getElementById('customer-display-mode');
+    const editMode = document.getElementById('customer-edit-mode');
+    const autosaveIndicator = document.getElementById('autosave-indicator');
+    
+    const editCompanyName = document.getElementById('edit-company-name');
+    const editDomain = document.getElementById('edit-domain');
+    const editIndustry = document.getElementById('edit-industry');
+    const editSize = document.getElementById('edit-size');
+    
+    let customerEditMode = false;
+    let customerPendingUpdates = {};
+    let customerSaveTimer = null;
+    let customerIsSaving = false;
+    
+    // Check if we should start in edit mode from URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('edit') === 'true') {
+        // Remove the query param from URL without reload
+        const url = new URL(window.location);
+        url.searchParams.delete('edit');
+        window.history.replaceState({}, '', url);
+        // Start in edit mode
+        customerEditMode = true;
+        displayMode.classList.add('hidden');
+        editMode.classList.remove('hidden');
+        setTimeout(() => editCompanyName.focus(), 100);
+    }
+    
+    function toggleCustomerEditMode() {
+        customerEditMode = !customerEditMode;
+        if (customerEditMode) {
+            displayMode.classList.add('hidden');
+            editMode.classList.remove('hidden');
+            editCompanyName.focus();
+        } else {
+            displayMode.classList.remove('hidden');
+            editMode.classList.add('hidden');
+        }
+    }
+    
+    function showSavedIndicator() {
+        if (!autosaveIndicator) return;
+        autosaveIndicator.classList.remove('hidden');
+        autosaveIndicator.classList.add('flex');
+        autosaveIndicator.style.display = 'flex';
+        setTimeout(() => {
+            autosaveIndicator.classList.add('hidden');
+            autosaveIndicator.classList.remove('flex');
+            autosaveIndicator.style.display = 'none';
+        }, 2000);
+    }
+    
+    function updateCustomerDisplay(data) {
+        // Update the display mode with new values
+        const h1 = displayMode.querySelector('h1');
+        if (h1 && data.company_name) {
+            h1.textContent = data.company_name;
+        }
+        
+        // Rebuild the info line
+        const infoDiv = displayMode.querySelector('.flex.items-center.mt-1');
+        if (infoDiv) {
+            let html = '';
+            if (data.domain) {
+                html += `<span class="text-gray-500 dark:text-gray-400">${data.domain}</span>`;
+            }
+            if (data.industry) {
+                html += `<span class="badge-blue">${data.industry}</span>`;
+            }
+            if (data.size) {
+                html += `<span class="badge-gray">${data.size}</span>`;
+            }
+            infoDiv.innerHTML = html;
+        }
+        
+        // Update the avatar letter
+        const avatar = document.querySelector('.w-16.h-16');
+        if (avatar && data.company_name) {
+            avatar.textContent = data.company_name[0].toUpperCase();
+        }
+        
+        // Update page title
+        if (data.company_name) {
+            document.title = `${data.company_name} - CloserNotes`;
+        }
+    }
+    
+    async function saveCustomerChanges() {
+        if (customerIsSaving || Object.keys(customerPendingUpdates).length === 0) return;
+        const payload = { ...customerPendingUpdates };
+        customerPendingUpdates = {};
+        customerIsSaving = true;
+        
+        try {
+            const response = await fetch(`/api/customers/${assistantId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                updateCustomerDisplay(data.customer);
+                showSavedIndicator();
+            }
+        } catch (err) {
+            showToast('Error saving customer', 'error');
+        } finally {
+            customerIsSaving = false;
+            if (Object.keys(customerPendingUpdates).length > 0) {
+                scheduleCustomerSave();
+            }
+        }
+    }
+    
+    function scheduleCustomerSave() {
+        if (customerSaveTimer) clearTimeout(customerSaveTimer);
+        customerSaveTimer = setTimeout(saveCustomerChanges, 600);
+    }
+    
+    function queueCustomerUpdate(field, value) {
+        customerPendingUpdates[field] = value;
+        scheduleCustomerSave();
+    }
+    
+    if (editCustomerBtn) {
+        editCustomerBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleCustomerEditMode();
+        });
+    }
+    
+    // Bind autosave to edit fields
+    if (editCompanyName) {
+        editCompanyName.addEventListener('input', function() {
+            queueCustomerUpdate('company_name', this.value.trim() || null);
+        });
+    }
+    if (editDomain) {
+        editDomain.addEventListener('input', function() {
+            queueCustomerUpdate('domain', this.value.trim() || null);
+        });
+    }
+    if (editIndustry) {
+        editIndustry.addEventListener('input', function() {
+            queueCustomerUpdate('industry', this.value.trim() || null);
+        });
+    }
+    if (editSize) {
+        editSize.addEventListener('change', function() {
+            queueCustomerUpdate('size', this.value || null);
+        });
+    }
+
+    // Delete customer from detail page
+    const deleteCustomerBtn = document.getElementById('delete-customer-btn');
+    if (deleteCustomerBtn) {
+        deleteCustomerBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const companyName = this.dataset.companyName || 'this customer';
+
+            const confirmed = await showConfirm('Delete Customer', `Delete ${companyName}? This cannot be undone.`);
+            if (!confirmed) {
+                return;
+            }
+
+            fetch(`/api/customers/${assistantId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast(data.error, 'error');
+                } else {
+                    showToast('Customer deleted', 'success');
+                    window.location.href = '/';
+                }
+            })
+            .catch(() => {
+                showToast('Error deleting customer', 'error');
+            });
+        });
+    }
+
+    // Handle checkbox toggle for action items
+    document.querySelectorAll('.action-item-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function(e) {
+            e.stopPropagation();
+            const assistantId = this.dataset.assistantId;
+            const itemId = this.dataset.itemId;
+            
+            fetch(`/api/action-items/${assistantId}/${itemId}/toggle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    this.checked = !this.checked;
+                } else {
+                    // Update the UI
+                    const card = this.closest('[data-action-item-id]');
+                    const description = card.querySelector('p');
+                    if (data.is_completed) {
+                        description.classList.add('line-through', 'text-gray-500', 'dark:text-gray-400');
+                    } else {
+                        description.classList.remove('line-through', 'text-gray-500', 'dark:text-gray-400');
+                    }
+                }
+            })
+            .catch(err => {
+                showToast('Error toggling action item', 'error');
+                this.checked = !this.checked;
+            });
+        });
+    });
+
+    // Handle dismiss action item buttons
+    document.querySelectorAll('.dismiss-action-item-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const confirmed = await showConfirm('Dismiss Action Item', 'Dismiss this action item?');
+            if (!confirmed) return;
+            
+            const assistantId = this.dataset.assistantId;
+            const itemId = this.dataset.itemId;
+            const dismissIcon = this.querySelector('.dismiss-icon');
+            const dismissSpinner = this.querySelector('.dismiss-spinner');
+            
+            // Show spinner
+            dismissIcon.classList.add('hidden');
+            dismissSpinner.classList.remove('hidden');
+            this.disabled = true;
+            
+            fetch(`/api/action-items/${assistantId}/${itemId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    // Restore icon
+                    dismissIcon.classList.remove('hidden');
+                    dismissSpinner.classList.add('hidden');
+                    this.disabled = false;
+                } else {
+                    showToast('Action item dismissed', 'success');
+                    // Remove the card from DOM
+                    const card = this.closest('[data-action-item-id]');
+                    card.remove();
+                }
+            })
+            .catch(err => {
+                showToast('Error dismissing action item', 'error');
+                // Restore icon
+                dismissIcon.classList.remove('hidden');
+                dismissSpinner.classList.add('hidden');
+                this.disabled = false;
+            });
+        });
+    });
+
+    // Handle delete meeting buttons
+    document.querySelectorAll('.delete-meeting-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const card = this.closest('.meeting-card');
+            const threadId = card.dataset.threadId;
+            const assistantId = card.dataset.assistantId;
+            
+            const confirmed = await showConfirm('Delete Meeting', 'Delete this meeting? This cannot be undone.');
+            if (!confirmed) {
+                return;
+            }
+            
+            fetch(`/api/customers/${assistantId}/meetings/${threadId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast(data.error, 'error');
+                } else {
+                    showToast('Meeting deleted', 'success');
+                    // Remove the card with animation
+                    card.style.transition = 'opacity 0.3s, transform 0.3s';
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateX(-10px)';
+                    setTimeout(() => card.remove(), 300);
+                }
+            })
+            .catch(err => {
+                showToast('Error deleting meeting', 'error');
+            });
+        });
+    });
+});
+
+// Get labels array from a meeting card
+function getLabelsFromCard(card) {
+    try {
+        return JSON.parse(card.dataset.labels || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+// Update labels on the server
+function updateLabels(assistantId, threadId, labels, callback) {
+    fetch(`/api/customers/${assistantId}/meetings/${threadId}/labels`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ labels: labels })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else if (callback) {
+            callback(data);
+        }
+    })
+    .catch(err => {
+        showToast('Error updating labels', 'error');
+    });
+}
+
+// Edit an existing label
+function editLabel(pillElement, threadId, labelIndex) {
+    const card = pillElement.closest('.meeting-card');
+    const assistantId = card.dataset.assistantId;
+    const labels = getLabelsFromCard(card);
+    const currentValue = labels[labelIndex] || '';
+    
+    // Create inline input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentValue;
+    input.className = 'text-xs px-2 py-0.5 rounded border border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500';
+    input.style.width = Math.max(60, currentValue.length * 8 + 20) + 'px';
+    
+    // Replace pill with input
+    pillElement.style.display = 'none';
+    pillElement.parentNode.insertBefore(input, pillElement);
+    input.focus();
+    input.select();
+    
+    function saveEdit() {
+        const newValue = input.value.trim();
+        
+        if (newValue === '') {
+            // Delete the label
+            labels.splice(labelIndex, 1);
+        } else if (newValue !== currentValue) {
+            labels[labelIndex] = newValue;
+        }
+        
+        updateLabels(assistantId, threadId, labels, function(data) {
+            // Update card data attribute
+            card.dataset.labels = JSON.stringify(data.labels);
+            // Refresh the labels display
+            refreshLabelsDisplay(card, data.labels, threadId);
+        });
+        
+        // Remove input and show original (will be refreshed)
+        input.remove();
+        pillElement.remove();
+    }
+    
+    input.addEventListener('blur', saveEdit);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+        } else if (e.key === 'Escape') {
+            input.remove();
+            pillElement.style.display = '';
+        }
+    });
+}
+
+// Add a new label
+function addNewLabel(btnElement, threadId) {
+    const card = btnElement.closest('.meeting-card');
+    const assistantId = card.dataset.assistantId;
+    const labels = getLabelsFromCard(card);
+    const labelsContainer = btnElement.closest('.meeting-labels');
+    
+    // Create inline input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'New label';
+    input.className = 'text-xs px-2 py-0.5 rounded border border-blue-500 dark:border-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500';
+    input.style.width = '80px';
+    
+    // Insert before the add button
+    labelsContainer.insertBefore(input, btnElement);
+    btnElement.style.display = 'none';
+    input.focus();
+    
+    function saveNewLabel() {
+        const newValue = input.value.trim();
+        
+        if (newValue !== '') {
+            labels.push(newValue);
+            updateLabels(assistantId, threadId, labels, function(data) {
+                // Update card data attribute
+                card.dataset.labels = JSON.stringify(data.labels);
+                // Refresh the labels display
+                refreshLabelsDisplay(card, data.labels, threadId);
+            });
+        }
+        
+        input.remove();
+        btnElement.style.display = '';
+    }
+    
+    input.addEventListener('blur', saveNewLabel);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+        } else if (e.key === 'Escape') {
+            input.remove();
+            btnElement.style.display = '';
+        }
+    });
+}
+
+// Refresh the labels display after an update
+function refreshLabelsDisplay(card, labels, threadId) {
+    const labelsContainer = card.querySelector('.meeting-labels');
+    
+    // Clear existing labels (keep only the add button)
+    const addBtn = labelsContainer.querySelector('.add-label-btn');
+    labelsContainer.querySelectorAll('.label-pill').forEach(pill => pill.remove());
+    
+    // Add new label pills
+    labels.slice(0, 5).forEach(function(label, index) {
+        const pill = document.createElement('span');
+        pill.className = 'label-pill badge-gray text-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors';
+        pill.textContent = label;
+        pill.onclick = function() { editLabel(this, threadId, index); };
+        labelsContainer.insertBefore(pill, addBtn);
+    });
+}
+
+// ========================================
+// Products Editing Functions
+// ========================================
+
+function editProduct(pillElement) {
+    const container = document.getElementById('products-container');
+    const assistantId = document.getElementById('products-card').dataset.assistantId;
+    const currentValue = pillElement.dataset.product;
+    
+    // Create inline input
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentValue;
+    input.className = 'text-sm px-3 py-1 rounded-full border-2 border-bb-blue bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-bb-blue';
+    input.style.width = Math.max(80, currentValue.length * 10 + 30) + 'px';
+    
+    // Replace pill with input
+    pillElement.style.display = 'none';
+    pillElement.parentNode.insertBefore(input, pillElement);
+    input.focus();
+    input.select();
+    
+    function saveEdit() {
+        const newValue = input.value.trim();
+        
+        if (newValue === '') {
+            // Empty = delete
+            deleteProductByName(assistantId, currentValue);
+        } else if (newValue !== currentValue) {
+            // Rename
+            renameProduct(assistantId, currentValue, newValue);
+        } else {
+            // No change, just restore
+            input.remove();
+            pillElement.style.display = '';
+        }
+    }
+    
+    input.addEventListener('blur', saveEdit);
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            input.blur();
+        } else if (e.key === 'Escape') {
+            input.remove();
+            pillElement.style.display = '';
+        }
+    });
+}
+
+async function deleteProduct(pillElement) {
+    const assistantId = document.getElementById('products-card').dataset.assistantId;
+    const productName = pillElement.dataset.product;
+    
+    const confirmed = await showConfirm('Remove Product', `Remove "${productName}" from all meetings?`);
+    if (!confirmed) {
+        return;
+    }
+    
+    deleteProductByName(assistantId, productName);
+}
+
+function deleteProductByName(assistantId, productName) {
+    fetch(`/api/customers/${assistantId}/products/${encodeURIComponent(productName)}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            showToast('Product removed', 'success');
+            refreshProductsDisplay(data.products);
+        }
+    })
+    .catch(err => {
+        showToast('Error deleting product', 'error');
+    });
+}
+
+function renameProduct(assistantId, oldName, newName) {
+    fetch(`/api/customers/${assistantId}/products`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_name: oldName, new_name: newName })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            refreshProductsDisplay(data.products);
+        }
+    })
+    .catch(err => {
+        showToast('Error renaming product', 'error');
+    });
+}
+
+function refreshProductsDisplay(products) {
+    const container = document.getElementById('products-container');
+    const countEl = document.getElementById('products-count');
+    const pillColors = ['badge-blue', 'badge-green', 'badge-purple', 'badge-yellow', 'badge-red'];
+    
+    // Clear container
+    container.innerHTML = '';
+    
+    if (products.length === 0) {
+        container.innerHTML = '<p id="no-products-message" class="text-gray-400 dark:text-gray-500 text-sm">None yet</p>';
+        countEl.textContent = '0';
+        return;
+    }
+    
+    countEl.textContent = products.length;
+    
+    products.forEach((product, index) => {
+        const colorClass = pillColors[index % pillColors.length];
+        const pill = document.createElement('span');
+        pill.className = `product-pill ${colorClass} group relative cursor-pointer pr-2 transition-all`;
+        pill.dataset.product = product;
+        pill.dataset.colorIndex = index % pillColors.length;
+        pill.onclick = function() { editProduct(this); };
+        
+        pill.innerHTML = `
+            <span class="product-name">${escapeHtml(product)}</span>
+            <button class="delete-product-btn absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-gray-400 dark:bg-gray-500 hover:bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-sm"
+                    onclick="event.stopPropagation(); deleteProduct(this.parentElement)"
+                    title="Remove product">
+                <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        `;
+        container.appendChild(pill);
+    });
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Toggle show more meetings
+function toggleMoreMeetings() {
+    const hiddenMeetings = document.querySelectorAll('.hidden-meeting');
+    const btn = document.getElementById('show-more-meetings');
+    const showMoreText = btn.querySelector('.show-more-text');
+    const showLessText = btn.querySelector('.show-less-text');
+    const icon = btn.querySelector('.show-more-icon');
+    
+    const isExpanded = !hiddenMeetings[0]?.classList.contains('hidden');
+    
+    hiddenMeetings.forEach(meeting => {
+        meeting.classList.toggle('hidden', isExpanded);
+    });
+    
+    showMoreText.classList.toggle('hidden', !isExpanded);
+    showLessText.classList.toggle('hidden', isExpanded);
+    icon.style.transform = isExpanded ? '' : 'rotate(180deg)';
+}
+
+// Follow-up date editing functions
+function toggleFollowupEdit() {
+    const input = document.getElementById('followup-date-input');
+    const editBtn = document.getElementById('edit-followup-btn');
+    const saveBtn = document.getElementById('save-followup-btn');
+    const cancelBtn = document.getElementById('cancel-followup-btn');
+    
+    input.classList.remove('hidden');
+    editBtn.classList.add('hidden');
+    saveBtn.classList.remove('hidden');
+    cancelBtn.classList.remove('hidden');
+    input.focus();
+}
+
+function cancelFollowupEdit() {
+    const input = document.getElementById('followup-date-input');
+    const editBtn = document.getElementById('edit-followup-btn');
+    const saveBtn = document.getElementById('save-followup-btn');
+    const cancelBtn = document.getElementById('cancel-followup-btn');
+    
+    input.classList.add('hidden');
+    editBtn.classList.remove('hidden');
+    saveBtn.classList.add('hidden');
+    cancelBtn.classList.add('hidden');
+}
+
+function saveFollowupDate() {
+    const input = document.getElementById('followup-date-input');
+    const assistantId = input.dataset.assistantId;
+    const newDate = input.value || null;
+    
+    fetch(`/api/customers/${assistantId}/followup`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ next_followup_date: newDate })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error');
+        } else {
+            showToast('Follow-up date saved', 'success');
+            // Update display
+            const display = document.getElementById('followup-display');
+            if (newDate) {
+                display.innerHTML = `${newDate} <span class="text-xs font-normal text-gray-500 dark:text-gray-400 ml-2">(set manually)</span>`;
+            } else {
+                display.innerHTML = '<span class="text-gray-400 dark:text-gray-500">Not set</span>';
+            }
+            cancelFollowupEdit();
+        }
+    })
+    .catch(err => {
+        showToast('Error saving follow-up date', 'error');
+    });
+}
+
+// ========================================
+// New Meeting Modal
+// ========================================
+let meetingMode = 'record';
+let meetingIsRecording = false;
+let meetingIsMonitoring = false;
+let meetingRecordingStartTime = null;
+let meetingRecordingTimer = null;
+let meetingAudioContext = null;
+let meetingAnalyser = null;
+let meetingAudioStream = null;
+let meetingScriptProcessor = null;
+let meetingRecordedSamples = [];
+let meetingSelectedDeviceId = null;
+let meetingWaveformAnimationId = null;
+let meetingWaveformCanvas = null;
+let meetingWaveformCtx = null;
+
+function showNewMeetingModal(e) {
+    if (e) e.preventDefault();
+    document.getElementById('new-meeting-modal').classList.remove('hidden');
+    setMeetingMode('record');
+    initMeetingAudioDevices();
+}
+
+function hideNewMeetingModal() {
+    if (meetingIsRecording) {
+        stopMeetingRecording();
+    }
+    stopMeetingMonitoring();
+    document.getElementById('new-meeting-modal').classList.add('hidden');
+    resetMeetingRecordingUI();
+}
+
+function setMeetingMode(mode) {
+    meetingMode = mode;
+    const recordBtn = document.getElementById('mode-record-btn');
+    const pasteBtn = document.getElementById('mode-paste-btn');
+    const recordContent = document.getElementById('record-mode-content');
+    const pasteContent = document.getElementById('paste-mode-content');
+    
+    if (mode === 'record') {
+        recordBtn.className = 'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm';
+        pasteBtn.className = 'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300';
+        recordContent.classList.remove('hidden');
+        pasteContent.classList.add('hidden');
+        // Start monitoring when switching to record mode
+        if (!meetingIsMonitoring) {
+            initMeetingAudioDevices();
+        }
+    } else {
+        pasteBtn.className = 'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm';
+        recordBtn.className = 'px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300';
+        pasteContent.classList.remove('hidden');
+        recordContent.classList.add('hidden');
+        // Stop monitoring when switching to paste mode
+        stopMeetingMonitoring();
+    }
+}
+
+async function initMeetingAudioDevices() {
+    try {
+        await navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => stream.getTracks().forEach(t => t.stop()));
+        
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter(d => d.kind === 'audioinput');
+        
+        const select = document.getElementById('meeting-mic-select');
+        select.innerHTML = '';
+        
+        audioInputs.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.textContent = device.label || `Microphone ${index + 1}`;
+            select.appendChild(option);
+        });
+        
+        if (audioInputs.length > 0) {
+            meetingSelectedDeviceId = audioInputs[0].deviceId;
+            startMeetingMonitoring();
+        }
+    } catch (err) {
+        console.error('Error enumerating devices:', err);
+        document.getElementById('meeting-mic-select').innerHTML = '<option value="">Microphone access denied</option>';
+    }
+}
+
+function updateMeetingDevice() {
+    const select = document.getElementById('meeting-mic-select');
+    meetingSelectedDeviceId = select.value;
+    stopMeetingMonitoring();
+    startMeetingMonitoring();
+}
+
+async function startMeetingMonitoring() {
+    if (meetingIsMonitoring || meetingIsRecording) return;
+    
+    try {
+        const constraints = {
+            audio: {
+                deviceId: meetingSelectedDeviceId ? { exact: meetingSelectedDeviceId } : undefined,
+                channelCount: 1,
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: true,
+            }
+        };
+        
+        meetingAudioStream = await navigator.mediaDevices.getUserMedia(constraints);
+        meetingAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        meetingAnalyser = meetingAudioContext.createAnalyser();
+        meetingAnalyser.fftSize = 2048;
+        
+        const source = meetingAudioContext.createMediaStreamSource(meetingAudioStream);
+        source.connect(meetingAnalyser);
+        
+        meetingIsMonitoring = true;
+        
+        meetingWaveformCanvas = document.getElementById('meeting-waveform-canvas');
+        meetingWaveformCtx = meetingWaveformCanvas.getContext('2d');
+        
+        drawMeetingWaveform();
+    } catch (err) {
+        console.error('Error starting monitoring:', err);
+    }
+}
+
+function stopMeetingMonitoring() {
+    meetingIsMonitoring = false;
+    
+    if (meetingWaveformAnimationId) {
+        cancelAnimationFrame(meetingWaveformAnimationId);
+        meetingWaveformAnimationId = null;
+    }
+    
+    if (!meetingIsRecording) {
+        if (meetingAudioStream) {
+            meetingAudioStream.getTracks().forEach(track => track.stop());
+            meetingAudioStream = null;
+        }
+        if (meetingAudioContext) {
+            meetingAudioContext.close();
+            meetingAudioContext = null;
+        }
+    }
+}
+
+function drawMeetingWaveform() {
+    if (!meetingAnalyser || !meetingWaveformCtx) return;
+    
+    meetingWaveformAnimationId = requestAnimationFrame(drawMeetingWaveform);
+    
+    const bufferLength = meetingAnalyser.fftSize;
+    const dataArray = new Float32Array(bufferLength);
+    meetingAnalyser.getFloatTimeDomainData(dataArray);
+    
+    const canvas = meetingWaveformCanvas;
+    const ctx = meetingWaveformCtx;
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.fillStyle = '#111827';
+    ctx.fillRect(0, 0, width, height);
+    
+    ctx.strokeStyle = '#374151';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, height / 2);
+    ctx.lineTo(width, height / 2);
+    ctx.stroke();
+    
+    let sum = 0;
+    for (let i = 0; i < bufferLength; i++) {
+        sum += dataArray[i] * dataArray[i];
+    }
+    const rms = Math.sqrt(sum / bufferLength);
+    const db = 20 * Math.log10(rms + 0.0001);
+    
+    const levelEl = document.getElementById('meeting-level-indicator');
+    if (levelEl) {
+        const displayDb = Math.max(-60, Math.min(0, db)).toFixed(1);
+        levelEl.textContent = `${displayDb} dB`;
+        
+        if (db > -10) {
+            levelEl.style.color = '#ef4444';
+        } else if (db > -30) {
+            levelEl.style.color = '#22c55e';
+        } else {
+            levelEl.style.color = '#6b7280';
+        }
+    }
+    
+    ctx.strokeStyle = meetingIsRecording ? '#ef4444' : '#3b82f6';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    
+    const sliceWidth = width / bufferLength;
+    let x = 0;
+    
+    for (let i = 0; i < bufferLength; i++) {
+        const v = dataArray[i];
+        const y = (height / 2) + (v * height * 2);
+        
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+        x += sliceWidth;
+    }
+    
+    ctx.stroke();
+}
+
+function resetMeetingRecordingUI() {
+    document.getElementById('meeting-status-idle').classList.remove('hidden');
+    document.getElementById('meeting-status-recording').classList.add('hidden');
+    document.getElementById('meeting-status-transcribing').classList.add('hidden');
+    document.getElementById('meeting-record-btn-text').textContent = 'Start Recording';
+    document.getElementById('meeting-record-btn').disabled = false;
+    document.getElementById('meeting-record-time').textContent = '00:00';
+}
+
+async function toggleMeetingRecording() {
+    if (meetingIsRecording) {
+        stopMeetingRecording();
+    } else {
+        await startMeetingRecording();
+    }
+}
+
+async function startMeetingRecording() {
+    try {
+        if (!meetingAudioContext || !meetingAudioStream) {
+            const constraints = {
+                audio: {
+                    deviceId: meetingSelectedDeviceId ? { exact: meetingSelectedDeviceId } : undefined,
+                    channelCount: 1,
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: true,
+                }
+            };
+            
+            meetingAudioStream = await navigator.mediaDevices.getUserMedia(constraints);
+            meetingAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            meetingAnalyser = meetingAudioContext.createAnalyser();
+            meetingAnalyser.fftSize = 2048;
+            
+            const source = meetingAudioContext.createMediaStreamSource(meetingAudioStream);
+            source.connect(meetingAnalyser);
+        }
+        
+        const source = meetingAudioContext.createMediaStreamSource(meetingAudioStream);
+        
+        meetingScriptProcessor = meetingAudioContext.createScriptProcessor(4096, 1, 1);
+        meetingRecordedSamples = [];
+        
+        meetingScriptProcessor.onaudioprocess = (e) => {
+            if (meetingIsRecording) {
+                const inputData = e.inputBuffer.getChannelData(0);
+                const samples = new Float32Array(inputData.length);
+                samples.set(inputData);
+                meetingRecordedSamples.push(samples);
+            }
+        };
+        
+        source.connect(meetingScriptProcessor);
+        meetingScriptProcessor.connect(meetingAudioContext.destination);
+        
+        meetingIsRecording = true;
+        meetingIsMonitoring = false;
+        meetingRecordingStartTime = Date.now();
+
+        document.getElementById('meeting-status-idle').classList.add('hidden');
+        document.getElementById('meeting-status-recording').classList.remove('hidden');
+        document.getElementById('meeting-record-btn-text').textContent = 'Stop Recording';
+
+        meetingRecordingTimer = setInterval(updateMeetingRecordingTime, 1000);
+
+    } catch (err) {
+        console.error('Error starting recording:', err);
+        showToast('Could not access microphone. Please ensure microphone permissions are granted.', 'error');
+    }
+}
+
+function stopMeetingRecording() {
+    meetingIsRecording = false;
+    
+    if (meetingRecordingTimer) {
+        clearInterval(meetingRecordingTimer);
+        meetingRecordingTimer = null;
+    }
+    
+    document.getElementById('meeting-status-recording').classList.add('hidden');
+    document.getElementById('meeting-status-transcribing').classList.remove('hidden');
+    document.getElementById('meeting-record-btn').disabled = true;
+    
+    if (meetingWaveformAnimationId) {
+        cancelAnimationFrame(meetingWaveformAnimationId);
+        meetingWaveformAnimationId = null;
+    }
+    
+    if (meetingRecordedSamples.length > 0 && meetingAudioContext) {
+        const sampleRate = meetingAudioContext.sampleRate;
+        
+        const totalLength = meetingRecordedSamples.reduce((acc, s) => acc + s.length, 0);
+        const combined = new Float32Array(totalLength);
+        let offset = 0;
+        for (const chunk of meetingRecordedSamples) {
+            combined.set(chunk, offset);
+            offset += chunk.length;
+        }
+        
+        const wavBlob = createMeetingWavBlob(combined, sampleRate);
+        transcribeMeetingAudio(wavBlob);
+    } else {
+        showToast('No audio recorded', 'warning');
+        resetMeetingRecordingUI();
+    }
+    
+    if (meetingScriptProcessor) {
+        meetingScriptProcessor.disconnect();
+        meetingScriptProcessor = null;
+    }
+    if (meetingAudioStream) {
+        meetingAudioStream.getTracks().forEach(track => track.stop());
+        meetingAudioStream = null;
+    }
+    if (meetingAudioContext) {
+        meetingAudioContext.close();
+        meetingAudioContext = null;
+    }
+    meetingRecordedSamples = [];
+}
+
+function createMeetingWavBlob(samples, inputSampleRate) {
+    const targetSampleRate = 16000;
+    
+    let resampled;
+    if (inputSampleRate === targetSampleRate) {
+        resampled = samples;
+    } else {
+        const ratio = inputSampleRate / targetSampleRate;
+        const newLength = Math.floor(samples.length / ratio);
+        resampled = new Float32Array(newLength);
+        for (let i = 0; i < newLength; i++) {
+            const srcIndex = Math.floor(i * ratio);
+            resampled[i] = samples[srcIndex];
+        }
+    }
+    
+    const buffer = new ArrayBuffer(44 + resampled.length * 2);
+    const view = new DataView(buffer);
+    
+    const writeString = (offset, string) => {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    };
+    
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + resampled.length * 2, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, 1, true);
+    view.setUint32(24, targetSampleRate, true);
+    view.setUint32(28, targetSampleRate * 2, true);
+    view.setUint16(32, 2, true);
+    view.setUint16(34, 16, true);
+    writeString(36, 'data');
+    view.setUint32(40, resampled.length * 2, true);
+    
+    let off = 44;
+    for (let i = 0; i < resampled.length; i++) {
+        const sample = Math.max(-1, Math.min(1, resampled[i]));
+        view.setInt16(off, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+        off += 2;
+    }
+    
+    return new Blob([buffer], { type: 'audio/wav' });
+}
+
+function updateMeetingRecordingTime() {
+    const elapsed = Math.floor((Date.now() - meetingRecordingStartTime) / 1000);
+    const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+    const seconds = (elapsed % 60).toString().padStart(2, '0');
+    document.getElementById('meeting-record-time').textContent = `${minutes}:${seconds}`;
+}
+
+async function transcribeMeetingAudio(audioBlob) {
+    if (audioBlob.size < 5000) {
+        showToast('Recording too short or empty. Please try again.', 'warning');
+        resetMeetingRecordingUI();
+        return;
+    }
+
+    try {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+
+        const response = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            if (!data.text || data.text.trim().length === 0) {
+                throw new Error('No speech detected. Please speak clearly and check your microphone input level.');
+            }
+            // Switch to paste mode and fill in transcript
+            setMeetingMode('paste');
+            document.getElementById('meeting-transcript').value = data.text;
+            resetMeetingRecordingUI();
+        } else {
+            throw new Error(data.error || 'Transcription failed');
+        }
+    } catch (err) {
+        console.error('Transcription error:', err);
+        showToast(`Transcription failed: ${err.message}`, 'error');
+        resetMeetingRecordingUI();
+    }
+}
+
+async function handleMeetingAudioUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('meeting-status-idle').classList.add('hidden');
+    document.getElementById('meeting-status-transcribing').classList.remove('hidden');
+    document.getElementById('meeting-record-btn').disabled = true;
+
+    try {
+        const formData = new FormData();
+        formData.append('audio', file, file.name);
+
+        const response = await fetch('/api/transcribe', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            if (!data.text || data.text.trim().length === 0) {
+                throw new Error('No speech detected in audio');
+            }
+            setMeetingMode('paste');
+            document.getElementById('meeting-transcript').value = data.text;
+            resetMeetingRecordingUI();
+        } else {
+            throw new Error(data.error || 'Transcription failed');
+        }
+    } catch (err) {
+        console.error('Transcription error:', err);
+        showToast(`Transcription failed: ${err.message}`, 'error');
+        resetMeetingRecordingUI();
+    }
+
+    event.target.value = '';
+}
+
+async function submitMeetingIngest(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = document.getElementById('meeting-ingest-submit');
+    const submitText = document.getElementById('meeting-ingest-submit-text');
+    const spinner = document.getElementById('meeting-ingest-spinner');
+    
+    submitBtn.disabled = true;
+    submitText.textContent = 'Processing...';
+    spinner.classList.remove('hidden');
+    
+    const contactHints = form.contact_hints.value.split(',').map(s => s.trim()).filter(s => s);
+    
+    const payload = {
+        transcript: form.transcript.value,
+        metadata: {
+            company_hint: form.company_hint.value || null,
+            call_type: form.call_type.value,
+            contact_hints: contactHints
+        }
+    };
+    
+    try {
+        const response = await fetch('/api/ingest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+            showToast('Transcript processed successfully!', 'success');
+            hideNewMeetingModal();
+            window.location.reload();
+        } else {
+            showToast(data.error, 'error');
+        }
+    } catch (err) {
+        showToast(err.message, 'error');
+    } finally {
+        submitBtn.disabled = false;
+        submitText.textContent = 'Process Transcript';
+        spinner.classList.add('hidden');
+    }
+}
+
+// Escape key to close modals
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const addActionItemModal = document.getElementById('add-action-item-modal');
+        const newMeetingModal = document.getElementById('new-meeting-modal');
+        
+        if (addActionItemModal && !addActionItemModal.classList.contains('hidden')) {
+            hideAddActionItemModal();
+        } else if (newMeetingModal && !newMeetingModal.classList.contains('hidden')) {
+            hideNewMeetingModal();
+        }
+    }
+});
+</script>
+{% endblock %}

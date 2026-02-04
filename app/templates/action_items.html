@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+
+{% block title %}Action Items - {{ customer.company_name }} - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+    {% else %}
+    
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">{{ customer.company_name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 dark:text-white font-medium">Action Items</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Action Items</h1>
+            <p class="mt-1 text-gray-500 dark:text-gray-400">{{ action_items|length }} item{% if action_items|length != 1 %}s{% endif %} for {{ customer.company_name }}</p>
+        </div>
+        <button onclick="showAddModal()" class="btn-primary inline-flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add
+        </button>
+    </div>
+
+    <!-- Filters -->
+    <div class="flex items-center space-x-2 mb-6">
+        <a href="/customer/{{ assistant_id }}/action-items?filter=all" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if filter_status == 'all' %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            All
+        </a>
+        <a href="/customer/{{ assistant_id }}/action-items?filter=pending" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if filter_status == 'pending' %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Pending
+        </a>
+        <a href="/customer/{{ assistant_id }}/action-items?filter=completed" 
+           class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if filter_status == 'completed' %}bg-blue-600 text-white{% else %}bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700{% endif %}">
+            Completed
+        </a>
+    </div>
+
+    <!-- Action Items List -->
+    {% if action_items %}
+    <div class="space-y-3">
+        {% for item in action_items %}
+        <div class="card flex items-start p-4 group" data-action-item-id="{{ item.id }}">
+            <div class="flex-shrink-0 mr-4 pt-0.5">
+                <input type="checkbox" 
+                       class="action-item-checkbox w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-800"
+                       data-assistant-id="{{ assistant_id }}"
+                       data-item-id="{{ item.id }}"
+                       {% if item.is_completed %}checked{% endif %}>
+            </div>
+            <a href="/customer/{{ assistant_id }}/action-item/{{ item.id }}" class="flex-1 min-w-0">
+                <p class="text-gray-900 dark:text-white {% if item.is_completed %}line-through text-gray-500 dark:text-gray-400{% endif %}">
+                    {{ item.description }}
+                </p>
+                <div class="flex items-center mt-2 space-x-4 text-sm">
+                    {% if item.owner %}
+                    <span class="text-gray-500 dark:text-gray-400">
+                        <span class="font-medium">Owner:</span> {{ item.owner }}
+                    </span>
+                    {% endif %}
+                    {% if item.due_date %}
+                    <span class="text-gray-500 dark:text-gray-400">
+                        <span class="font-medium">Due:</span> {{ item.due_date }}
+                    </span>
+                    {% endif %}
+                    <span class="text-gray-400 dark:text-gray-500">
+                        {{ item.created_at[:10] if item.created_at else '' }}
+                    </span>
+                </div>
+                {% if item.source_excerpt %}
+                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400 italic border-l-2 border-gray-300 dark:border-gray-600 pl-3">
+                    "{{ item.source_excerpt[:100] }}{% if item.source_excerpt|length > 100 %}..."{% endif %}
+                </div>
+                {% endif %}
+            </a>
+            <div class="flex items-center ml-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <a href="/customer/{{ assistant_id }}/action-item/{{ item.id }}?edit=true" 
+                   class="p-2 text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                   title="Edit">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </a>
+                <button class="dismiss-btn p-2 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                        data-assistant-id="{{ assistant_id }}"
+                        data-item-id="{{ item.id }}"
+                        title="Dismiss">
+                    <svg class="dismiss-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    <svg class="dismiss-spinner hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No action items</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">Action items are automatically extracted from meeting transcripts.</p>
+    </div>
+    {% endif %}
+    
+    {% endif %}
+</div>
+
+<!-- Add Action Item Modal -->
+<div id="add-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideAddModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add Action Item</h3>
+                <button onclick="hideAddModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="add-form" onsubmit="submitAddForm(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label for="description" class="label">Description</label>
+                        <textarea id="description" name="description" rows="3" required
+                                  class="input-field" placeholder="What needs to be done?"></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="owner" class="label">Owner (optional)</label>
+                            <input type="text" id="owner" name="owner" class="input-field" 
+                                   placeholder="Who is responsible?">
+                        </div>
+                        <div>
+                            <label for="due_date" class="label">Due Date (optional)</label>
+                            <input type="date" id="due_date" name="due_date" class="input-field">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideAddModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary" id="add-submit">
+                        <span id="add-submit-text">Add Item</span>
+                        <svg id="add-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Modal functions
+    function showAddModal() {
+        document.getElementById('add-modal').classList.remove('hidden');
+    }
+
+    function hideAddModal() {
+        document.getElementById('add-modal').classList.add('hidden');
+        document.getElementById('add-form').reset();
+    }
+
+    async function submitAddForm(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = document.getElementById('add-submit');
+        const submitText = document.getElementById('add-submit-text');
+        const spinner = document.getElementById('add-spinner');
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitText.textContent = 'Adding...';
+        spinner.classList.remove('hidden');
+        
+        const payload = {
+            description: form.description.value,
+            owner: form.owner.value || null,
+            due_date: form.due_date.value || null
+        };
+        
+        try {
+            const response = await fetch('/api/action-items/{{ assistant_id }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast('Action item added', 'success');
+                hideAddModal();
+                // Reload page to show new item
+                window.location.reload();
+            } else {
+                showToast(data.error || 'Failed to add action item', 'error');
+            }
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitText.textContent = 'Add Item';
+            spinner.classList.add('hidden');
+        }
+    }
+
+    // Escape key to close modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const addModal = document.getElementById('add-modal');
+            if (addModal && !addModal.classList.contains('hidden')) {
+                hideAddModal();
+            }
+        }
+    });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle checkbox toggle
+    document.querySelectorAll('.action-item-checkbox').forEach(function(checkbox) {
+        checkbox.addEventListener('change', function(e) {
+            e.stopPropagation();
+            const assistantId = this.dataset.assistantId;
+            const itemId = this.dataset.itemId;
+            
+            fetch(`/api/action-items/${assistantId}/${itemId}/toggle`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    this.checked = !this.checked;
+                } else {
+                    // Update the UI
+                    const card = this.closest('[data-action-item-id]');
+                    const description = card.querySelector('p');
+                    if (data.is_completed) {
+                        description.classList.add('line-through', 'text-gray-500', 'dark:text-gray-400');
+                    } else {
+                        description.classList.remove('line-through', 'text-gray-500', 'dark:text-gray-400');
+                    }
+                }
+            })
+            .catch(err => {
+                showToast('Error toggling action item', 'error');
+                this.checked = !this.checked;
+            });
+        });
+    });
+
+    // Handle dismiss button
+    document.querySelectorAll('.dismiss-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const confirmed = await showConfirm('Dismiss Action Item', 'Dismiss this action item?');
+            if (!confirmed) return;
+            
+            const assistantId = this.dataset.assistantId;
+            const itemId = this.dataset.itemId;
+            const dismissIcon = this.querySelector('.dismiss-icon');
+            const dismissSpinner = this.querySelector('.dismiss-spinner');
+            
+            // Show spinner
+            dismissIcon.classList.add('hidden');
+            dismissSpinner.classList.remove('hidden');
+            this.disabled = true;
+            
+            fetch(`/api/action-items/${assistantId}/${itemId}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showToast(data.error, 'error');
+                    // Restore icon
+                    dismissIcon.classList.remove('hidden');
+                    dismissSpinner.classList.add('hidden');
+                    this.disabled = false;
+                } else {
+                    showToast('Action item dismissed', 'success');
+                    // Remove the card from DOM
+                    const card = this.closest('[data-action-item-id]');
+                    card.remove();
+                }
+            })
+            .catch(err => {
+                showToast('Error dismissing action item', 'error');
+                // Restore icon
+                dismissIcon.classList.remove('hidden');
+                dismissSpinner.classList.add('hidden');
+                this.disabled = false;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,572 @@
+{% extends "base.html" %}
+
+{% block title %}Manager Dashboard - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Manager Dashboard</h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Manage users and customer assignments</p>
+    </div>
+
+    <!-- Error container -->
+    <div id="error-container" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hidden">
+        <p id="error-message" class="text-red-800 dark:text-red-200"></p>
+    </div>
+
+    <!-- Aggregate Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="card">
+            <div class="flex items-center">
+                <div class="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                    <svg class="w-6 h-6 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</p>
+                    <p id="stat-user-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
+                    <p id="stat-customer-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Opportunities</p>
+                    <p id="stat-opportunity-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Activities</p>
+                    <p id="stat-activity-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Summary Section -->
+    <div class="card mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Users</h2>
+            <button onclick="showAddUserModal()" class="btn-primary text-sm">
+                <svg class="w-4 h-4 mr-1 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add User
+            </button>
+        </div>
+
+        <!-- Users loading skeleton -->
+        <div id="users-loading" class="space-y-3">
+            {% for _ in range(2) %}
+            <div class="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg animate-pulse">
+                <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div class="ml-4 flex-1 space-y-2">
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                    <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Users table (hidden until loaded) -->
+        <div id="users-table-container" class="hidden overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customers</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Opportunities</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Activities</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="users-table-body">
+                    <!-- Populated via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Customer Assignments Section -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Customer Assignments</h2>
+            <div class="relative">
+                <input type="text" id="customer-search" placeholder="Search customers..."
+                       class="input-field pl-10 w-64">
+                <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Customers loading skeleton -->
+        <div id="customers-loading" class="space-y-3">
+            {% for _ in range(3) %}
+            <div class="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg animate-pulse">
+                <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div class="ml-4 flex-1 space-y-2">
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                    <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                </div>
+                <div class="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Customers table (hidden until loaded) -->
+        <div id="customers-table-container" class="hidden overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Industry</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Opportunities</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Activities</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned To</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="customers-table-body">
+                    <!-- Populated via JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Empty state -->
+        <div id="customers-empty" class="hidden text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No customers yet</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Customers will appear here once created.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div id="add-user-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideAddUserModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add New User</h3>
+                <button onclick="hideAddUserModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="add-user-form" onsubmit="submitAddUser(event)" data-ajax>
+                <div class="space-y-4">
+                    <div>
+                        <label for="new-user-name" class="label">Name</label>
+                        <input type="text" id="new-user-name" name="name" required class="input-field w-full" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label for="new-user-email" class="label">Email</label>
+                        <input type="email" id="new-user-email" name="email" required class="input-field w-full" placeholder="john@example.com">
+                    </div>
+                    <div>
+                        <label for="new-user-password" class="label">Password</label>
+                        <input type="password" id="new-user-password" name="password" required minlength="8" class="input-field w-full" placeholder="At least 8 characters">
+                    </div>
+                    <div>
+                        <label for="new-user-role" class="label">Role</label>
+                        <select id="new-user-role" name="role" class="input-field w-full">
+                            <option value="user">User</option>
+                            <option value="manager">Manager</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideAddUserModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary" id="add-user-submit">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div id="reset-password-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideResetPasswordModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Reset Password</h3>
+                <button onclick="hideResetPasswordModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="reset-password-form" onsubmit="submitResetPassword(event)" data-ajax>
+                <input type="hidden" id="reset-user-id" name="user_id">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                    Reset password for <span id="reset-user-name" class="font-medium text-gray-900 dark:text-white"></span>
+                </p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="new-password" class="label">New Password</label>
+                        <input type="password" id="new-password" name="new_password" required minlength="8" class="input-field w-full" placeholder="At least 8 characters">
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideResetPasswordModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ========================================
+    // Manager Dashboard Data Loading
+    // ========================================
+    let managerData = null;
+    let usersData = [];
+    let customersData = [];
+
+    async function loadManagerData() {
+        try {
+            const response = await fetch('/api/manager/dashboard');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to load manager dashboard');
+            }
+
+            managerData = data;
+            usersData = data.users || [];
+            customersData = data.customers || [];
+
+            renderManagerDashboard(data);
+        } catch (err) {
+            console.error('Error loading manager dashboard:', err);
+            showError(err.message);
+        }
+    }
+
+    function showError(message) {
+        const container = document.getElementById('error-container');
+        const messageEl = document.getElementById('error-message');
+        messageEl.textContent = message;
+        container.classList.remove('hidden');
+    }
+
+    function renderManagerDashboard(data) {
+        // Update stats
+        document.getElementById('stat-user-count').textContent = data.user_count;
+        document.getElementById('stat-customer-count').textContent = data.customer_count;
+        document.getElementById('stat-opportunity-count').textContent = data.opportunity_count;
+        document.getElementById('stat-activity-count').textContent = data.activity_count;
+
+        // Render users
+        renderUsers(data.users);
+
+        // Render customers
+        renderCustomers(data.customers);
+    }
+
+    function renderUsers(users) {
+        const loadingEl = document.getElementById('users-loading');
+        const tableContainer = document.getElementById('users-table-container');
+        const tbody = document.getElementById('users-table-body');
+
+        loadingEl.classList.add('hidden');
+
+        if (users.length === 0) {
+            tableContainer.classList.add('hidden');
+            return;
+        }
+
+        let html = '';
+        for (const user of users) {
+            const initial = (user.name || 'U')[0].toUpperCase();
+            const roleBadge = user.role === 'manager'
+                ? '<span class="badge-blue">Manager</span>'
+                : '<span class="badge-gray">User</span>';
+
+            html += `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                ${initial}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(user.name)}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(user.email)}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">${roleBadge}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${user.customer_count || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${user.opportunity_count || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${user.activity_count || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <button onclick="showResetPasswordModal('${user.id}', '${escapeHtml(user.name)}')"
+                                class="p-1.5 rounded-md bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors"
+                                title="Reset password">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        tbody.innerHTML = html;
+        tableContainer.classList.remove('hidden');
+    }
+
+    function renderCustomers(customers) {
+        const loadingEl = document.getElementById('customers-loading');
+        const tableContainer = document.getElementById('customers-table-container');
+        const emptyEl = document.getElementById('customers-empty');
+        const tbody = document.getElementById('customers-table-body');
+
+        loadingEl.classList.add('hidden');
+
+        if (customers.length === 0) {
+            emptyEl.classList.remove('hidden');
+            return;
+        }
+
+        let html = '';
+        for (const item of customers) {
+            const customer = item.customer;
+            const initial = (customer.company_name || 'U')[0].toUpperCase();
+            const industry = customer.industry || 'Unknown';
+
+            // Build user options for dropdown
+            let userOptions = '<option value="">Unassigned</option>';
+            for (const user of usersData) {
+                const selected = customer.assigned_user_id === user.id ? 'selected' : '';
+                userOptions += `<option value="${user.id}" ${selected}>${escapeHtml(user.name)}</option>`;
+            }
+
+            html += `
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors customer-row"
+                    data-name="${escapeHtml(customer.company_name.toLowerCase())}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                ${initial}
+                            </div>
+                            <div class="ml-4">
+                                <a href="/customer/${customer.assistant_id}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-bb-blue dark:hover:text-bb-blue transition-colors">
+                                    ${escapeHtml(customer.company_name)}
+                                </a>
+                                ${customer.domain ? `<div class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(customer.domain)}</div>` : ''}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="badge-gray">${escapeHtml(industry)}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${item.opportunity_count || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${item.activity_count || 0}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <select onchange="assignCustomer('${customer.assistant_id}', this.value)"
+                                class="input-field py-1 px-2 text-sm w-40">
+                            ${userOptions}
+                        </select>
+                    </td>
+                </tr>
+            `;
+        }
+
+        tbody.innerHTML = html;
+        tableContainer.classList.remove('hidden');
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Customer search
+    document.getElementById('customer-search').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.customer-row').forEach(row => {
+            const name = row.dataset.name || '';
+            row.style.display = name.includes(query) ? '' : 'none';
+        });
+    });
+
+    // ========================================
+    // Customer Assignment
+    // ========================================
+    async function assignCustomer(assistantId, userId) {
+        try {
+            const response = await fetch(`/api/customers/${assistantId}/assign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId || null })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to assign customer');
+            }
+
+            showToast('Customer assignment updated', 'success');
+            // Reload to update user stats
+            loadManagerData();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    // ========================================
+    // Add User Modal
+    // ========================================
+    function showAddUserModal() {
+        document.getElementById('add-user-modal').classList.remove('hidden');
+    }
+
+    function hideAddUserModal() {
+        document.getElementById('add-user-modal').classList.add('hidden');
+        document.getElementById('add-user-form').reset();
+    }
+
+    async function submitAddUser(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const payload = {
+            name: form.name.value.trim(),
+            email: form.email.value.trim(),
+            password: form.password.value,
+            role: form.role.value
+        };
+
+        try {
+            const response = await fetch('/api/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to create user');
+            }
+
+            hideAddUserModal();
+            showToast(`User ${payload.name} created successfully`, 'success');
+            loadManagerData();
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    // ========================================
+    // Reset Password Modal
+    // ========================================
+    function showResetPasswordModal(userId, userName) {
+        document.getElementById('reset-user-id').value = userId;
+        document.getElementById('reset-user-name').textContent = userName;
+        document.getElementById('reset-password-modal').classList.remove('hidden');
+    }
+
+    function hideResetPasswordModal() {
+        document.getElementById('reset-password-modal').classList.add('hidden');
+        document.getElementById('reset-password-form').reset();
+    }
+
+    async function submitResetPassword(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const userId = form.user_id.value;
+        const newPassword = form.new_password.value;
+
+        try {
+            const response = await fetch(`/api/users/${userId}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_password: newPassword })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to reset password');
+            }
+
+            hideResetPasswordModal();
+            showToast('Password reset successfully', 'success');
+        } catch (err) {
+            showToast(err.message, 'error');
+        }
+    }
+
+    // ========================================
+    // Keyboard shortcuts
+    // ========================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            hideAddUserModal();
+            hideResetPasswordModal();
+        }
+    });
+
+    // Start loading data
+    loadManagerData();
+</script>
+{% endblock %}

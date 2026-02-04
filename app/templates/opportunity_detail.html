@@ -1,0 +1,525 @@
+{% extends "base.html" %}
+
+{% block title %}{{ opportunity.name }} - {{ customer.company_name }} - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+
+    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span>Saved</span>
+    </div>
+    {% else %}
+    
+    <!-- Autosave Indicator -->
+    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span>Saved</span>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">{{ customer.company_name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}/opportunities" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Opportunities</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 dark:text-white font-medium truncate max-w-xs">{{ opportunity.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card mb-8">
+        <div class="flex items-start justify-between">
+            <div class="flex-1">
+                <div class="flex items-center gap-3">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white opp-display" data-edit-display="name">{{ opportunity.name }}</h1>
+                    <input type="text" class="text-3xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-blue-500 focus:outline-none opp-input hidden" 
+                           data-edit-input="name" value="{{ opportunity.name }}" style="width: auto; min-width: 200px;">
+                </div>
+                <p class="text-gray-500 dark:text-gray-400 mt-1">{{ customer.company_name }}</p>
+                <div class="flex items-center mt-4 space-x-3">
+                    <span id="stage-badge">
+                        {% if opportunity.stage == 'discovery' %}
+                        <span class="badge-blue text-base px-4 py-1">Discovery</span>
+                        {% elif opportunity.stage == 'qualification' %}
+                        <span class="badge-yellow text-base px-4 py-1">Qualified</span>
+                        {% elif opportunity.stage == 'proposal' %}
+                        <span class="badge-blue text-base px-4 py-1">Proposal</span>
+                        {% elif opportunity.stage == 'negotiation' %}
+                        <span class="badge-yellow text-base px-4 py-1">Negotiation</span>
+                        {% elif opportunity.stage == 'closed_won' %}
+                        <span class="badge-green text-base px-4 py-1">Sold</span>
+                        {% elif opportunity.stage == 'closed_lost' %}
+                        <span class="badge-red text-base px-4 py-1">Closed Lost</span>
+                        {% elif opportunity.stage == 'delivered' %}
+                        <span class="badge-purple text-base px-4 py-1">Delivered</span>
+                        {% elif opportunity.stage == 'blocked' %}
+                        <span class="badge-red text-base px-4 py-1">Blocked</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="flex items-start gap-4">
+                <div class="text-right">
+                    <div class="flex items-center gap-2">
+                        <span class="text-5xl font-bold text-gray-900 dark:text-white opp-display" data-edit-display="confidence">{{ opportunity.confidence }}</span>
+                        <input type="number" min="0" max="100" class="text-5xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-blue-500 focus:outline-none opp-input hidden w-24 text-right" 
+                               data-edit-input="confidence" value="{{ opportunity.confidence }}">
+                        <span class="text-5xl font-bold text-gray-900 dark:text-white">%</span>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400 mt-1">Win Probability</div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="edit-opp-toggle"
+                            class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                            title="Edit opportunity">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                    </button>
+                    <button id="delete-opp-btn"
+                            class="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                            title="Delete opportunity"
+                            data-assistant-id="{{ assistant_id }}"
+                            data-opportunity-id="{{ opportunity.id }}"
+                            data-opportunity-name="{{ opportunity.name }}">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- State Change Buttons -->
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <span class="text-sm font-medium text-gray-500 dark:text-gray-400">Change Status:</span>
+                <div class="flex gap-3 flex-wrap">
+                    <button 
+                        onclick="changeOpportunityState('qualification')"
+                        class="state-btn state-btn-qualified {{ 'active' if opportunity.stage == 'qualification' else '' }}"
+                        data-state="qualification">
+                        Qualified
+                    </button>
+                    <button 
+                        onclick="changeOpportunityState('closed_won')"
+                        class="state-btn state-btn-sold {{ 'active' if opportunity.stage == 'closed_won' else '' }}"
+                        data-state="closed_won">
+                        Sold
+                    </button>
+                    <button 
+                        onclick="changeOpportunityState('delivered')"
+                        class="state-btn state-btn-delivered {{ 'active' if opportunity.stage == 'delivered' else '' }}"
+                        data-state="delivered">
+                        Delivered
+                    </button>
+                    <button 
+                        onclick="changeOpportunityState('blocked')"
+                        class="state-btn state-btn-blocked {{ 'active' if opportunity.stage == 'blocked' else '' }}"
+                        data-state="blocked">
+                        Blocked
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Deal Info -->
+        <div class="card">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Deal Information</h2>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Value</dt>
+                    <dd class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span class="opp-display" data-edit-display="value">
+                            {% if opportunity.value %}
+                            ${{ "{:,.0f}".format(opportunity.value) }} {{ opportunity.currency or 'USD' }}
+                            {% else %}
+                            <span class="text-gray-400 text-base font-normal">Not specified</span>
+                            {% endif %}
+                        </span>
+                        <div class="opp-input hidden flex items-center gap-1" data-edit-input="value">
+                            <span class="text-gray-500">$</span>
+                            <input type="number" step="0.01" min="0" class="input-field w-40" 
+                                   value="{{ opportunity.value or '' }}" placeholder="10000">
+                        </div>
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Expected Close Date</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">
+                        <span class="opp-display" data-edit-display="close_date_estimate">{{ opportunity.close_date_estimate or 'Not set' }}</span>
+                        <input type="date" class="input-field opp-input hidden" data-edit-input="close_date_estimate"
+                               value="{{ opportunity.close_date_estimate or '' }}">
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">{{ opportunity.created_at[:10] if opportunity.created_at else 'Unknown' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">{{ opportunity.updated_at[:10] if opportunity.updated_at else 'Unknown' }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Competitors -->
+        <div class="card">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Competition</h2>
+            <div class="opp-display" data-edit-display="competitors">
+                {% if opportunity.competitors %}
+                <div class="space-y-2">
+                    {% for comp in opportunity.competitors %}
+                    <div class="flex items-center p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        <span class="text-red-700 dark:text-red-300 font-medium">{{ comp }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 dark:text-gray-400 text-center py-8">No competitors identified yet</p>
+                {% endif %}
+            </div>
+            <div class="opp-input hidden" data-edit-input="competitors">
+                <textarea class="input-field w-full h-32" placeholder="Enter competitors, one per line">{% for comp in opportunity.competitors %}{{ comp }}{% if not loop.last %}
+{% endif %}{% endfor %}</textarea>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">One competitor per line</p>
+            </div>
+        </div>
+    </div>
+
+    {% if opportunity.loss_reason %}
+    <div class="card mt-6 border-red-200 dark:border-red-800">
+        <h2 class="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Loss Reason</h2>
+        <p class="text-gray-700 dark:text-gray-300">{{ opportunity.loss_reason }}</p>
+    </div>
+    {% endif %}
+    
+    {% endif %}
+</div>
+
+<!-- Coffee Animation Overlay (hidden by default) -->
+<div id="coffeeOverlay" class="coffee-overlay hidden">
+    <div class="coffee-cup">
+        <div class="steam-container">
+            <div class="steam"></div>
+            <div class="steam"></div>
+            <div class="steam"></div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Coffee cup body -->
+            <path d="M3 8h15v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" fill="#8B4513" stroke="#5D2E0C" stroke-width="1"/>
+            <!-- Coffee liquid -->
+            <path d="M4 9h13v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V9z" fill="#3E1C00"/>
+            <!-- Cup handle -->
+            <path d="M18 9h1a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3h-1" stroke="#8B4513" stroke-width="2" fill="none"/>
+            <!-- Highlight -->
+            <path d="M5 10h2v5H5z" fill="#A0522D" opacity="0.5"/>
+        </svg>
+    </div>
+    <div class="coffee-text">Coffee is for Closers!</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const assistantId = '{{ assistant_id }}';
+    const opportunityId = '{{ opportunity.id }}';
+    const editToggle = document.getElementById('edit-opp-toggle');
+    const deleteBtn = document.getElementById('delete-opp-btn');
+    const autosaveIndicator = document.getElementById('autosave-indicator');
+    const displayEls = document.querySelectorAll('[data-edit-display]');
+    const inputEls = document.querySelectorAll('[data-edit-input]');
+    const stateButtons = document.querySelectorAll('.state-btn');
+
+    let editMode = false;
+    let pendingUpdates = {};
+    let saveTimer = null;
+    let isSaving = false;
+    let currentStage = '{{ opportunity.stage }}';
+
+    // Stage display names and badge classes
+    const stageDisplayNames = {
+        'qualification': 'Qualified',
+        'closed_won': 'Sold',
+        'delivered': 'Delivered',
+        'blocked': 'Blocked',
+        'discovery': 'Discovery',
+        'proposal': 'Proposal',
+        'negotiation': 'Negotiation',
+        'closed_lost': 'Closed Lost'
+    };
+
+    const stageBadgeClasses = {
+        'qualification': 'badge-yellow',
+        'closed_won': 'badge-green',
+        'delivered': 'badge-purple',
+        'blocked': 'badge-red',
+        'discovery': 'badge-blue',
+        'proposal': 'badge-blue',
+        'negotiation': 'badge-yellow',
+        'closed_lost': 'badge-red'
+    };
+
+    // Delete handler
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const oppName = this.dataset.opportunityName || 'this opportunity';
+            
+            const confirmed = await showConfirm('Delete Opportunity', `Delete "${oppName}"? This cannot be undone.`);
+            if (!confirmed) {
+                return;
+            }
+            
+            fetch(`/api/customers/${assistantId}/opportunities/${opportunityId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Opportunity deleted', 'success');
+                    window.location.href = `/customer/${assistantId}/opportunities`;
+                } else {
+                    return response.json().then(data => {
+                        showToast(data.error || 'Failed to delete', 'error');
+                    });
+                }
+            })
+            .catch(err => {
+                showToast('Error deleting opportunity', 'error');
+            });
+        });
+    }
+
+    // Edit mode toggle
+    function toggleEditMode(forceValue) {
+        editMode = typeof forceValue === 'boolean' ? forceValue : !editMode;
+        displayEls.forEach(el => el.classList.toggle('hidden', editMode));
+        inputEls.forEach(el => el.classList.toggle('hidden', !editMode));
+        
+        if (editMode) {
+            const firstInput = document.querySelector('.opp-input:not(.hidden) input, .opp-input:not(.hidden) textarea');
+            if (firstInput) firstInput.focus();
+        }
+    }
+
+    function showSavedIndicator() {
+        if (!autosaveIndicator) return;
+        autosaveIndicator.classList.remove('hidden');
+        autosaveIndicator.classList.add('flex');
+        autosaveIndicator.style.display = 'flex';
+        autosaveIndicator.style.opacity = '1';
+        setTimeout(() => {
+            autosaveIndicator.classList.add('hidden');
+            autosaveIndicator.classList.remove('flex');
+            autosaveIndicator.style.display = 'none';
+        }, 2000);
+    }
+
+    function formatCurrency(value) {
+        if (value) {
+            return '$' + Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 }) + ' USD';
+        }
+        return '<span class="text-gray-400 text-base font-normal">Not specified</span>';
+    }
+
+    function updateDisplays(payload) {
+        Object.entries(payload).forEach(([field, value]) => {
+            const display = document.querySelector(`[data-edit-display="${field}"]`);
+            if (!display) return;
+            
+            if (field === 'name') {
+                display.textContent = value || 'Unnamed Opportunity';
+            } else if (field === 'value') {
+                display.innerHTML = formatCurrency(value);
+            } else if (field === 'close_date_estimate') {
+                display.textContent = value || 'Not set';
+            } else if (field === 'confidence') {
+                display.textContent = value;
+            } else if (field === 'competitors') {
+                if (value && value.length > 0) {
+                    let html = '<div class="space-y-2">';
+                    value.forEach(comp => {
+                        html += `<div class="flex items-center p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                            <svg class="w-5 h-5 text-red-600 dark:text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span class="text-red-700 dark:text-red-300 font-medium">${comp}</span>
+                        </div>`;
+                    });
+                    html += '</div>';
+                    display.innerHTML = html;
+                } else {
+                    display.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">No competitors identified yet</p>';
+                }
+            }
+        });
+    }
+
+    async function saveChanges() {
+        if (isSaving || Object.keys(pendingUpdates).length === 0) return;
+        const payload = { ...pendingUpdates };
+        pendingUpdates = {};
+        isSaving = true;
+        
+        try {
+            const response = await fetch(`/api/customers/${assistantId}/opportunities/${opportunityId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                updateDisplays(payload);
+                showSavedIndicator();
+            }
+        } catch (err) {
+            showToast('Error saving opportunity', 'error');
+        } finally {
+            isSaving = false;
+            if (Object.keys(pendingUpdates).length > 0) {
+                scheduleSave();
+            }
+        }
+    }
+
+    function scheduleSave() {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveChanges, 600);
+    }
+
+    function queueUpdate(field, value) {
+        pendingUpdates[field] = value;
+        scheduleSave();
+    }
+
+    // Edit toggle button
+    if (editToggle) {
+        editToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleEditMode();
+        });
+    }
+
+    // Text/number inputs
+    document.querySelectorAll('.opp-input input[type="text"], .opp-input input[type="number"], .opp-input input[type="date"]').forEach(input => {
+        input.addEventListener('input', function() {
+            const field = this.closest('[data-edit-input]').dataset.editInput;
+            let value = this.value.trim();
+            
+            if (this.type === 'number') {
+                value = value ? parseFloat(value) : null;
+            } else {
+                value = value || null;
+            }
+            
+            queueUpdate(field, value);
+        });
+    });
+
+    // Competitors textarea
+    document.querySelectorAll('.opp-input textarea').forEach(textarea => {
+        textarea.addEventListener('input', function() {
+            const field = this.closest('[data-edit-input]').dataset.editInput;
+            const lines = this.value.split('\n').map(l => l.trim()).filter(l => l);
+            queueUpdate(field, lines.length > 0 ? lines : []);
+        });
+    });
+
+    // State change function (global for onclick handlers)
+    window.changeOpportunityState = async function(newState) {
+        if (newState === currentStage) return;
+        
+        stateButtons.forEach(btn => btn.disabled = true);
+        
+        try {
+            const response = await fetch(`/api/customers/${assistantId}/opportunities/${opportunityId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ stage: newState })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update opportunity');
+            }
+            
+            currentStage = newState;
+            
+            // Update button states
+            stateButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.state === newState) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Update badge
+            const badgeContainer = document.getElementById('stage-badge');
+            if (badgeContainer) {
+                const badgeClass = stageBadgeClasses[newState] || 'badge-gray';
+                const displayName = stageDisplayNames[newState] || newState;
+                badgeContainer.innerHTML = `<span class="${badgeClass} text-base px-4 py-1">${displayName}</span>`;
+            }
+            
+            showSavedIndicator();
+            
+            // Trigger coffee animation if sold
+            if (newState === 'closed_won') {
+                showCoffeeAnimation();
+            }
+            
+        } catch (error) {
+            console.error('Error updating opportunity:', error);
+            showToast('Failed to update opportunity status. Please try again.', 'error');
+        } finally {
+            stateButtons.forEach(btn => btn.disabled = false);
+        }
+    };
+
+    function showCoffeeAnimation() {
+        const overlay = document.getElementById('coffeeOverlay');
+        if (!overlay) return;
+        overlay.classList.remove('hidden', 'fade-out');
+        
+        setTimeout(() => {
+            overlay.classList.add('fade-out');
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                overlay.classList.remove('fade-out');
+            }, 500);
+        }, 3000);
+    }
+
+    // Click overlay to dismiss
+    document.getElementById('coffeeOverlay')?.addEventListener('click', function() {
+        this.classList.add('fade-out');
+        setTimeout(() => {
+            this.classList.add('hidden');
+            this.classList.remove('fade-out');
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

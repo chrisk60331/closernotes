@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}Action Item - {{ customer.company_name }} - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+    {% else %}
+    
+    <!-- Autosave Indicator -->
+    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span>Saved</span>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">{{ customer.company_name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}/action-items" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Action Items</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 dark:text-white font-medium">Detail</li>
+        </ol>
+    </nav>
+
+    <!-- Header Card -->
+    <div class="card mb-8" data-action-item-id="{{ action_item.id }}">
+        <div class="flex items-start justify-between">
+            <div class="flex items-start flex-1">
+                <div class="flex-shrink-0 mr-4">
+                    <input type="checkbox" 
+                           id="main-checkbox"
+                           class="action-item-checkbox w-6 h-6 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-800"
+                           data-assistant-id="{{ assistant_id }}"
+                           data-item-id="{{ action_item.id }}"
+                           {% if action_item.is_completed %}checked{% endif %}>
+                </div>
+                <div class="flex-1">
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white {% if action_item.is_completed %}line-through text-gray-500 dark:text-gray-400{% endif %} ai-display" id="description-text" data-edit-display="description">
+                        {{ action_item.description }}
+                    </h1>
+                    <textarea id="edit-description" 
+                              class="ai-input hidden w-full text-2xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-blue-500 focus:outline-none resize-none"
+                              data-edit-input="description"
+                              rows="2">{{ action_item.description }}</textarea>
+                    <div class="flex items-center mt-4 space-x-4 text-sm">
+                        {% if action_item.is_completed %}
+                        <span id="status-badge" class="badge-green">Completed</span>
+                        {% else %}
+                        <span id="status-badge" class="badge-yellow">Pending</span>
+                        {% endif %}
+                        <span class="text-gray-500 dark:text-gray-400">Created {{ action_item.created_at[:10] if action_item.created_at else '' }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 ml-4">
+                <button id="edit-toggle"
+                        class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                        title="Edit action item">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-4">
+            <button id="toggle-btn" class="btn-primary">
+                {% if action_item.is_completed %}Mark Pending{% else %}Mark Complete{% endif %}
+            </button>
+            <button id="dismiss-btn" class="px-4 py-2 rounded-lg text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2">
+                <span>Dismiss</span>
+                <svg id="dismiss-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Details -->
+        <div class="card">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Details</h2>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Owner</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white ai-display" data-edit-display="owner">{{ action_item.owner or 'Not assigned' }}</dd>
+                    <input type="text" id="edit-owner" 
+                           class="ai-input hidden mt-1 input-field"
+                           data-edit-input="owner"
+                           placeholder="Who is responsible?"
+                           value="{{ action_item.owner or '' }}">
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Due Date</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white ai-display" data-edit-display="due_date">{{ action_item.due_date or 'Not set' }}</dd>
+                    <input type="date" id="edit-due-date" 
+                           class="ai-input hidden mt-1 input-field"
+                           data-edit-input="due_date"
+                           value="{{ action_item.due_date or '' }}">
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">{{ action_item.created_at[:10] if action_item.created_at else 'Unknown' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white" id="updated-at">{{ action_item.updated_at[:10] if action_item.updated_at else 'Unknown' }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Source Activity -->
+        <div class="card">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Source Activity</h2>
+            {% if activity %}
+            <div class="space-y-3">
+                <div class="flex items-center space-x-3">
+                    <span class="badge-blue capitalize">{{ activity.activity_type }}</span>
+                    <span class="text-gray-500 dark:text-gray-400 text-sm">{{ activity.date[:10] if activity.date else '' }}</span>
+                </div>
+                <p class="text-gray-700 dark:text-gray-300">{{ activity.summary[:150] }}{% if activity.summary|length > 150 %}...{% endif %}</p>
+                <a href="/customer/{{ assistant_id }}/activity/{{ activity.id }}" class="text-blue-600 dark:text-blue-400 hover:underline text-sm">
+                    View full activity
+                </a>
+            </div>
+            {% else %}
+            <p class="text-gray-500 dark:text-gray-400">Source activity not found</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lineage / Source Excerpt -->
+    {% if action_item.source_excerpt %}
+    <div class="card mt-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            <span class="flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Lineage - Source Transcript
+            </span>
+        </h2>
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border-l-4 border-blue-500">
+            <p class="text-gray-700 dark:text-gray-300 italic leading-relaxed">
+                "{{ action_item.source_excerpt }}"
+            </p>
+        </div>
+        <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            This action item was extracted from the meeting transcript above. The excerpt shows the part of the conversation that led to this task being identified.
+        </p>
+        {% if action_item.thread_id %}
+        <a href="/meeting/{{ action_item.thread_id }}" class="mt-4 inline-flex items-center text-blue-600 dark:text-blue-400 hover:underline text-sm">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+            </svg>
+            View full meeting thread
+        </a>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="card mt-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Lineage</h2>
+        <p class="text-gray-500 dark:text-gray-400 text-center py-4">
+            No source excerpt available for this action item.
+        </p>
+    </div>
+    {% endif %}
+    
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const assistantId = '{{ assistant_id }}';
+    const itemId = '{{ action_item.id }}';
+    
+    // Edit mode elements
+    const editToggle = document.getElementById('edit-toggle');
+    const autosaveIndicator = document.getElementById('autosave-indicator');
+    const displayEls = document.querySelectorAll('[data-edit-display]');
+    const inputEls = document.querySelectorAll('[data-edit-input]');
+    
+    let editMode = false;
+    let pendingUpdates = {};
+    let saveTimer = null;
+    let isSaving = false;
+    
+    // Check if we should start in edit mode from URL param
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('edit') === 'true') {
+        // Remove the query param from URL without reload
+        const url = new URL(window.location);
+        url.searchParams.delete('edit');
+        window.history.replaceState({}, '', url);
+        // Start in edit mode
+        toggleEditMode(true);
+        setTimeout(() => document.getElementById('edit-description').focus(), 100);
+    }
+    
+    function toggleEditMode(forceValue) {
+        editMode = typeof forceValue === 'boolean' ? forceValue : !editMode;
+        displayEls.forEach(el => el.classList.toggle('hidden', editMode));
+        inputEls.forEach(el => el.classList.toggle('hidden', !editMode));
+        
+        if (editMode) {
+            editToggle.classList.add('bg-blue-200', 'dark:bg-blue-900/50');
+        } else {
+            editToggle.classList.remove('bg-blue-200', 'dark:bg-blue-900/50');
+        }
+    }
+    
+    function scheduleSave(field, value) {
+        pendingUpdates[field] = value;
+        
+        if (saveTimer) {
+            clearTimeout(saveTimer);
+        }
+        
+        saveTimer = setTimeout(() => {
+            if (Object.keys(pendingUpdates).length > 0 && !isSaving) {
+                saveChanges();
+            }
+        }, 800);
+    }
+    
+    async function saveChanges() {
+        if (isSaving || Object.keys(pendingUpdates).length === 0) return;
+        
+        isSaving = true;
+        const updates = { ...pendingUpdates };
+        pendingUpdates = {};
+        
+        try {
+            const response = await fetch(`/api/action-items/${assistantId}/${itemId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updates)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Update display values
+                if (updates.description) {
+                    document.getElementById('description-text').textContent = updates.description;
+                }
+                if (updates.owner !== undefined) {
+                    document.querySelector('[data-edit-display="owner"]').textContent = updates.owner || 'Not assigned';
+                }
+                if (updates.due_date !== undefined) {
+                    document.querySelector('[data-edit-display="due_date"]').textContent = updates.due_date || 'Not set';
+                }
+                
+                // Update last updated timestamp
+                const now = new Date().toISOString().slice(0, 10);
+                document.getElementById('updated-at').textContent = now;
+                
+                // Show saved indicator
+                autosaveIndicator.classList.remove('hidden');
+                autosaveIndicator.classList.add('flex');
+                setTimeout(() => {
+                    autosaveIndicator.classList.add('hidden');
+                    autosaveIndicator.classList.remove('flex');
+                }, 2000);
+            } else {
+                showToast(data.error || 'Failed to save', 'error');
+            }
+        } catch (err) {
+            showToast('Error saving changes', 'error');
+        } finally {
+            isSaving = false;
+            
+            // If more updates came in while saving, save again
+            if (Object.keys(pendingUpdates).length > 0) {
+                saveChanges();
+            }
+        }
+    }
+    
+    // Edit toggle button
+    editToggle.addEventListener('click', function(e) {
+        e.preventDefault();
+        toggleEditMode();
+    });
+    
+    // Input change handlers
+    document.getElementById('edit-description').addEventListener('input', function() {
+        scheduleSave('description', this.value);
+    });
+    
+    document.getElementById('edit-owner').addEventListener('input', function() {
+        scheduleSave('owner', this.value || null);
+    });
+    
+    document.getElementById('edit-due-date').addEventListener('change', function() {
+        scheduleSave('due_date', this.value || null);
+    });
+    
+    // Handle checkbox toggle
+    const checkbox = document.getElementById('main-checkbox');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const descriptionText = document.getElementById('description-text');
+    const statusBadge = document.getElementById('status-badge');
+    
+    function toggleComplete() {
+        fetch(`/api/action-items/${assistantId}/${itemId}/toggle`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                // Update UI
+                checkbox.checked = data.is_completed;
+                if (data.is_completed) {
+                    descriptionText.classList.add('line-through', 'text-gray-500', 'dark:text-gray-400');
+                    toggleBtn.textContent = 'Mark Pending';
+                    statusBadge.className = 'badge-green';
+                    statusBadge.textContent = 'Completed';
+                } else {
+                    descriptionText.classList.remove('line-through', 'text-gray-500', 'dark:text-gray-400');
+                    toggleBtn.textContent = 'Mark Complete';
+                    statusBadge.className = 'badge-yellow';
+                    statusBadge.textContent = 'Pending';
+                }
+            }
+        })
+        .catch(err => {
+            showToast('Error toggling action item', 'error');
+        });
+    }
+    
+    checkbox.addEventListener('change', function(e) {
+        e.stopPropagation();
+        toggleComplete();
+    });
+    
+    toggleBtn.addEventListener('click', function() {
+        toggleComplete();
+    });
+
+    // Handle dismiss button
+    const dismissBtn = document.getElementById('dismiss-btn');
+    const dismissSpinner = document.getElementById('dismiss-spinner');
+    
+    dismissBtn.addEventListener('click', async function() {
+        const confirmed = await showConfirm('Dismiss Action Item', 'Dismiss this action item? It will be hidden from lists.');
+        if (!confirmed) return;
+        
+        // Show spinner
+        dismissSpinner.classList.remove('hidden');
+        dismissBtn.disabled = true;
+        
+        fetch(`/api/action-items/${assistantId}/${itemId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'error');
+                dismissSpinner.classList.add('hidden');
+                dismissBtn.disabled = false;
+            } else {
+                showToast('Action item dismissed', 'success');
+                // Redirect back to list
+                window.location.href = `/customer/${assistantId}/action-items`;
+            }
+        })
+        .catch(err => {
+            showToast('Error dismissing action item', 'error');
+            dismissSpinner.classList.add('hidden');
+            dismissBtn.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}

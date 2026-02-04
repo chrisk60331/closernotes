@@ -1,0 +1,1405 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-400">Manage your customer relationships and meeting notes</p>
+    </div>
+
+    <!-- Primary CTA -->
+    <div class="mb-8">
+        <button onclick="showRecordModal()" class="btn-primary w-full inline-flex items-center justify-center py-3 text-base">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+            </svg>
+            Make Notes
+        </button>
+    </div>
+
+    <!-- Error container (hidden by default) -->
+    <div id="error-container" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hidden">
+        <p id="error-message" class="text-red-800 dark:text-red-200"></p>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="card">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
+                    <p id="stat-customer-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Opportunities</p>
+                    <p id="stat-opportunity-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Activities</p>
+                    <p id="stat-activity-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
+        <div class="flex flex-wrap gap-4">
+            <button onclick="showIngestModal()" class="btn-secondary inline-flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Paste Transcript
+            </button>
+            <button onclick="generateFollowups()" class="btn-secondary inline-flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                Generate Follow-ups
+            </button>
+        </div>
+    </div>
+
+    <!-- Today's Follow-ups (container - populated via JS) -->
+    <div id="followups-container" class="hidden"></div>
+
+    <!-- Customer List -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Customers</h2>
+            <div class="relative">
+                <input type="text" id="customer-search" placeholder="Search customers..." 
+                       class="input-field pl-10 w-64">
+                <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div id="customers-loading" class="space-y-4">
+            <div class="flex items-center justify-center py-8">
+                <svg class="w-8 h-8 text-bb-blue animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="ml-3 text-gray-500 dark:text-gray-400">Loading customers...</span>
+            </div>
+            <!-- Skeleton rows -->
+            <div class="space-y-3">
+                {% for _ in range(3) %}
+                <div class="flex items-center p-4 border border-gray-200 dark:border-gray-700 rounded-lg animate-pulse">
+                    <div class="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    <div class="ml-4 flex-1 space-y-2">
+                        <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                        <div class="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                    </div>
+                    <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Customer table (hidden until loaded) -->
+        <div id="customers-table-container" class="hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Company</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Industry</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Opportunities</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Activities</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Activity</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="customer-table-body">
+                        <!-- Populated via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty state (hidden until loaded) -->
+        <div id="customers-empty" class="hidden text-center py-12">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No customers yet</h3>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by ingesting your first transcript.</p>
+            <div class="mt-6">
+                <button onclick="showIngestModal()" class="btn-primary">
+                    Ingest Transcript
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record Modal -->
+<div id="record-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideRecordModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Make Notes</h3>
+                <button onclick="hideRecordModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Recording UI -->
+            <div class="space-y-6">
+                <!-- Device Selection -->
+                <div>
+                    <label for="mic-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Microphone
+                    </label>
+                    <select id="mic-select" class="input-field w-full" onchange="updateSelectedDevice()">
+                        <option value="">Loading devices...</option>
+                    </select>
+                </div>
+                
+                <!-- Waveform Display -->
+                <div class="bg-gray-900 rounded-lg p-2">
+                    <canvas id="waveform-canvas" width="400" height="80" class="w-full"></canvas>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>Input Level:</span>
+                        <span id="level-indicator" class="font-mono">-- dB</span>
+                    </div>
+                </div>
+                
+                <!-- Status indicator -->
+                <div id="record-status" class="text-center">
+                    <div id="status-idle" class="space-y-2">
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Select your microphone and click to start recording</p>
+                        <p class="text-xs text-gray-400 dark:text-gray-500">You should see the waveform move when you speak</p>
+                    </div>
+                    
+                    <div id="status-recording" class="space-y-2 hidden">
+                        <div class="flex items-center justify-center gap-2">
+                            <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                            <p class="text-sm font-medium text-red-600 dark:text-red-400">
+                                Recording... <span id="record-time">00:00</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div id="status-transcribing" class="space-y-4 hidden">
+                        <div class="flex items-center justify-center gap-3">
+                            <svg class="w-5 h-5 text-blue-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-sm font-medium text-blue-600 dark:text-blue-400">Transcribing audio...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Controls -->
+                <div class="flex justify-center gap-4">
+                    <button id="record-btn" onclick="toggleRecording()" class="btn-primary px-8 py-3 text-lg">
+                        <span id="record-btn-text">Start Recording</span>
+                    </button>
+                </div>
+                
+                <!-- Or upload -->
+                <div class="relative">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                    </div>
+                    <div class="relative flex justify-center text-sm">
+                        <span class="px-2 bg-bb-cloud dark:bg-bb-phantom text-gray-500 dark:text-gray-400">or upload audio file</span>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center">
+                    <label class="btn-secondary cursor-pointer inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        </svg>
+                        Upload Audio
+                        <input type="file" id="audio-upload" accept="audio/*,.webm,.mp3,.wav,.m4a,.ogg" class="hidden" onchange="handleAudioUpload(event)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ingest Modal -->
+<div id="ingest-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideIngestModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-2xl w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Ingest Transcript</h3>
+                <button onclick="hideIngestModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="ingest-form" onsubmit="submitIngest(event)" data-ajax>
+                <div class="space-y-4">
+                    <div>
+                        <label for="transcript" class="label">Transcript</label>
+                        <textarea id="transcript" name="transcript" rows="8" required
+                                  class="input-field" placeholder="Paste your meeting transcript here..."></textarea>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="company_hint" class="label">Company Name (optional)</label>
+                            <input type="text" id="company_hint" name="company_hint" class="input-field" 
+                                   placeholder="Acme Corp">
+                        </div>
+                        <div>
+                            <label for="call_type" class="label">Call Type</label>
+                            <select id="call_type" name="call_type" class="input-field">
+                                <option value="meeting">Meeting</option>
+                                <option value="call">Call</option>
+                                <option value="demo">Demo</option>
+                                <option value="discovery">Discovery</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="contact_hints" class="label">Participants (comma separated)</label>
+                        <input type="text" id="contact_hints" name="contact_hints" class="input-field"
+                               placeholder="John Smith, Jane Doe">
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideIngestModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary" id="ingest-submit">
+                        <span id="ingest-submit-text">Process Transcript</span>
+                        <svg id="ingest-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="success-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-md w-full p-6 transform transition-all">
+            <!-- Success Icon -->
+            <div class="flex justify-center mb-4">
+                <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+            </div>
+            
+            <!-- Title -->
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white text-center mb-2">
+                Transcript Processed!
+            </h3>
+            
+            <!-- Customer Info -->
+            <div class="text-center mb-6">
+                <p class="text-gray-600 dark:text-gray-300">
+                    <span id="success-new-badge" class="hidden inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 mr-2">
+                        New
+                    </span>
+                    <span id="success-customer-name" class="font-medium"></span>
+                </p>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Meeting ID: <span id="success-meeting-id" class="font-mono"></span>
+                </p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button onclick="navigateToCustomerList()" 
+                        class="flex-1 btn-secondary py-3 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    View Customer List
+                </button>
+                <button onclick="navigateToCustomer()" 
+                        class="flex-1 btn-primary py-3 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                    <span id="success-view-btn-text">View Customer</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // ========================================
+    // Dashboard Data Loading
+    // ========================================
+    let dashboardData = null;
+
+    // Fetch dashboard data on page load
+    async function loadDashboardData() {
+        try {
+            const response = await fetch('/api/dashboard');
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to load dashboard');
+            }
+            
+            dashboardData = data;
+            renderDashboard(data);
+        } catch (err) {
+            console.error('Error loading dashboard:', err);
+            showError(err.message);
+            // Hide loading, show empty state
+            document.getElementById('customers-loading').classList.add('hidden');
+            document.getElementById('customers-empty').classList.remove('hidden');
+        }
+    }
+
+    function showError(message) {
+        const container = document.getElementById('error-container');
+        const messageEl = document.getElementById('error-message');
+        messageEl.textContent = message;
+        container.classList.remove('hidden');
+    }
+
+    function renderDashboard(data) {
+        // Update stats
+        document.getElementById('stat-customer-count').textContent = data.customer_count;
+        
+        const opportunityCount = data.customers.filter(c => c.opportunity_count > 0).length;
+        document.getElementById('stat-opportunity-count').textContent = opportunityCount;
+        
+        const activityCount = data.customers.reduce((sum, c) => sum + c.activity_count, 0);
+        document.getElementById('stat-activity-count').textContent = activityCount;
+
+        // Render follow-ups if any
+        if (data.todays_followups && data.todays_followups.length > 0) {
+            renderFollowups(data.todays_followups);
+        }
+
+        // Render customers
+        renderCustomers(data.customers);
+    }
+
+    function renderFollowups(followups) {
+        const container = document.getElementById('followups-container');
+        
+        let html = `
+            <div class="card mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Today's Follow-ups
+                    </h2>
+                    <span class="badge-yellow">${followups.length} pending</span>
+                </div>
+                <div class="space-y-3">
+        `;
+        
+        for (const item of followups) {
+            const initial = (item.customer.company_name || 'U')[0].toUpperCase();
+            const contactText = item.contact_count === 1 ? '1 contact' : `${item.contact_count} contacts`;
+            
+            let statusBadge;
+            if (item.is_overdue) {
+                statusBadge = `
+                    <span class="badge-red text-xs">Overdue</span>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Due: ${item.followup_date}</p>
+                `;
+            } else {
+                statusBadge = `<span class="badge-yellow text-xs">Due Today</span>`;
+            }
+            
+            html += `
+                <a href="/customer/${item.customer.assistant_id}" 
+                   class="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-bb-blue dark:hover:border-bb-blue hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                            ${initial}
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(item.customer.company_name)}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">${contactText}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        ${statusBadge}
+                    </div>
+                </a>
+            `;
+        }
+        
+        html += '</div></div>';
+        container.innerHTML = html;
+        container.classList.remove('hidden');
+    }
+
+    function renderCustomers(customers) {
+        const loadingEl = document.getElementById('customers-loading');
+        const tableContainer = document.getElementById('customers-table-container');
+        const emptyEl = document.getElementById('customers-empty');
+        const tbody = document.getElementById('customer-table-body');
+        
+        // Hide loading
+        loadingEl.classList.add('hidden');
+        
+        if (customers.length === 0) {
+            emptyEl.classList.remove('hidden');
+            return;
+        }
+        
+        // Build table rows
+        let html = '';
+        for (const item of customers) {
+            const customer = item.customer;
+            const initial = (customer.company_name || 'U')[0].toUpperCase();
+            const domain = customer.domain ? `<div class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(customer.domain)}</div>` : '';
+            const industry = customer.industry || 'Unknown';
+            const lastActivity = item.last_activity ? item.last_activity.substring(0, 10) : 'No activity';
+            
+            html += `
+                <tr class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors customer-row cursor-pointer"
+                    data-href="/customer/${customer.assistant_id}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                                ${initial}
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white customer-name">
+                                    ${escapeHtml(customer.company_name)}
+                                </div>
+                                ${domain}
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="badge-gray">${escapeHtml(industry)}</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        ${item.opportunity_count}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        ${item.activity_count}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        ${lastActivity}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="/customer/${customer.assistant_id}?edit=true" 
+                               class="edit-customer-btn p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                               title="Edit customer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                            <button class="delete-customer-btn p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                    title="Delete customer"
+                                    data-assistant-id="${customer.assistant_id}"
+                                    data-company-name="${escapeHtml(customer.company_name)}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+        
+        tbody.innerHTML = html;
+        tableContainer.classList.remove('hidden');
+        
+        // Attach event listeners to new rows
+        attachCustomerRowListeners();
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function attachCustomerRowListeners() {
+        // Customer row click navigation
+        document.querySelectorAll('.customer-row').forEach(function(row) {
+            row.addEventListener('click', function(e) {
+                // Don't navigate if clicking on action buttons
+                if (e.target.closest('.edit-customer-btn') || e.target.closest('.delete-customer-btn')) {
+                    return;
+                }
+                const href = this.dataset.href;
+                if (href) {
+                    // Show loading overlay (defined in base.html)
+                    if (typeof showLoading === 'function') {
+                        showLoading();
+                    }
+                    window.location.href = href;
+                }
+            });
+        });
+
+        // Customer delete
+        document.querySelectorAll('.delete-customer-btn').forEach(function(btn) {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const assistantId = this.dataset.assistantId;
+                const companyName = this.dataset.companyName || 'this customer';
+
+                const confirmed = await showConfirm('Delete Customer', `Delete ${companyName}? This cannot be undone.`);
+                if (!confirmed) {
+                    return;
+                }
+
+                // Show loading spinner and hide table
+                document.getElementById('customers-table-container').classList.add('hidden');
+                document.getElementById('customers-loading').classList.remove('hidden');
+
+                fetch(`/api/customers/${assistantId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        showToast(data.error, 'error');
+                        // Hide loading, show table again
+                        document.getElementById('customers-loading').classList.add('hidden');
+                        document.getElementById('customers-table-container').classList.remove('hidden');
+                    } else {
+                        showToast('Customer deleted successfully', 'success');
+                        // Reload dashboard data to refresh everything
+                        loadDashboardData();
+                    }
+                })
+                .catch(() => {
+                    showToast('Error deleting customer', 'error');
+                    // Hide loading, show table again
+                    document.getElementById('customers-loading').classList.add('hidden');
+                    document.getElementById('customers-table-container').classList.remove('hidden');
+                });
+            });
+        });
+    }
+
+    // Customer search
+    document.getElementById('customer-search').addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.customer-row').forEach(row => {
+            const nameEl = row.querySelector('.customer-name');
+            if (nameEl) {
+                const name = nameEl.textContent.toLowerCase();
+                row.style.display = name.includes(query) ? '' : 'none';
+            }
+        });
+    });
+
+    // Start loading data immediately
+    loadDashboardData();
+
+    // ========================================
+    // Modal functions
+    // ========================================
+    function showIngestModal() {
+        document.getElementById('ingest-modal').classList.remove('hidden');
+    }
+
+    function hideIngestModal() {
+        document.getElementById('ingest-modal').classList.add('hidden');
+    }
+
+    function showRecordModal() {
+        document.getElementById('record-modal').classList.remove('hidden');
+        // Initialize audio devices and start monitoring
+        initAudioDevices();
+    }
+
+    function hideRecordModal() {
+        // Stop recording if active
+        if (isRecording) {
+            stopRecording();
+        }
+        // Stop monitoring
+        stopMonitoring();
+        document.getElementById('record-modal').classList.add('hidden');
+        resetRecordingUI();
+    }
+
+    // Success modal state
+    let successModalData = null;
+
+    function showSuccessModal(data) {
+        successModalData = data;
+        
+        // Update modal content
+        document.getElementById('success-customer-name').textContent = data.customer_name;
+        document.getElementById('success-meeting-id').textContent = data.meeting_id;
+        
+        // Show/hide "New" badge
+        const newBadge = document.getElementById('success-new-badge');
+        if (data.is_new_customer) {
+            newBadge.classList.remove('hidden');
+            document.getElementById('success-view-btn-text').textContent = 'View New Customer';
+        } else {
+            newBadge.classList.add('hidden');
+            document.getElementById('success-view-btn-text').textContent = 'View Customer';
+        }
+        
+        document.getElementById('success-modal').classList.remove('hidden');
+    }
+
+    function hideSuccessModal() {
+        document.getElementById('success-modal').classList.add('hidden');
+        successModalData = null;
+    }
+
+    function navigateToCustomerList() {
+        window.location.href = '/';
+    }
+
+    function navigateToCustomer() {
+        if (successModalData && successModalData.assistant_id) {
+            window.location.href = `/customer/${successModalData.assistant_id}`;
+        } else {
+            window.location.href = '/customers';
+        }
+    }
+
+    // ========================================
+    // Audio Recording with Device Selection and Waveform
+    // ========================================
+    let isRecording = false;
+    let isMonitoring = false;
+    let recordingStartTime = null;
+    let recordingTimer = null;
+    let audioContext = null;
+    let analyser = null;
+    let audioStream = null;
+    let scriptProcessor = null;
+    let recordedSamples = [];
+    let selectedDeviceId = null;
+    let waveformAnimationId = null;
+    
+    // Canvas for waveform
+    let waveformCanvas = null;
+    let waveformCtx = null;
+
+    // Enumerate audio devices when modal opens
+    async function initAudioDevices() {
+        try {
+            // Request permission first (needed to get device labels)
+            await navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => stream.getTracks().forEach(t => t.stop()));
+            
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const audioInputs = devices.filter(d => d.kind === 'audioinput');
+            
+            const select = document.getElementById('mic-select');
+            select.innerHTML = '';
+            
+            audioInputs.forEach((device, index) => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label || `Microphone ${index + 1}`;
+                select.appendChild(option);
+            });
+            
+            if (audioInputs.length > 0) {
+                selectedDeviceId = audioInputs[0].deviceId;
+                // Start monitoring immediately
+                startMonitoring();
+            }
+            
+            console.log('Found', audioInputs.length, 'audio input devices');
+        } catch (err) {
+            console.error('Error enumerating devices:', err);
+            document.getElementById('mic-select').innerHTML = '<option value="">Microphone access denied</option>';
+        }
+    }
+    
+    function updateSelectedDevice() {
+        const select = document.getElementById('mic-select');
+        selectedDeviceId = select.value;
+        console.log('Selected device:', selectedDeviceId);
+        
+        // Restart monitoring with new device
+        stopMonitoring();
+        startMonitoring();
+    }
+    
+    // Start monitoring (waveform display) without recording
+    async function startMonitoring() {
+        if (isMonitoring || isRecording) return;
+        
+        try {
+            const constraints = {
+                audio: {
+                    deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+                    channelCount: 1,
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: true,
+                }
+            };
+            
+            audioStream = await navigator.mediaDevices.getUserMedia(constraints);
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048;
+            
+            const source = audioContext.createMediaStreamSource(audioStream);
+            source.connect(analyser);
+            
+            isMonitoring = true;
+            
+            // Initialize canvas
+            waveformCanvas = document.getElementById('waveform-canvas');
+            waveformCtx = waveformCanvas.getContext('2d');
+            
+            // Start waveform animation
+            drawWaveform();
+            
+            console.log('Monitoring started, sample rate:', audioContext.sampleRate);
+        } catch (err) {
+            console.error('Error starting monitoring:', err);
+        }
+    }
+    
+    function stopMonitoring() {
+        isMonitoring = false;
+        
+        if (waveformAnimationId) {
+            cancelAnimationFrame(waveformAnimationId);
+            waveformAnimationId = null;
+        }
+        
+        if (!isRecording) {
+            if (audioStream) {
+                audioStream.getTracks().forEach(track => track.stop());
+                audioStream = null;
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+        }
+    }
+    
+    // Draw waveform oscilloscope style
+    function drawWaveform() {
+        if (!analyser || !waveformCtx) return;
+        
+        waveformAnimationId = requestAnimationFrame(drawWaveform);
+        
+        const bufferLength = analyser.fftSize;
+        const dataArray = new Float32Array(bufferLength);
+        analyser.getFloatTimeDomainData(dataArray);
+        
+        const canvas = waveformCanvas;
+        const ctx = waveformCtx;
+        const width = canvas.width;
+        const height = canvas.height;
+        
+        // Clear with dark background
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Draw center line
+        ctx.strokeStyle = '#374151';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, height / 2);
+        ctx.lineTo(width, height / 2);
+        ctx.stroke();
+        
+        // Calculate RMS level
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+            sum += dataArray[i] * dataArray[i];
+        }
+        const rms = Math.sqrt(sum / bufferLength);
+        const db = 20 * Math.log10(rms + 0.0001);
+        
+        // Update level indicator
+        const levelEl = document.getElementById('level-indicator');
+        if (levelEl) {
+            const displayDb = Math.max(-60, Math.min(0, db)).toFixed(1);
+            levelEl.textContent = `${displayDb} dB`;
+            
+            // Color based on level
+            if (db > -10) {
+                levelEl.style.color = '#ef4444'; // Red - too loud
+            } else if (db > -30) {
+                levelEl.style.color = '#22c55e'; // Green - good
+            } else {
+                levelEl.style.color = '#6b7280'; // Gray - too quiet
+            }
+        }
+        
+        // Draw waveform
+        ctx.strokeStyle = isRecording ? '#ef4444' : '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        
+        const sliceWidth = width / bufferLength;
+        let x = 0;
+        
+        for (let i = 0; i < bufferLength; i++) {
+            const v = dataArray[i];
+            const y = (height / 2) + (v * height * 2); // Amplify for visibility
+            
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+            x += sliceWidth;
+        }
+        
+        ctx.stroke();
+    }
+
+    function resetRecordingUI() {
+        document.getElementById('status-idle').classList.remove('hidden');
+        document.getElementById('status-recording').classList.add('hidden');
+        document.getElementById('status-transcribing').classList.add('hidden');
+        document.getElementById('record-btn-text').textContent = 'Start Recording';
+        document.getElementById('record-btn').disabled = false;
+        document.getElementById('record-time').textContent = '00:00';
+        
+        // Restart monitoring
+        if (!isMonitoring && document.getElementById('record-modal').classList.contains('hidden') === false) {
+            startMonitoring();
+        }
+    }
+
+    async function toggleRecording() {
+        if (isRecording) {
+            stopRecording();
+        } else {
+            await startRecording();
+        }
+    }
+
+    async function startRecording() {
+        try {
+            // If not already monitoring, start fresh
+            if (!audioContext || !audioStream) {
+                const constraints = {
+                    audio: {
+                        deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+                        channelCount: 1,
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: true,
+                    }
+                };
+                
+                audioStream = await navigator.mediaDevices.getUserMedia(constraints);
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                
+                const source = audioContext.createMediaStreamSource(audioStream);
+                source.connect(analyser);
+            }
+            
+            const sampleRate = audioContext.sampleRate;
+            console.log('Recording at sample rate:', sampleRate);
+            
+            // Create source from microphone
+            const source = audioContext.createMediaStreamSource(audioStream);
+            
+            // Use ScriptProcessorNode to capture raw audio samples
+            scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+            recordedSamples = [];
+            
+            scriptProcessor.onaudioprocess = (e) => {
+                if (isRecording) {
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    const samples = new Float32Array(inputData.length);
+                    samples.set(inputData);
+                    recordedSamples.push(samples);
+                }
+            };
+            
+            source.connect(scriptProcessor);
+            scriptProcessor.connect(audioContext.destination);
+            
+            isRecording = true;
+            isMonitoring = false;
+            recordingStartTime = Date.now();
+
+            // Update UI
+            document.getElementById('status-idle').classList.add('hidden');
+            document.getElementById('status-recording').classList.remove('hidden');
+            document.getElementById('record-btn-text').textContent = 'Stop Recording';
+
+            // Start timer
+            recordingTimer = setInterval(updateRecordingTime, 1000);
+
+        } catch (err) {
+            console.error('Error starting recording:', err);
+            showToast('Could not access microphone. Please ensure microphone permissions are granted.', 'error');
+        }
+    }
+
+    function stopRecording() {
+        isRecording = false;
+        
+        if (recordingTimer) {
+            clearInterval(recordingTimer);
+            recordingTimer = null;
+        }
+        
+        // Update UI to transcribing state
+        document.getElementById('status-recording').classList.add('hidden');
+        document.getElementById('status-transcribing').classList.remove('hidden');
+        document.getElementById('record-btn').disabled = true;
+        
+        // Stop waveform
+        if (waveformAnimationId) {
+            cancelAnimationFrame(waveformAnimationId);
+            waveformAnimationId = null;
+        }
+        
+        // Process recorded audio
+        if (recordedSamples.length > 0 && audioContext) {
+            const sampleRate = audioContext.sampleRate;
+            
+            // Combine all samples
+            const totalLength = recordedSamples.reduce((acc, s) => acc + s.length, 0);
+            const combined = new Float32Array(totalLength);
+            let offset = 0;
+            for (const chunk of recordedSamples) {
+                combined.set(chunk, offset);
+                offset += chunk.length;
+            }
+            
+            console.log('Recorded', totalLength, 'samples at', sampleRate, 'Hz =', (totalLength/sampleRate).toFixed(2), 'seconds');
+            
+            // Calculate peak level
+            let peak = 0;
+            for (let i = 0; i < combined.length; i++) {
+                peak = Math.max(peak, Math.abs(combined[i]));
+            }
+            console.log('Peak level:', peak.toFixed(4), '=', (20 * Math.log10(peak + 0.0001)).toFixed(1), 'dB');
+            
+            // Convert to 16kHz WAV for Whisper
+            const wavBlob = createWavBlob(combined, sampleRate);
+            console.log('WAV blob size:', wavBlob.size);
+            
+            transcribeAudio(wavBlob);
+        } else {
+            showToast('No audio recorded', 'warning');
+            resetRecordingUI();
+        }
+        
+        // Cleanup
+        if (scriptProcessor) {
+            scriptProcessor.disconnect();
+            scriptProcessor = null;
+        }
+        if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop());
+            audioStream = null;
+        }
+        if (audioContext) {
+            audioContext.close();
+            audioContext = null;
+        }
+        recordedSamples = [];
+    }
+
+    // Create a WAV blob from float samples, resampling to 16kHz
+    function createWavBlob(samples, inputSampleRate) {
+        const targetSampleRate = 16000;
+        
+        // Resample to 16kHz
+        let resampled;
+        if (inputSampleRate === targetSampleRate) {
+            resampled = samples;
+        } else {
+            const ratio = inputSampleRate / targetSampleRate;
+            const newLength = Math.floor(samples.length / ratio);
+            resampled = new Float32Array(newLength);
+            for (let i = 0; i < newLength; i++) {
+                const srcIndex = Math.floor(i * ratio);
+                resampled[i] = samples[srcIndex];
+            }
+        }
+        
+        // Convert to 16-bit PCM
+        const buffer = new ArrayBuffer(44 + resampled.length * 2);
+        const view = new DataView(buffer);
+        
+        // WAV header
+        const writeString = (offset, string) => {
+            for (let i = 0; i < string.length; i++) {
+                view.setUint8(offset + i, string.charCodeAt(i));
+            }
+        };
+        
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + resampled.length * 2, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, 1, true);
+        view.setUint32(24, targetSampleRate, true);
+        view.setUint32(28, targetSampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        writeString(36, 'data');
+        view.setUint32(40, resampled.length * 2, true);
+        
+        // Write audio data
+        let offset = 44;
+        for (let i = 0; i < resampled.length; i++) {
+            const sample = Math.max(-1, Math.min(1, resampled[i]));
+            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+            offset += 2;
+        }
+        
+        return new Blob([buffer], { type: 'audio/wav' });
+    }
+
+    function updateRecordingTime() {
+        const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const seconds = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('record-time').textContent = `${minutes}:${seconds}`;
+    }
+
+    async function transcribeAudio(audioBlob) {
+        console.log('Starting transcription, blob size:', audioBlob.size, 'type:', audioBlob.type);
+        
+        if (audioBlob.size < 5000) {
+            showToast('Recording too short or empty. Please try again.', 'warning');
+            resetRecordingUI();
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+
+            console.log('Sending WAV to /api/transcribe...');
+            const response = await fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            console.log('Response:', response.status, data);
+
+            if (response.ok) {
+                if (!data.text || data.text.trim().length === 0) {
+                    throw new Error('No speech detected. Please speak clearly and check your microphone input level.');
+                }
+                // Success - populate ingest modal with transcription
+                hideRecordModal();
+                document.getElementById('transcript').value = data.text;
+                showIngestModal();
+            } else {
+                throw new Error(data.error || 'Transcription failed');
+            }
+        } catch (err) {
+            console.error('Transcription error:', err);
+            showToast(`Transcription failed: ${err.message}`, 'error');
+            resetRecordingUI();
+        }
+    }
+
+    // Convert audio blob to WAV format using Web Audio API
+    async function convertToWav(audioBlob) {
+        const arrayBuffer = await audioBlob.arrayBuffer();
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Decode the audio data
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        
+        // Convert to 16kHz mono WAV (optimal for speech recognition)
+        const targetSampleRate = 16000;
+        const numberOfChannels = 1;
+        
+        // Create offline context for resampling
+        const offlineContext = new OfflineAudioContext(
+            numberOfChannels,
+            Math.ceil(audioBuffer.duration * targetSampleRate),
+            targetSampleRate
+        );
+        
+        // Create buffer source
+        const source = offlineContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(offlineContext.destination);
+        source.start(0);
+        
+        // Render the audio
+        const renderedBuffer = await offlineContext.startRendering();
+        
+        // Convert to WAV
+        const wavBlob = audioBufferToWav(renderedBuffer);
+        
+        audioContext.close();
+        
+        return wavBlob;
+    }
+
+    // Convert AudioBuffer to WAV Blob
+    function audioBufferToWav(buffer) {
+        const numChannels = buffer.numberOfChannels;
+        const sampleRate = buffer.sampleRate;
+        const format = 1; // PCM
+        const bitDepth = 16;
+        
+        const bytesPerSample = bitDepth / 8;
+        const blockAlign = numChannels * bytesPerSample;
+        
+        const samples = buffer.getChannelData(0);
+        const dataLength = samples.length * bytesPerSample;
+        const bufferLength = 44 + dataLength;
+        
+        const arrayBuffer = new ArrayBuffer(bufferLength);
+        const view = new DataView(arrayBuffer);
+        
+        // WAV header
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + dataLength, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true); // Subchunk1Size
+        view.setUint16(20, format, true);
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * blockAlign, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitDepth, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, dataLength, true);
+        
+        // Write audio data
+        let offset = 44;
+        for (let i = 0; i < samples.length; i++) {
+            const sample = Math.max(-1, Math.min(1, samples[i]));
+            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+            offset += 2;
+        }
+        
+        return new Blob([arrayBuffer], { type: 'audio/wav' });
+    }
+
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    async function handleAudioUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        console.log('Uploading file:', file.name, 'size:', file.size, 'type:', file.type);
+
+        // Show transcribing state
+        document.getElementById('status-idle').classList.add('hidden');
+        document.getElementById('status-transcribing').classList.remove('hidden');
+        document.getElementById('record-btn').disabled = true;
+
+        try {
+            // Send file directly - server handles format conversion via PyAV
+            const formData = new FormData();
+            formData.append('audio', file, file.name);
+
+            console.log('Sending to /api/transcribe...');
+            const response = await fetch('/api/transcribe', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            console.log('Response:', response.status, data);
+
+            if (response.ok) {
+                if (!data.text || data.text.trim().length === 0) {
+                    throw new Error('No speech detected in audio');
+                }
+                hideRecordModal();
+                document.getElementById('transcript').value = data.text;
+                showIngestModal();
+            } else {
+                throw new Error(data.error || 'Transcription failed');
+            }
+        } catch (err) {
+            console.error('Transcription error:', err);
+            showToast(`Transcription failed: ${err.message}`, 'error');
+            resetRecordingUI();
+        }
+
+        // Reset file input
+        event.target.value = '';
+    }
+
+    // ========================================
+    // Ingest submission
+    // ========================================
+    async function submitIngest(e) {
+        e.preventDefault();
+        
+        const form = e.target;
+        const submitBtn = document.getElementById('ingest-submit');
+        const submitText = document.getElementById('ingest-submit-text');
+        const spinner = document.getElementById('ingest-spinner');
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitText.textContent = 'Processing...';
+        spinner.classList.remove('hidden');
+        
+        const contactHints = form.contact_hints.value.split(',').map(s => s.trim()).filter(s => s);
+        
+        const payload = {
+            transcript: form.transcript.value,
+            metadata: {
+                company_hint: form.company_hint.value || null,
+                call_type: form.call_type.value,
+                contact_hints: contactHints
+            }
+        };
+        
+        try {
+            const response = await fetch('/api/ingest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                hideIngestModal();
+                showSuccessModal(data);
+            } else {
+                showToast(data.error, 'error');
+            }
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitText.textContent = 'Process Transcript';
+            spinner.classList.add('hidden');
+        }
+    }
+
+    // ========================================
+    // Generate follow-ups
+    // ========================================
+    async function generateFollowups() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Generating...';
+        
+        try {
+            const response = await fetch('/api/followup/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({})
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showToast(`Generated ${data.count} follow-up emails!`, 'success');
+            } else {
+                showToast(data.error, 'error');
+            }
+        } catch (err) {
+            showToast(err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Generate Follow-ups';
+        }
+    }
+
+    // ========================================
+    // Escape key to close modals
+    // ========================================
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const recordModal = document.getElementById('record-modal');
+            const ingestModal = document.getElementById('ingest-modal');
+            const successModal = document.getElementById('success-modal');
+            
+            if (!recordModal.classList.contains('hidden')) {
+                hideRecordModal();
+            } else if (!ingestModal.classList.contains('hidden')) {
+                hideIngestModal();
+            } else if (!successModal.classList.contains('hidden')) {
+                hideSuccessModal();
+            }
+        }
+    });
+</script>
+{% endblock %}

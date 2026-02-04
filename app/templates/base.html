@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}CloserNotes{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* BB palette - inline for immediate effect */
+        body { background-color: #EDEFF7; color: #1E1E24; }
+        html.dark body { background-color: #1E1E24 !important; color: #F5F6FA !important; }
+        .bg-bb-cloud { background-color: #EDEFF7; }
+        .bg-bb-phantom { background-color: #1E1E24; }
+        .bg-bb-steel { background-color: #BCBFCC; }
+        .bg-bb-steelDark { background-color: #2B2F3D; }
+        .bg-bb-blue { background-color: #007BFC; }
+        .text-bb-phantom { color: #1E1E24; }
+        .text-bb-phantomLight { color: #F5F6FA; }
+        html.dark .dark\:bg-bb-phantom { background-color: #1E1E24 !important; }
+        html.dark .dark\:bg-bb-steelDark { background-color: #2B2F3D !important; }
+        html.dark .dark\:text-bb-phantomLight { color: #F5F6FA !important; }
+    </style>
+    <script>
+        // Check for dark mode preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="h-full bg-bb-cloud dark:bg-bb-phantom text-bb-phantom dark:text-bb-phantomLight font-sans antialiased">
+    <!-- Glengarry Glen Ross floating wireframe icons - "Coffee is for closers" -->
+    <div class="glengarry-bg" aria-hidden="true">
+        <!-- Coffee Cup - "Coffee is for closers" -->
+        <svg class="wireframe-icon float-1 w-12 h-12" style="top: 8%; left: 5%;" viewBox="0 0 24 24">
+            <path d="M17 8h1a4 4 0 0 1 0 8h-1"/>
+            <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/>
+            <line x1="6" y1="2" x2="6" y2="4"/>
+            <line x1="10" y1="2" x2="10" y2="4"/>
+            <line x1="14" y1="2" x2="14" y2="4"/>
+        </svg>
+
+        <!-- Cadillac - First Prize -->
+        <svg class="wireframe-icon float-2 w-16 h-16 hide-mobile" style="top: 15%; right: 8%;" viewBox="0 0 24 24">
+            <rect x="1" y="10" width="22" height="8" rx="2"/>
+            <circle cx="6" cy="18" r="2"/>
+            <circle cx="18" cy="18" r="2"/>
+            <path d="M4 10V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/>
+            <line x1="7" y1="6" x2="7" y2="4"/>
+            <line x1="17" y1="6" x2="17" y2="4"/>
+        </svg>
+
+        <!-- Steak Knives - Second Prize -->
+        <svg class="wireframe-icon float-3 w-10 h-10" style="top: 35%; left: 3%;" viewBox="0 0 24 24">
+            <path d="M6 3v12"/>
+            <path d="M6 3c2.5 0 4 1.5 4 4s-1.5 4-4 4"/>
+            <path d="M6 15v6"/>
+            <line x1="3" y1="15" x2="9" y2="15"/>
+        </svg>
+
+        <!-- Leads/Folder - The Glengarry Leads -->
+        <svg class="wireframe-icon drift-1 w-14 h-14" style="top: 55%; right: 5%;" viewBox="0 0 24 24">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+            <line x1="9" y1="13" x2="15" y2="13"/>
+            <line x1="9" y1="17" x2="13" y2="17"/>
+        </svg>
+
+        <!-- Telephone - Cold Calling -->
+        <svg class="wireframe-icon float-4 w-10 h-10 hide-mobile" style="top: 25%; left: 15%;" viewBox="0 0 24 24">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+
+        <!-- Dollar Sign - Sales Motivation -->
+        <svg class="wireframe-icon float-5 w-8 h-8" style="top: 70%; left: 10%;" viewBox="0 0 24 24">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+
+        <!-- ABC - Always Be Closing -->
+        <svg class="wireframe-icon drift-2 w-20 h-10 hide-mobile" style="top: 12%; left: 40%;" viewBox="0 0 60 24">
+            <text x="0" y="18" font-family="Inter, sans-serif" font-size="14" font-weight="600" fill="none" stroke="currentColor" stroke-width="0.5">ABC</text>
+        </svg>
+
+        <!-- Watch - "My watch cost more than your car" -->
+        <svg class="wireframe-icon float-2 w-10 h-10" style="top: 45%; right: 15%;" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="7"/>
+            <polyline points="12 9 12 12 14 14"/>
+            <path d="M9 2h6"/>
+            <path d="M9 22h6"/>
+            <path d="M9 2v2"/>
+            <path d="M15 2v2"/>
+            <path d="M9 20v2"/>
+            <path d="M15 20v2"/>
+        </svg>
+
+        <!-- Briefcase - Salesman's Kit -->
+        <svg class="wireframe-icon float-3 w-12 h-12" style="top: 80%; right: 25%;" viewBox="0 0 24 24">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            <line x1="6" y1="12" x2="18" y2="12"/>
+        </svg>
+
+        <!-- Second Coffee Cup - smaller, different position -->
+        <svg class="wireframe-icon float-4 w-8 h-8 hide-mobile" style="top: 60%; left: 25%;" viewBox="0 0 24 24">
+            <path d="M17 8h1a4 4 0 0 1 0 8h-1"/>
+            <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z"/>
+            <line x1="6" y1="2" x2="6" y2="4"/>
+            <line x1="10" y1="2" x2="10" y2="4"/>
+            <line x1="14" y1="2" x2="14" y2="4"/>
+        </svg>
+
+        <!-- Chart/Board - Sales Board -->
+        <svg class="wireframe-icon drift-1 w-14 h-14 hide-mobile" style="top: 30%; right: 30%;" viewBox="0 0 24 24">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+            <line x1="2" y1="20" x2="22" y2="20"/>
+        </svg>
+
+        <!-- Another Dollar Sign - different position -->
+        <svg class="wireframe-icon spin-icon w-6 h-6 hide-mobile" style="top: 85%; left: 45%;" viewBox="0 0 24 24">
+            <line x1="12" y1="1" x2="12" y2="23"/>
+            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+
+        <!-- Trophy - Winner's prize -->
+        <svg class="wireframe-icon float-1 w-10 h-10" style="top: 5%; right: 35%;" viewBox="0 0 24 24">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+            <path d="M4 22h16"/>
+            <path d="M10 22V12a2 2 0 0 1-2-2V4h8v6a2 2 0 0 1-2 2v10"/>
+        </svg>
+
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-bb-cloud dark:bg-bb-phantom border-b border-bb-steel/60 dark:border-bb-steelDark sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-bb-blue rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <span class="text-xl font-semibold">CloserNotes</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Navigation links -->
+                    <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                        Dashboard
+                    </a>
+                    
+                    {% if session.get('user_id') %}
+                    <!-- Manager link (managers only) -->
+                    {% if session.get('user_role') == 'manager' %}
+                    <a href="/manager" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                        Manager
+                    </a>
+                    {% endif %}
+                    
+                    <!-- User dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button onclick="toggleUserMenu()" id="user-menu-button" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                            <div class="w-7 h-7 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                                {{ session.get('user_name', 'U')[0].upper() }}
+                            </div>
+                            <span class="hidden sm:inline">{{ session.get('user_name', 'User') }}</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        
+                        <!-- Dropdown menu -->
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-bb-steelDark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                            <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">{{ session.get('user_name', 'User') }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ session.get('user_email', '') }}</p>
+                                <span class="inline-flex items-center mt-1 px-2 py-0.5 rounded text-xs font-medium {% if session.get('user_role') == 'manager' %}bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300{% else %}bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300{% endif %}">
+                                    {{ session.get('user_role', 'user').title() }}
+                                </span>
+                            </div>
+                            <form action="{{ url_for('auth.logout') }}" method="POST" class="m-0">
+                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                    </svg>
+                                    Sign out
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- Login link for unauthenticated users -->
+                    <a href="{{ url_for('auth.login') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                        Sign in
+                    </a>
+                    {% endif %}
+                    
+                    <!-- Dark mode toggle -->
+                    <button id="theme-toggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                        <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                        </svg>
+                        <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Global Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center bg-bb-cloud/80 dark:bg-bb-phantom/80 backdrop-blur-sm">
+        <div class="card flex flex-col items-center space-y-4 px-8 py-6">
+            <svg class="w-12 h-12 text-bb-blue animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Loading...</span>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
+            {% for category, message in messages %}
+            <div class="mb-2 p-4 rounded-lg flex items-center gap-3 {% if category == 'error' %}bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300{% elif category == 'success' %}bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300{% else %}bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300{% endif %}">
+                {% if category == 'error' %}
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                {% elif category == 'success' %}
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                {% else %}
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                {% endif %}
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main content -->
+    <main class="min-h-[calc(100vh-4rem)]">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-bb-cloud dark:bg-bb-phantom border-t border-bb-steel/60 dark:border-bb-steelDark py-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+                CloserNotes - Powered by Backboard.io
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-20 right-4 z-[200] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="fixed inset-0 z-[150] hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" id="confirm-backdrop"></div>
+            <div class="relative bg-white dark:bg-bb-steelDark rounded-xl shadow-xl max-w-md w-full p-6 transform transition-all">
+                <div class="flex items-start gap-4">
+                    <div id="confirm-icon" class="flex-shrink-0 w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 id="confirm-title" class="text-lg font-semibold text-gray-900 dark:text-white">Confirm Action</h3>
+                        <p id="confirm-message" class="mt-2 text-sm text-gray-600 dark:text-gray-300">Are you sure you want to proceed?</p>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="confirm-cancel" class="btn-secondary">Cancel</button>
+                    <button id="confirm-ok" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 font-medium">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // User menu toggle
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            if (menu) {
+                menu.classList.toggle('hidden');
+            }
+        }
+        
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const menu = document.getElementById('user-menu');
+            const button = document.getElementById('user-menu-button');
+            if (menu && button && !button.contains(e.target) && !menu.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+        // Set initial icon
+        if (document.documentElement.classList.contains('dark')) {
+            lightIcon.classList.remove('hidden');
+        } else {
+            darkIcon.classList.remove('hidden');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            // Toggle icons
+            darkIcon.classList.toggle('hidden');
+            lightIcon.classList.toggle('hidden');
+
+            // Toggle dark class
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        });
+
+        // Global loading spinner for page navigation
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        function showLoading() {
+            loadingOverlay.classList.remove('hidden');
+            loadingOverlay.classList.add('flex');
+        }
+
+        // Intercept all internal link clicks
+        document.addEventListener('click', (e) => {
+            const link = e.target.closest('a');
+            if (!link) return;
+            
+            const href = link.getAttribute('href');
+            // Skip external links, anchors, javascript:, and links with target
+            if (!href || 
+                href.startsWith('#') || 
+                href.startsWith('javascript:') || 
+                href.startsWith('http') ||
+                link.hasAttribute('target') ||
+                link.hasAttribute('download') ||
+                e.ctrlKey || e.metaKey || e.shiftKey) {
+                return;
+            }
+            
+            showLoading();
+        });
+
+        // Also show on form submissions
+        document.addEventListener('submit', (e) => {
+            // Skip AJAX forms (those with data-ajax attribute)
+            if (!e.target.hasAttribute('data-ajax')) {
+                showLoading();
+            }
+        });
+
+        // Hide on back/forward navigation (bfcache)
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted) {
+                loadingOverlay.classList.add('hidden');
+                loadingOverlay.classList.remove('flex');
+            }
+        });
+
+        // ===== Toast Notification System =====
+        const toastIcons = {
+            success: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>`,
+            error: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>`,
+            warning: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>`,
+            info: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>`
+        };
+
+        const toastStyles = {
+            success: 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800',
+            error: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800',
+            warning: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800',
+            info: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800'
+        };
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const duration = type === 'error' ? 6000 : 4000;
+            
+            toast.className = `toast-notification pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg max-w-sm ${toastStyles[type] || toastStyles.info}`;
+            toast.innerHTML = `
+                <span class="flex-shrink-0">${toastIcons[type] || toastIcons.info}</span>
+                <span class="text-sm font-medium flex-1">${escapeHtml(message)}</span>
+                <button class="flex-shrink-0 opacity-70 hover:opacity-100 transition-opacity" onclick="this.parentElement.remove()">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                toast.classList.add('toast-enter');
+            });
+            
+            // Auto-remove
+            setTimeout(() => {
+                toast.classList.add('toast-exit');
+                toast.addEventListener('animationend', () => toast.remove());
+            }, duration);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== Confirmation Modal System =====
+        let confirmResolve = null;
+
+        function showConfirm(title, message, options = {}) {
+            return new Promise((resolve) => {
+                confirmResolve = resolve;
+                
+                const modal = document.getElementById('confirm-modal');
+                const titleEl = document.getElementById('confirm-title');
+                const messageEl = document.getElementById('confirm-message');
+                const okBtn = document.getElementById('confirm-ok');
+                
+                titleEl.textContent = title;
+                messageEl.textContent = message;
+                
+                // Customize button text if provided
+                okBtn.textContent = options.confirmText || 'Confirm';
+                
+                modal.classList.remove('hidden');
+            });
+        }
+
+        function hideConfirm(result) {
+            const modal = document.getElementById('confirm-modal');
+            modal.classList.add('hidden');
+            
+            if (confirmResolve) {
+                confirmResolve(result);
+                confirmResolve = null;
+            }
+        }
+
+        // Confirmation modal event listeners
+        document.getElementById('confirm-ok')?.addEventListener('click', () => hideConfirm(true));
+        document.getElementById('confirm-cancel')?.addEventListener('click', () => hideConfirm(false));
+        document.getElementById('confirm-backdrop')?.addEventListener('click', () => hideConfirm(false));
+
+        // Escape key closes confirmation modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !document.getElementById('confirm-modal').classList.contains('hidden')) {
+                hideConfirm(false);
+            }
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

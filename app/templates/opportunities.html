@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Opportunities - {{ customer.company_name }} - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+    {% else %}
+    
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">{{ customer.company_name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 dark:text-white font-medium">Opportunities</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Opportunities</h1>
+            <p class="mt-1 text-gray-500 dark:text-gray-400">{{ opportunities|length }} opportunit{% if opportunities|length == 1 %}y{% else %}ies{% endif %} for {{ customer.company_name }}</p>
+        </div>
+    </div>
+
+    <!-- Opportunities List -->
+    {% if opportunities %}
+    <div class="space-y-4">
+        {% for opp in opportunities %}
+        <div class="card hover:border-blue-500 dark:hover:border-blue-500 transition-colors" data-opp-id="{{ opp.id }}">
+            <a href="/customer/{{ assistant_id }}/opportunity/{{ opp.id }}" class="block">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ opp.name }}</h3>
+                        <div class="flex items-center mt-2 space-x-3">
+                            <span class="stage-badge" data-opp-id="{{ opp.id }}">
+                                {% if opp.stage == 'discovery' %}
+                                <span class="badge-blue">Discovery</span>
+                                {% elif opp.stage == 'qualification' %}
+                                <span class="badge-yellow">Qualified</span>
+                                {% elif opp.stage == 'proposal' %}
+                                <span class="badge-blue">Proposal</span>
+                                {% elif opp.stage == 'negotiation' %}
+                                <span class="badge-yellow">Negotiation</span>
+                                {% elif opp.stage == 'closed_won' %}
+                                <span class="badge-green">Sold</span>
+                                {% elif opp.stage == 'closed_lost' %}
+                                <span class="badge-red">Closed Lost</span>
+                                {% elif opp.stage == 'delivered' %}
+                                <span class="badge-purple">Delivered</span>
+                                {% elif opp.stage == 'blocked' %}
+                                <span class="badge-red">Blocked</span>
+                                {% endif %}
+                            </span>
+                            
+                            {% if opp.value %}
+                            <span class="text-gray-600 dark:text-gray-300 font-medium">${{ "{:,.0f}".format(opp.value) }}</span>
+                            {% endif %}
+                            
+                            {% if opp.close_date_estimate %}
+                            <span class="text-gray-500 dark:text-gray-400 text-sm">Close: {{ opp.close_date_estimate }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-right ml-4">
+                        <div class="text-3xl font-bold text-gray-900 dark:text-white">{{ opp.confidence }}%</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">confidence</div>
+                    </div>
+                </div>
+            </a>
+            
+            <!-- State Change Buttons -->
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-500 dark:text-gray-400 mr-3">Status:</span>
+                    <div class="flex gap-2 flex-wrap">
+                        <button 
+                            onclick="changeOpportunityState('{{ opp.id }}', 'qualification', event)"
+                            class="state-btn state-btn-qualified {{ 'active' if opp.stage == 'qualification' else '' }}"
+                            data-state="qualification"
+                        >
+                            Qualified
+                        </button>
+                        <button 
+                            onclick="changeOpportunityState('{{ opp.id }}', 'closed_won', event)"
+                            class="state-btn state-btn-sold {{ 'active' if opp.stage == 'closed_won' else '' }}"
+                            data-state="closed_won"
+                        >
+                            Sold
+                        </button>
+                        <button 
+                            onclick="changeOpportunityState('{{ opp.id }}', 'delivered', event)"
+                            class="state-btn state-btn-delivered {{ 'active' if opp.stage == 'delivered' else '' }}"
+                            data-state="delivered"
+                        >
+                            Delivered
+                        </button>
+                        <button 
+                            onclick="changeOpportunityState('{{ opp.id }}', 'blocked', event)"
+                            class="state-btn state-btn-blocked {{ 'active' if opp.stage == 'blocked' else '' }}"
+                            data-state="blocked"
+                        >
+                            Blocked
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            {% if opp.competitors %}
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <span class="text-sm text-gray-500 dark:text-gray-400">Competitors: </span>
+                {% for comp in opp.competitors %}
+                <span class="badge-red text-xs ml-1">{{ comp }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No opportunities yet</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">Opportunities are created automatically when deal signals are detected.</p>
+    </div>
+    {% endif %}
+    
+    {% endif %}
+</div>
+
+<!-- Coffee Animation Overlay (hidden by default) -->
+<div id="coffeeOverlay" class="coffee-overlay hidden">
+    <div class="coffee-cup">
+        <div class="steam-container">
+            <div class="steam"></div>
+            <div class="steam"></div>
+            <div class="steam"></div>
+        </div>
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Coffee cup body -->
+            <path d="M3 8h15v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" fill="#8B4513" stroke="#5D2E0C" stroke-width="1"/>
+            <!-- Coffee liquid -->
+            <path d="M4 9h13v7a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V9z" fill="#3E1C00"/>
+            <!-- Cup handle -->
+            <path d="M18 9h1a3 3 0 0 1 3 3v1a3 3 0 0 1-3 3h-1" stroke="#8B4513" stroke-width="2" fill="none"/>
+            <!-- Highlight -->
+            <path d="M5 10h2v5H5z" fill="#A0522D" opacity="0.5"/>
+        </svg>
+    </div>
+    <div class="coffee-text">Coffee is for Closers!</div>
+</div>
+
+<script>
+const assistantId = '{{ assistant_id }}';
+
+// Stage to display name mapping
+const stageDisplayNames = {
+    'qualification': 'Qualified',
+    'closed_won': 'Sold',
+    'delivered': 'Delivered',
+    'blocked': 'Blocked',
+    'discovery': 'Discovery',
+    'proposal': 'Proposal',
+    'negotiation': 'Negotiation',
+    'closed_lost': 'Closed Lost'
+};
+
+// Stage to badge class mapping
+const stageBadgeClasses = {
+    'qualification': 'badge-yellow',
+    'closed_won': 'badge-green',
+    'delivered': 'badge-purple',
+    'blocked': 'badge-red',
+    'discovery': 'badge-blue',
+    'proposal': 'badge-blue',
+    'negotiation': 'badge-yellow',
+    'closed_lost': 'badge-red'
+};
+
+async function changeOpportunityState(oppId, newState, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    const card = document.querySelector(`[data-opp-id="${oppId}"]`);
+    const buttons = card.querySelectorAll('.state-btn');
+    
+    // Disable buttons during update
+    buttons.forEach(btn => btn.disabled = true);
+    
+    try {
+        const response = await fetch(`/api/crm/customers/${assistantId}/opportunities/${oppId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ stage: newState })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to update opportunity');
+        }
+        
+        const data = await response.json();
+        
+        // Update button states
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.state === newState) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Update the badge display
+        const badgeContainer = card.querySelector('.stage-badge');
+        if (badgeContainer) {
+            const badgeClass = stageBadgeClasses[newState] || 'badge-gray';
+            const displayName = stageDisplayNames[newState] || newState;
+            badgeContainer.innerHTML = `<span class="${badgeClass}">${displayName}</span>`;
+        }
+        
+        // Trigger coffee animation if sold
+        if (newState === 'closed_won') {
+            showCoffeeAnimation();
+        }
+        
+    } catch (error) {
+        console.error('Error updating opportunity:', error);
+        showToast('Failed to update opportunity status. Please try again.', 'error');
+    } finally {
+        // Re-enable buttons
+        buttons.forEach(btn => btn.disabled = false);
+    }
+}
+
+function showCoffeeAnimation() {
+    const overlay = document.getElementById('coffeeOverlay');
+    overlay.classList.remove('hidden', 'fade-out');
+    
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+        overlay.classList.add('fade-out');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('fade-out');
+        }, 500);
+    }, 3000);
+}
+
+// Allow clicking overlay to dismiss early
+document.getElementById('coffeeOverlay')?.addEventListener('click', function() {
+    this.classList.add('fade-out');
+    setTimeout(() => {
+        this.classList.add('hidden');
+        this.classList.remove('fade-out');
+    }, 500);
+});
+</script>
+{% endblock %}

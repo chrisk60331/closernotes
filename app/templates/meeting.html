@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Meeting - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+    {% else %}
+    
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
+            <li class="text-gray-400">/</li>
+            {% if customer %}
+            <li><a href="/customer/{{ assistant_id }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">{{ customer.company_name }}</a></li>
+            <li class="text-gray-400">/</li>
+            {% endif %}
+            <li class="text-gray-900 dark:text-white font-medium">Meeting</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Meeting Details</h1>
+        <p class="mt-1 text-gray-500 dark:text-gray-400">Thread ID: {{ meeting.thread_id }}</p>
+    </div>
+
+    {% if meeting_summary %}
+    <div class="card mb-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Meeting Summary</h2>
+        {% if summary_html %}
+        <p class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{{ summary_html|safe }}</p>
+        {% elif meeting_summary.summary %}
+        <p class="text-sm text-gray-700 dark:text-gray-300">{{ meeting_summary.summary }}</p>
+        {% endif %}
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Products Discussed</div>
+                {% if meeting_summary.products_discussed %}
+                <div class="mt-2 flex flex-wrap gap-2">
+                    {% for product in meeting_summary.products_discussed %}
+                    <span class="badge-blue text-xs">{{ product }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">None captured</p>
+                {% endif %}
+            </div>
+            <div>
+                <div class="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Sales Value</div>
+                {% if meeting_summary.sales_value %}
+                <p class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                    ${{ "{:,.0f}".format(meeting_summary.sales_value) }}
+                </p>
+                {% else %}
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Not discussed</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Messages -->
+    <div class="card">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Conversation</h2>
+        
+        {% if meeting.messages %}
+        <div class="space-y-6">
+            {% for message in meeting.messages %}
+            <div class="{% if message.role == 'user' %}bg-bb-blue/10 dark:bg-bb-blue/20 border-bb-blue/30 dark:border-bb-blue/40{% else %}bg-bb-steel/40 dark:bg-bb-steelDark/60 border-bb-steel/60 dark:border-bb-steelDark{% endif %} border rounded-lg p-4">
+                <div class="flex items-center mb-2">
+                    {% if message.role == 'user' %}
+                    <span class="badge-blue">User</span>
+                    {% else %}
+                    <span class="badge-gray">Assistant</span>
+                    {% endif %}
+                </div>
+                <div class="prose prose-sm dark:prose-invert max-w-none">
+                    <pre class="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300 font-sans">{{ message.content }}</pre>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-gray-500 dark:text-gray-400 text-center py-8">No messages in this thread</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

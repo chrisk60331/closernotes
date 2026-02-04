@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+
+{% block title %}{{ contact.name if contact else 'Contact' }} - {{ customer.company_name if customer else 'Customer' }} - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+
+    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span>Saved</span>
+    </div>
+    {% else %}
+    
+    <!-- Breadcrumb -->
+    <nav class="mb-6">
+        <ol class="flex items-center space-x-2 text-sm">
+            <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">{{ customer.company_name }}</a></li>
+            <li class="text-gray-400">/</li>
+            <li><a href="/customer/{{ assistant_id }}/contacts" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Contacts</a></li>
+            <li class="text-gray-400">/</li>
+            <li class="text-gray-900 dark:text-white font-medium">{{ contact.name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="card mb-8">
+        <div class="flex items-start">
+            <div class="w-20 h-20 min-w-[5rem] min-h-[5rem] aspect-square rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl flex-shrink-0">
+                {{ contact.name[0] | upper }}
+            </div>
+            <div class="ml-6 flex-1">
+                <div class="flex items-center flex-wrap gap-3">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ contact.name }}</h1>
+                    {% if contact.is_champion %}
+                    <span class="badge-green">Champion</span>
+                    {% endif %}
+                    {% if contact.is_decision_maker %}
+                    <span class="badge-blue">Decision Maker</span>
+                    {% endif %}
+                </div>
+                {% if contact.role %}
+                <p class="text-lg text-gray-600 dark:text-gray-300 mt-2">{{ contact.role }}</p>
+                {% endif %}
+                <p class="text-gray-500 dark:text-gray-400 mt-1">{{ customer.company_name }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="edit-contact-toggle"
+                        class="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                        title="Edit contact">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                </button>
+                <button id="delete-contact-btn"
+                        class="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                        title="Delete contact"
+                        data-assistant-id="{{ assistant_id }}"
+                        data-contact-id="{{ contact.id }}"
+                        data-contact-name="{{ contact.name }}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Details -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Info Card -->
+        <div class="card">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Contact Information</h2>
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Email</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white flex items-center gap-2">
+                        <span class="contact-display" data-edit-display="email">
+                            {% if contact.email %}
+                            <a href="mailto:{{ contact.email }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ contact.email }}</a>
+                            {% if contact.preferred_contact_method == 'email' %}
+                            <span class="badge-green text-xs">Preferred</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </span>
+                        <input type="email" class="input-field contact-input hidden" data-edit-input="email"
+                               value="{{ contact.email or '' }}" placeholder="john@example.com">
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white flex items-center gap-2">
+                        <span class="contact-display" data-edit-display="phone">
+                            {% if contact.phone %}
+                            <a href="tel:{{ contact.phone }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ contact.phone }}</a>
+                            {% if contact.preferred_contact_method == 'call' %}
+                            <span class="badge-green text-xs">Preferred</span>
+                            {% endif %}
+                            {% if contact.preferred_contact_method == 'text' %}
+                            <span class="badge-green text-xs">Text Preferred</span>
+                            {% endif %}
+                            {% if contact.preferred_contact_method == 'whatsapp' %}
+                            <span class="badge-green text-xs">WhatsApp Preferred</span>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-gray-400">Not provided</span>
+                            {% endif %}
+                        </span>
+                        <input type="tel" class="input-field contact-input hidden" data-edit-input="phone"
+                               value="{{ contact.phone or '' }}" placeholder="+1 555-123-4567">
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Role</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">
+                        <span class="contact-display" data-edit-display="role">{{ contact.role or 'Not specified' }}</span>
+                        <input type="text" class="input-field contact-input hidden" data-edit-input="role"
+                               value="{{ contact.role or '' }}" placeholder="Head of Sales">
+                    </dd>
+                </div>
+                <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">LinkedIn</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">
+                        <span class="contact-display" data-edit-display="linkedin_url">
+                            {% if contact.linkedin_url %}
+                            <a href="{{ contact.linkedin_url }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">View Profile</a>
+                            {% else %}
+                            <span class="text-gray-400">Not linked</span>
+                            {% endif %}
+                        </span>
+                        <input type="url" class="input-field contact-input hidden" data-edit-input="linkedin_url"
+                               value="{{ contact.linkedin_url or '' }}" placeholder="https://linkedin.com/in/...">
+                    </dd>
+                </div>
+            </dl>
+        </div>
+
+        <!-- Status Card -->
+        <div class="card">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status</h2>
+            <div class="space-y-4">
+                <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <span class="text-gray-600 dark:text-gray-300">Champion</span>
+                    <span class="contact-display" data-edit-display="is_champion">
+                        {% if contact.is_champion %}
+                        <span class="badge-green">Yes</span>
+                        {% else %}
+                        <span class="badge-gray">No</span>
+                        {% endif %}
+                    </span>
+                    <label class="hidden items-center gap-2" data-edit-input="is_champion">
+                        <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400"
+                               {% if contact.is_champion %}checked{% endif %}>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Yes</span>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <span class="text-gray-600 dark:text-gray-300">Decision Maker</span>
+                    <span class="contact-display" data-edit-display="is_decision_maker">
+                        {% if contact.is_decision_maker %}
+                        <span class="badge-blue">Yes</span>
+                        {% else %}
+                        <span class="badge-gray">No</span>
+                        {% endif %}
+                    </span>
+                    <label class="hidden items-center gap-2" data-edit-input="is_decision_maker">
+                        <input type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400"
+                               {% if contact.is_decision_maker %}checked{% endif %}>
+                        <span class="text-sm text-gray-600 dark:text-gray-300">Yes</span>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <span class="text-gray-600 dark:text-gray-300">Added</span>
+                    <span class="text-gray-900 dark:text-white">{{ contact.created_at[:10] if contact.created_at else 'Unknown' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if contact.notes %}
+    <div class="card mt-6">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Notes</h2>
+        <p class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{{ contact.notes }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Inline edit with autosave -->
+    
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteBtn = document.getElementById('delete-contact-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            const assistantId = this.dataset.assistantId;
+            const contactId = this.dataset.contactId;
+            const contactName = this.dataset.contactName || 'this contact';
+            
+            const confirmed = await showConfirm('Delete Contact', `Delete ${contactName}? This cannot be undone.`);
+            if (!confirmed) {
+                return;
+            }
+            
+            fetch(`/api/customers/${assistantId}/contacts/${contactId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                if (response.ok) {
+                    showToast('Contact deleted', 'success');
+                    // Success (204 No Content) - redirect back to contacts list
+                    window.location.href = `/customer/${assistantId}/contacts`;
+                } else {
+                    return response.json().then(data => {
+                        showToast(data.error || 'Failed to delete', 'error');
+                    });
+                }
+            })
+            .catch(err => {
+                showToast('Error deleting contact', 'error');
+            });
+        });
+    }
+
+    const assistantId = '{{ assistant_id }}';
+    const contactId = '{{ contact.id }}';
+    const preferredMethod = '{{ contact.preferred_contact_method or "" }}';
+    const editToggle = document.getElementById('edit-contact-toggle');
+    const autosaveIndicator = document.getElementById('autosave-indicator');
+    const displayEls = document.querySelectorAll('[data-edit-display]');
+    const inputEls = document.querySelectorAll('[data-edit-input]');
+    const textInputs = document.querySelectorAll('.contact-input');
+    const checkboxInputs = document.querySelectorAll('[data-edit-input] input[type="checkbox"]');
+
+    let editMode = false;
+    let pendingUpdates = {};
+    let saveTimer = null;
+    let isSaving = false;
+
+    function toggleEditMode(forceValue) {
+        editMode = typeof forceValue === 'boolean' ? forceValue : !editMode;
+        displayEls.forEach(el => el.classList.toggle('hidden', editMode));
+        inputEls.forEach(el => el.classList.toggle('hidden', !editMode));
+        if (editMode && textInputs.length > 0) {
+            textInputs[0].focus();
+        }
+    }
+
+    function showSavedIndicator() {
+        if (!autosaveIndicator) return;
+        autosaveIndicator.classList.remove('hidden');
+        autosaveIndicator.classList.add('flex');
+        autosaveIndicator.style.display = 'flex';
+        autosaveIndicator.style.opacity = '1';
+        setTimeout(() => {
+            autosaveIndicator.classList.add('hidden');
+            autosaveIndicator.classList.remove('flex');
+            autosaveIndicator.style.display = 'none';
+        }, 2000);
+    }
+
+    function renderEmail(value) {
+        if (value) {
+            const badge = preferredMethod === 'email' ? '<span class="badge-green text-xs">Preferred</span>' : '';
+            return `<a href="mailto:${value}" class="text-blue-600 dark:text-blue-400 hover:underline">${value}</a>${badge}`;
+        }
+        return '<span class="text-gray-400">Not provided</span>';
+    }
+
+    function renderPhone(value) {
+        if (value) {
+            let badge = '';
+            if (preferredMethod === 'call') {
+                badge = '<span class="badge-green text-xs">Preferred</span>';
+            } else if (preferredMethod === 'text') {
+                badge = '<span class="badge-green text-xs">Text Preferred</span>';
+            } else if (preferredMethod === 'whatsapp') {
+                badge = '<span class="badge-green text-xs">WhatsApp Preferred</span>';
+            }
+            return `<a href="tel:${value}" class="text-blue-600 dark:text-blue-400 hover:underline">${value}</a>${badge}`;
+        }
+        return '<span class="text-gray-400">Not provided</span>';
+    }
+
+    function renderLinkedIn(value) {
+        if (value) {
+            return `<a href="${value}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline">View Profile</a>`;
+        }
+        return '<span class="text-gray-400">Not linked</span>';
+    }
+
+    function renderRole(value) {
+        return value || 'Not specified';
+    }
+
+    function renderStatus(value, positiveClass) {
+        if (value) {
+            return `<span class="${positiveClass}">Yes</span>`;
+        }
+        return '<span class="badge-gray">No</span>';
+    }
+
+    function updateDisplays(payload) {
+        Object.entries(payload).forEach(([field, value]) => {
+            const display = document.querySelector(`[data-edit-display="${field}"]`);
+            if (!display) return;
+            if (field === 'email') {
+                display.innerHTML = renderEmail(value);
+            } else if (field === 'phone') {
+                display.innerHTML = renderPhone(value);
+            } else if (field === 'linkedin_url') {
+                display.innerHTML = renderLinkedIn(value);
+            } else if (field === 'role') {
+                display.textContent = renderRole(value);
+            } else if (field === 'is_champion') {
+                display.innerHTML = renderStatus(value, 'badge-green');
+            } else if (field === 'is_decision_maker') {
+                display.innerHTML = renderStatus(value, 'badge-blue');
+            }
+        });
+    }
+
+    async function saveChanges() {
+        if (isSaving || Object.keys(pendingUpdates).length === 0) return;
+        const payload = { ...pendingUpdates };
+        pendingUpdates = {};
+        isSaving = true;
+        try {
+            const response = await fetch(`/api/customers/${assistantId}/contacts/${contactId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            if (data.error) {
+                showToast(data.error, 'error');
+            } else {
+                updateDisplays(payload);
+                showSavedIndicator();
+            }
+        } catch (err) {
+            showToast('Error saving contact', 'error');
+        } finally {
+            isSaving = false;
+            if (Object.keys(pendingUpdates).length > 0) {
+                scheduleSave();
+            }
+        }
+    }
+
+    function scheduleSave() {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(saveChanges, 600);
+    }
+
+    function queueUpdate(field, value) {
+        pendingUpdates[field] = value;
+        scheduleSave();
+    }
+
+    if (editToggle) {
+        editToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleEditMode();
+        });
+    }
+
+    textInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const field = this.dataset.editInput;
+            const value = this.value.trim() || null;
+            queueUpdate(field, value);
+        });
+        input.addEventListener('blur', function() {
+            const field = this.dataset.editInput;
+            const value = this.value.trim() || null;
+            queueUpdate(field, value);
+        });
+    });
+
+    checkboxInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const field = this.closest('[data-edit-input]').dataset.editInput;
+            queueUpdate(field, this.checked);
+        });
+    });
+});
+</script>
+{% endblock %}
