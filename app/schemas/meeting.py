@@ -21,6 +21,10 @@ class StakeholderMention(BaseModel):
     preferred_contact_method: ContactMethod | None = Field(
         None, description="Preferred contact method if mentioned: email, text, call, whatsapp"
     )
+    is_teammate: bool = Field(
+        False,
+        description="True if this person is a known team member, not a customer contact",
+    )
 
 
 class ActionItem(BaseModel):
@@ -84,6 +88,12 @@ class MeetingNotes(BaseModel):
     confidence_delta: int = Field(
         0, ge=-50, le=50, description="Suggested change to deal confidence (-50 to +50)"
     )
+    lead_source: str | None = Field(
+        None, description="Detected lead source channel"
+    )
+    lead_source_detail: str | None = Field(
+        None, description="Extra context for the lead source"
+    )
 
 
 class TranscriptMetadata(BaseModel):
@@ -120,6 +130,10 @@ class IngestResponse(BaseModel):
     crm_updates: dict = Field(
         default_factory=dict, description="Summary of CRM objects created/updated"
     )
+    detected_teammates: list[dict] = Field(
+        default_factory=list,
+        description="Teammates detected in the transcript (not added as contacts)",
+    )
 
 
 class EntityExtraction(BaseModel):
@@ -135,6 +149,12 @@ class EntityExtraction(BaseModel):
     )
     confidence: float = Field(
         0.5, ge=0.0, le=1.0, description="Confidence in extraction accuracy"
+    )
+    lead_source: str | None = Field(
+        None, description="Detected lead source channel"
+    )
+    lead_source_detail: str | None = Field(
+        None, description="Extra context for the lead source"
     )
 
 

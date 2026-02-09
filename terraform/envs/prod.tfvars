@@ -1,0 +1,11 @@
+environment                    = "prod"
+cpu                            = 1024
+memory                         = 2048
+min_instances                  = 2
+max_instances                  = 10
+flask_debug                    = false
+health_check_interval          = 5
+health_check_timeout           = 3
+health_check_healthy_threshold = 1
+health_check_unhealthy_threshold = 3
+ecr_retain_count               = 20

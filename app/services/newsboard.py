@@ -41,7 +41,7 @@ class NewsboardService:
         Returns:
             List of NewsHeadline objects
         """
-        newsboard_id = self._settings.effective_newsboard_id
+        newsboard_id = self._settings.newsboard_assistant_id
         if not newsboard_id:
             return []
 

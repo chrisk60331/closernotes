@@ -1,8 +1,13 @@
 """Flask application factory for CloserNotes."""
 
+import re
+
 from flask import Flask
 
 from app.config import get_settings
+
+# Matches a trailing space + exactly 6 hex chars at end of string
+_HEX_SUFFIX_RE = re.compile(r"\s+[0-9a-fA-F]{6}$")
 
 
 def create_app() -> Flask:
@@ -30,6 +35,7 @@ def create_app() -> Flask:
     from app.api.transcribe import transcribe_bp
     from app.api.auth import auth_bp
     from app.api.users import users_bp
+    from app.api.health import health_bp
 
     app.register_blueprint(ingest_bp, url_prefix="/api")
     app.register_blueprint(customers_bp, url_prefix="/api")
@@ -43,9 +49,19 @@ def create_app() -> Flask:
     # Register auth routes (no /api prefix for login/signup pages)
     app.register_blueprint(auth_bp)
 
+    # Register health check route for App Runner
+    app.register_blueprint(health_bp)
+
     # Register UI routes
     from app.api.ui import ui_bp
 
     app.register_blueprint(ui_bp)
+
+    # Jinja filter: strip trailing 6-char hex dedup suffix from company names
+    @app.template_filter("display_name")
+    def display_name_filter(value: str | None) -> str:
+        if not value:
+            return "Unknown"
+        return _HEX_SUFFIX_RE.sub("", value)
 
     return app

@@ -28,6 +28,12 @@ if [ -z "$BACKBOARD_API_KEY" ]; then
     exit 1
 fi
 
+# Assistant IDs are optional — the app auto-creates a shared assistant
+# on Backboard if any of ORCHESTRATOR/USERS/CACHE_ASSISTANT_ID are missing.
+if [ -z "$ORCHESTRATOR_ASSISTANT_ID" ] || [ -z "$USERS_ASSISTANT_ID" ] || [ -z "$CACHE_ASSISTANT_ID" ]; then
+    echo "One or more assistant IDs not set — will auto-create on startup."
+fi
+
 # Download Whisper model if not cached
 # Models are cached in ~/.cache/huggingface/hub/
 WHISPER_MODEL="${WHISPER_MODEL:-base}"
@@ -83,4 +89,4 @@ echo "Starting CloserNotes..."
 export FLASK_APP=app.main:create_app
 export FLASK_ENV=development
 
-python -m flask run --host=0.0.0.0 --port=5000 --reload
+python -m flask run --host=0.0.0.0 --port=5002 --reload

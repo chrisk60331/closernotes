@@ -1,0 +1,9 @@
+environment  = "dev"
+cpu          = 1024
+memory       = 2048
+min_instances = 1
+max_instances = 2
+flask_debug  = true
+health_check_interval = 5
+health_check_timeout = 2
+health_check_unhealthy_threshold = 2

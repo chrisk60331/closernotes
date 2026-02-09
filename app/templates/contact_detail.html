@@ -18,6 +18,14 @@
     </div>
     {% else %}
     
+    <!-- Autosave Indicator -->
+    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        </svg>
+        <span>Saved</span>
+    </div>
+    
     <!-- Breadcrumb -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm">
@@ -217,22 +225,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            showProcessing('Deleting Contact', `Removing ${contactName}...`);
+            
             fetch(`/api/customers/${assistantId}/contacts/${contactId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             })
             .then(response => {
                 if (response.ok) {
-                    showToast('Contact deleted', 'success');
-                    // Success (204 No Content) - redirect back to contacts list
                     window.location.href = `/customer/${assistantId}/contacts`;
                 } else {
+                    hideProcessing();
                     return response.json().then(data => {
                         showToast(data.error || 'Failed to delete', 'error');
                     });
                 }
             })
             .catch(err => {
+                hideProcessing();
                 showToast('Error deleting contact', 'error');
             });
         });

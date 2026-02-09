@@ -55,3 +55,16 @@ class ContactMethod(str, Enum):
     TEXT = "text"
     CALL = "call"
     WHATSAPP = "whatsapp"
+
+
+class LeadSource(str, Enum):
+    """How a customer or opportunity was sourced."""
+
+    REFERRAL = "referral"
+    LINKEDIN = "linkedin"
+    VC_INTRO = "vc_intro"
+    COLD_OUTREACH = "cold_outreach"
+    INBOUND_WEBSITE = "inbound_website"
+    CONFERENCE_EVENT = "conference_event"
+    PARTNER = "partner"
+    OTHER = "other"

@@ -6,12 +6,9 @@ from datetime import datetime
 
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from app.config import get_settings
 from app.schemas.user import User, UserCreate, UserRole, UserUpdate
 from app.services.backboard import BackboardService
-
-
-# Assistant name for storing users
-USERS_ASSISTANT_NAME = "closernotes-users"
 
 
 class UserService:
@@ -24,26 +21,37 @@ class UserService:
             backboard: BackboardService instance
         """
         self._backboard = backboard
-        self._users_assistant_id: str | None = None
+        self._users_assistant_id: str = get_settings().users_assistant_id
 
-    async def _get_users_assistant_id(self) -> str:
-        """Get or create the users assistant ID."""
-        if self._users_assistant_id:
-            return self._users_assistant_id
+    @staticmethod
+    def _extract_memory_fields(memory) -> tuple[str | None, str | None]:
+        """Extract content and memory id from memory objects."""
+        if isinstance(memory, dict):
+            payload = memory
+        elif hasattr(memory, "model_dump"):
+            payload = memory.model_dump()
+        elif hasattr(memory, "dict"):
+            payload = memory.dict()
+        else:
+            payload = {}
 
-        # Try to find existing assistant
-        assistant = await self._backboard.find_assistant_by_name(USERS_ASSISTANT_NAME)
-        if assistant:
-            self._users_assistant_id = str(assistant.assistant_id)
-            return self._users_assistant_id
-
-        # Create new assistant for users
-        result = await self._backboard.create_assistant(
-            name=USERS_ASSISTANT_NAME,
-            system_prompt="User storage assistant for CloserNotes authentication.",
+        content = payload.get("content") or payload.get("text") or payload.get("value")
+        memory_id = (
+            payload.get("memory_id")
+            or payload.get("id")
+            or payload.get("memoryId")
         )
-        self._users_assistant_id = str(result.assistant_id)
-        return self._users_assistant_id
+
+        if content is None and hasattr(memory, "content"):
+            content = memory.content
+
+        if memory_id is None:
+            for attr in ("memory_id", "id", "memoryId"):
+                if hasattr(memory, attr):
+                    memory_id = getattr(memory, attr)
+                    break
+
+        return content, memory_id
 
     async def create_user(
         self,
@@ -71,7 +79,7 @@ class UserService:
         if existing:
             raise ValueError(f"User with email {email} already exists")
 
-        assistant_id = await self._get_users_assistant_id()
+        assistant_id = self._users_assistant_id
 
         user = User(
             id=str(uuid.uuid4()),
@@ -119,12 +127,12 @@ class UserService:
         Returns:
             User if found, None otherwise
         """
-        assistant_id = await self._get_users_assistant_id()
+        assistant_id = self._users_assistant_id
         memories = await self._backboard.get_memories(assistant_id)
 
         for memory in memories.memories if hasattr(memories, "memories") else memories:
             try:
-                content = memory.content if hasattr(memory, "content") else memory.get("content")
+                content, _ = self._extract_memory_fields(memory)
                 if not content:
                     continue
                 data = json.loads(content)
@@ -145,12 +153,12 @@ class UserService:
             User if found, None otherwise
         """
         email_lower = email.lower().strip()
-        assistant_id = await self._get_users_assistant_id()
+        assistant_id = self._users_assistant_id
         memories = await self._backboard.get_memories(assistant_id)
 
         for memory in memories.memories if hasattr(memories, "memories") else memories:
             try:
-                content = memory.content if hasattr(memory, "content") else memory.get("content")
+                content, _ = self._extract_memory_fields(memory)
                 if not content:
                     continue
                 data = json.loads(content)
@@ -167,13 +175,13 @@ class UserService:
         Returns:
             List of all users
         """
-        assistant_id = await self._get_users_assistant_id()
+        assistant_id = self._users_assistant_id
         memories = await self._backboard.get_memories(assistant_id)
 
         users = []
         for memory in memories.memories if hasattr(memories, "memories") else memories:
             try:
-                content = memory.content if hasattr(memory, "content") else memory.get("content")
+                content, _ = self._extract_memory_fields(memory)
                 if not content:
                     continue
                 data = json.loads(content)
@@ -194,13 +202,13 @@ class UserService:
         Returns:
             Updated user if found, None otherwise
         """
-        assistant_id = await self._get_users_assistant_id()
+        assistant_id = self._users_assistant_id
         memories = await self._backboard.get_memories(assistant_id)
 
         for memory in memories.memories if hasattr(memories, "memories") else memories:
             try:
-                content = memory.content if hasattr(memory, "content") else memory.get("content")
-                memory_id = memory.memory_id if hasattr(memory, "memory_id") else memory.get("memory_id")
+                content, memory_id = self._extract_memory_fields(memory)
+
                 if not content or not memory_id:
                     continue
 
@@ -222,7 +230,7 @@ class UserService:
                     )
 
                     return user
-            except (json.JSONDecodeError, ValueError):
+            except (json.JSONDecodeError, ValueError, AttributeError):
                 continue
 
         return None
@@ -237,13 +245,12 @@ class UserService:
         Returns:
             Updated user if found, None otherwise
         """
-        assistant_id = await self._get_users_assistant_id()
+        assistant_id = self._users_assistant_id
         memories = await self._backboard.get_memories(assistant_id)
 
         for memory in memories.memories if hasattr(memories, "memories") else memories:
             try:
-                content = memory.content if hasattr(memory, "content") else memory.get("content")
-                memory_id = memory.memory_id if hasattr(memory, "memory_id") else memory.get("memory_id")
+                content, memory_id = self._extract_memory_fields(memory)
                 if not content or not memory_id:
                     continue
 
@@ -275,13 +282,13 @@ class UserService:
         Returns:
             True if deleted, False if not found
         """
-        assistant_id = await self._get_users_assistant_id()
+        assistant_id = self._users_assistant_id
         memories = await self._backboard.get_memories(assistant_id)
 
         for memory in memories.memories if hasattr(memories, "memories") else memories:
             try:
-                content = memory.content if hasattr(memory, "content") else memory.get("content")
-                memory_id = memory.memory_id if hasattr(memory, "memory_id") else memory.get("memory_id")
+                content, memory_id = self._extract_memory_fields(memory)
+
                 if not content or not memory_id:
                     continue
 
@@ -292,7 +299,7 @@ class UserService:
                         memory_id=str(memory_id),
                     )
                     return True
-            except (json.JSONDecodeError, ValueError):
+            except (json.JSONDecodeError, ValueError, AttributeError):
                 continue
 
         return False

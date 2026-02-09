@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Contacts - CloserNotes{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+        <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
+    </div>
+    {% else %}
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Contacts</h1>
+            <p class="mt-1 text-gray-500 dark:text-gray-400">{{ contacts|length }} contact{% if contacts|length != 1 %}s{% endif %} across all customers</p>
+        </div>
+        <div class="relative">
+            <input type="text" id="contacts-search" placeholder="Search contacts..." class="input-field pl-10 w-64">
+            <svg class="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+        </div>
+    </div>
+
+    {% if contacts %}
+    <div class="card">
+        <table class="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
+            <thead>
+                <tr>
+                    <th class="w-[18%] px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <button type="button" class="table-sort text-left" data-key="customer">Customer</button>
+                    </th>
+                    <th class="w-[24%] px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <button type="button" class="table-sort text-left" data-key="name">Name</button>
+                    </th>
+                    <th class="w-[16%] px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <button type="button" class="table-sort text-left" data-key="role">Role</button>
+                    </th>
+                    <th class="w-[22%] px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <button type="button" class="table-sort text-left" data-key="email">Email</button>
+                    </th>
+                    <th class="w-[13%] px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <button type="button" class="table-sort text-left" data-key="phone">Phone</button>
+                    </th>
+                    <th class="w-[7%] px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Actions
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="contacts-table-body">
+                {% for contact in contacts %}
+                <tr class="contact-row hover:bg-gray-50 dark:hover:bg-gray-800/40 cursor-pointer transition-colors"
+                    data-href="/customer/{{ contact.assistant_id }}/contact/{{ contact.id }}">
+                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                        <span class="sr-only sort-value" data-key="customer">{{ contact.company_name or "Unknown" }}</span>
+                        <span class="block truncate text-bb-blue dark:text-bb-blueDark" title="{{ contact.company_name or 'Unknown' }}">
+                            {{ contact.company_name or "Unknown" }}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                        <span class="sr-only sort-value" data-key="name">{{ contact.name }}</span>
+                        <div class="flex items-center gap-1.5 min-w-0">
+                            <span class="truncate" title="{{ contact.name }}">{{ contact.name }}</span>
+                            {% if contact.is_champion %}
+                            <span class="badge-green text-xs flex-shrink-0">Champion</span>
+                            {% endif %}
+                            {% if contact.is_decision_maker %}
+                            <span class="badge-blue text-xs flex-shrink-0">DM</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                        <span class="sr-only sort-value" data-key="role">{{ contact.role or "" }}</span>
+                        <span class="block truncate" title="{{ contact.role or '' }}">{{ contact.role or "-" }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                        <span class="sr-only sort-value" data-key="email">{{ contact.email or "" }}</span>
+                        <span class="block truncate" title="{{ contact.email or '' }}">{{ contact.email or "-" }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
+                        <span class="sr-only sort-value" data-key="phone">{{ contact.phone or "" }}</span>
+                        <span class="block truncate" title="{{ contact.phone or '' }}">{{ contact.phone or "-" }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-right whitespace-nowrap">
+                        <div class="flex items-center justify-end gap-1">
+                            <a href="/customer/{{ contact.assistant_id }}/contact/{{ contact.id }}"
+                               class="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                               title="Edit contact"
+                               onclick="event.stopPropagation();">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                            <button class="delete-contact-btn p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                    title="Delete contact"
+                                    data-assistant-id="{{ contact.assistant_id }}"
+                                    data-contact-id="{{ contact.id }}"
+                                    data-contact-name="{{ contact.name }}"
+                                    onclick="event.stopPropagation();">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No contacts yet</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">Contacts will appear here as they are extracted.</p>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('contacts-search');
+    if (!searchInput) {
+        return;
+    }
+    const tableBody = document.getElementById('contacts-table-body');
+    const sortButtons = document.querySelectorAll('.table-sort');
+    const sortState = {};
+
+    // Clickable rows
+    document.querySelectorAll('.contact-row[data-href]').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+            // Don't navigate if user clicked a link, button, or input inside the row
+            if (e.target.closest('a, button, input')) return;
+            window.location.href = this.dataset.href;
+        });
+    });
+
+    // Delete buttons
+    document.querySelectorAll('.delete-contact-btn').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const assistantId = this.dataset.assistantId;
+            const contactId = this.dataset.contactId;
+            const contactName = this.dataset.contactName || 'this contact';
+            const row = this.closest('tr');
+
+            const confirmed = await showConfirm('Delete Contact', `Delete ${contactName}? This cannot be undone.`);
+            if (!confirmed) return;
+
+            showProcessing('Deleting Contact', `Removing ${contactName}...`);
+            
+            fetch(`/api/customers/${assistantId}/contacts/${contactId}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => {
+                hideProcessing();
+                if (response.ok) {
+                    showToast('Contact deleted', 'success');
+                    row.style.transition = 'opacity 0.3s, transform 0.3s';
+                    row.style.opacity = '0';
+                    row.style.transform = 'scale(0.98)';
+                    setTimeout(() => row.remove(), 300);
+                } else {
+                    return response.json().then(data => {
+                        showToast(data.error || 'Failed to delete', 'error');
+                    });
+                }
+            })
+            .catch(err => {
+                hideProcessing();
+                showToast('Error deleting contact', 'error');
+            });
+        });
+    });
+
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.toLowerCase();
+        document.querySelectorAll('.contact-row').forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    });
+
+    sortButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const key = btn.dataset.key;
+            const nextDir = sortState[key] === 'asc' ? 'desc' : 'asc';
+            sortState[key] = nextDir;
+            sortTableRows(tableBody, key, nextDir);
+        });
+    });
+
+    function sortTableRows(body, key, direction) {
+        const rows = Array.from(body.querySelectorAll('tr'));
+        rows.sort((a, b) => {
+            const aValue = getSortValue(a, key);
+            const bValue = getSortValue(b, key);
+            if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        rows.forEach(row => body.appendChild(row));
+    }
+
+    function getSortValue(row, key) {
+        const valueEl = row.querySelector(`.sort-value[data-key="${key}"]`);
+        const rawValue = valueEl ? valueEl.textContent.trim() : '';
+        const numericValue = Number(rawValue);
+        if (!Number.isNaN(numericValue) && rawValue !== '') {
+            return numericValue;
+        }
+        return rawValue.toLowerCase();
+    }
+});
+</script>
+{% endblock %}

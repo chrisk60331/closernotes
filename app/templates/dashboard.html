@@ -27,7 +27,8 @@
 
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="card">
+        <a href="/contacts" class="block">
+        <div class="card cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
             <div class="flex items-center">
                 <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -35,15 +36,17 @@
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Customers</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Contacts</p>
                     <p id="stat-customer-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
                         <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
                     </p>
                 </div>
             </div>
         </div>
+        </a>
 
-        <div class="card">
+        <a href="/opportunities" class="block">
+        <div class="card cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
             <div class="flex items-center">
                 <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
                     <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -51,15 +54,17 @@
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Opportunities</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Opportunities</p>
                     <p id="stat-opportunity-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
                         <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
                     </p>
                 </div>
             </div>
         </div>
+        </a>
 
-        <div class="card">
+        <a href="/activities" class="block">
+        <div class="card cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
             <div class="flex items-center">
                 <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                     <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -67,13 +72,14 @@
                     </svg>
                 </div>
                 <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Activities</p>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Activities</p>
                     <p id="stat-activity-count" class="text-2xl font-semibold text-gray-900 dark:text-white">
                         <span class="inline-block w-8 h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span>
                     </p>
                 </div>
             </div>
         </div>
+        </a>
     </div>
 
     <!-- Quick Actions -->
@@ -85,6 +91,12 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Paste Transcript
+            </button>
+            <button onclick="showBulkUploadModal()" class="btn-secondary inline-flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v12"></path>
+                </svg>
+                Bulk Upload Opportunities
             </button>
             <button onclick="generateFollowups()" class="btn-secondary inline-flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,11 +153,21 @@
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead>
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Company</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Industry</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Opportunities</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Activities</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Last Activity</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <button type="button" class="table-sort inline-flex items-center gap-1 text-left" data-key="company">Company</button>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <button type="button" class="table-sort inline-flex items-center gap-1 text-left" data-key="industry">Industry</button>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <button type="button" class="table-sort inline-flex items-center gap-1 text-left" data-key="opportunities">Opportunities</button>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <button type="button" class="table-sort inline-flex items-center gap-1 text-left" data-key="activities">Activities</button>
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <button type="button" class="table-sort inline-flex items-center gap-1 text-left" data-key="last_activity">Last Activity</button>
+                            </th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -166,6 +188,104 @@
             <div class="mt-6">
                 <button onclick="showIngestModal()" class="btn-primary">
                     Ingest Transcript
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Merge Floating Toolbar -->
+<div id="merge-toolbar" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-40
+     bg-bb-phantom dark:bg-bb-steelDark shadow-2xl rounded-full px-6 py-3
+     flex items-center gap-4 border border-bb-steelDark dark:border-bb-steel/30
+     transition-all duration-200 animate-slide-up">
+    <div class="flex items-center gap-2 text-white">
+        <svg class="w-5 h-5 text-bb-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <span id="merge-toolbar-count" class="text-sm font-medium">0 selected</span>
+    </div>
+    <button onclick="showMergeModal()" class="bg-bb-blue text-white hover:bg-bb-blueDark px-4 py-1.5 rounded-full text-sm font-medium transition-colors">
+        Merge Customers
+    </button>
+    <button onclick="clearMergeSelection()" class="text-gray-400 hover:text-white transition-colors p-1" title="Clear selection">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+    </button>
+</div>
+
+<style>
+@keyframes slide-up {
+    from { opacity: 0; transform: translate(-50%, 20px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+.animate-slide-up { animation: slide-up 0.2s ease-out; }
+</style>
+
+<!-- Merge Confirmation Modal -->
+<div id="merge-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideMergeModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Merge Customers</h3>
+                <button onclick="hideMergeModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Selected customers list -->
+            <div class="mb-5">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">Merging these customers into one:</p>
+                <div id="merge-customer-list" class="space-y-2 max-h-40 overflow-y-auto"></div>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-5">
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">New merged customer details</p>
+                <div class="space-y-4">
+                    <div>
+                        <label for="merge-company-name" class="label">Company Name</label>
+                        <input type="text" id="merge-company-name" class="input-field w-full" required
+                               placeholder="Merged company name">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label for="merge-domain" class="label">Domain</label>
+                            <input type="text" id="merge-domain" class="input-field w-full"
+                                   placeholder="company.com">
+                        </div>
+                        <div>
+                            <label for="merge-industry" class="label">Industry</label>
+                            <input type="text" id="merge-industry" class="input-field w-full"
+                                   placeholder="e.g. SaaS">
+                        </div>
+                    </div>
+                    <div>
+                        <label for="merge-size" class="label">Company Size</label>
+                        <select id="merge-size" class="input-field w-full">
+                            <option value="">Select size</option>
+                            <option value="startup">Startup</option>
+                            <option value="smb">SMB</option>
+                            <option value="mid_market">Mid-Market</option>
+                            <option value="enterprise">Enterprise</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+                <button type="button" onclick="hideMergeModal()" class="btn-secondary">Cancel</button>
+                <button type="button" onclick="submitMerge()" id="merge-submit-btn" class="btn-primary relative">
+                    <span id="merge-submit-text">Merge</span>
+                    <span id="merge-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                        <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
                 </button>
             </div>
         </div>
@@ -287,43 +407,170 @@
                                   class="input-field" placeholder="Paste your meeting transcript here..."></textarea>
                     </div>
                     
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label for="company_hint" class="label">Company Name (optional)</label>
-                            <input type="text" id="company_hint" name="company_hint" class="input-field" 
-                                   placeholder="Acme Corp">
-                        </div>
-                        <div>
-                            <label for="call_type" class="label">Call Type</label>
-                            <select id="call_type" name="call_type" class="input-field">
-                                <option value="meeting">Meeting</option>
-                                <option value="call">Call</option>
-                                <option value="demo">Demo</option>
-                                <option value="discovery">Discovery</option>
-                            </select>
-                        </div>
-                    </div>
-                    
                     <div>
-                        <label for="contact_hints" class="label">Participants (comma separated)</label>
-                        <input type="text" id="contact_hints" name="contact_hints" class="input-field"
-                               placeholder="John Smith, Jane Doe">
+                        <label for="call_type" class="label">Call Type</label>
+                        <select id="call_type" name="call_type" class="input-field">
+                            <option value="meeting">Meeting</option>
+                            <option value="call">Call</option>
+                            <option value="demo">Demo</option>
+                            <option value="discovery">Discovery</option>
+                        </select>
                     </div>
                 </div>
                 
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" onclick="hideIngestModal()" class="btn-secondary">Cancel</button>
-                    <button type="submit" class="btn-primary" id="ingest-submit">
+                    <button type="submit" class="btn-primary relative" id="ingest-submit">
                         <span id="ingest-submit-text">Process Transcript</span>
-                        <svg id="ingest-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <span id="ingest-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
                     </button>
                 </div>
             </form>
         </div>
     </div>
+</div>
+
+<!-- Bulk Upload Modal -->
+<div id="bulk-upload-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" id="bulk-upload-backdrop" onclick="hideBulkUploadModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-lg w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Bulk Upload Opportunities</h3>
+                <div class="flex items-center gap-1">
+                    <button id="bulk-upload-minimize-btn" onclick="minimizeBulkModal()" class="hidden text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Minimize to background">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                        </svg>
+                    </button>
+                    <button id="bulk-upload-close-btn" onclick="hideBulkUploadModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- File selection form -->
+            <div id="bulk-upload-form-section">
+                <form id="bulk-upload-form" data-ajax onsubmit="submitBulkUpload(event)">
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-sm text-gray-600 dark:text-gray-400">
+                                Upload a CSV file. Each row is processed like a transcript, and we auto-route
+                                to the right customer. Include a company column if possible.
+                            </p>
+                        </div>
+                        <div>
+                            <label class="label" for="bulk-csv-file">CSV File</label>
+                            <input id="bulk-csv-file" name="bulk-csv-file" type="file" accept=".csv"
+                                   class="input-field w-full">
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                Suggested columns: company, opportunity, value, stage, notes.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" onclick="hideBulkUploadModal()" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary" id="bulk-upload-submit">Process CSV</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Progress section (hidden initially) -->
+            <div id="bulk-upload-progress-section" class="hidden space-y-5">
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span id="bulk-progress-label" class="text-gray-600 dark:text-gray-400">Preparing...</span>
+                        <span id="bulk-progress-pct" class="font-mono font-semibold text-gray-900 dark:text-white">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                        <div id="bulk-progress-bar" class="bulk-bar-stripe bg-bb-blue h-3 rounded-full transition-all duration-300 ease-out" style="width: 3%"></div>
+                    </div>
+                    <style>
+                        @keyframes bulk-candy {
+                            0% { background-position: 0 0; }
+                            100% { background-position: 0 40px; }
+                        }
+                        .bulk-bar-stripe {
+                            background-image: linear-gradient(
+                                0deg,
+                                rgba(255,255,255,0.18) 25%,
+                                transparent 25%,
+                                transparent 50%,
+                                rgba(255,255,255,0.18) 50%,
+                                rgba(255,255,255,0.18) 75%,
+                                transparent 75%,
+                                transparent
+                            );
+                            background-size: 40px 40px;
+                            animation: bulk-candy 0.6s linear infinite;
+                        }
+                        .bulk-bar-done {
+                            animation: none;
+                            background-image: none;
+                        }
+                    </style>
+                </div>
+
+                <!-- Row-by-row status log -->
+                <div id="bulk-progress-status" class="text-sm space-y-1.5 max-h-48 overflow-y-auto pr-1"></div>
+
+                <!-- Stop button (visible during processing) -->
+                <div id="bulk-stop-section" class="flex justify-end">
+                    <button id="bulk-stop-btn" onclick="stopBulkUpload()" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/40 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                        </svg>
+                        Stop &amp; generate report
+                    </button>
+                </div>
+
+                <!-- Completion state -->
+                <div id="bulk-progress-complete" class="hidden">
+                    <div id="bulk-complete-banner" class="flex items-center gap-2 text-green-600 dark:text-green-400 mb-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span id="bulk-complete-text" class="font-medium">All rows processed</span>
+                    </div>
+                    <div class="flex items-center gap-3 mt-4">
+                        <a id="bulk-view-report-btn" href="#" class="btn-primary inline-flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            View Report
+                        </a>
+                        <button onclick="hideBulkUploadModal()" class="btn-secondary">Dismiss</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Upload Floating Progress Pill (minimized state) -->
+<div id="bulk-progress-pill" class="hidden fixed bottom-6 right-6 z-50
+     bg-white dark:bg-bb-steelDark shadow-lg rounded-full pl-4 pr-3 py-2.5
+     flex items-center gap-3 cursor-pointer
+     border border-bb-steel/60 dark:border-bb-steelDark
+     hover:shadow-xl transition-shadow"
+     onclick="expandBulkModal()">
+    <div id="pill-spinner" class="w-4 h-4 border-2 border-bb-blue border-t-transparent rounded-full animate-spin"></div>
+    <svg id="pill-check" class="hidden w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+    </svg>
+    <span id="pill-label" class="text-sm font-medium text-gray-700 dark:text-gray-300">Processing...</span>
+    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/>
+    </svg>
 </div>
 
 <!-- Success Modal -->
@@ -357,6 +604,19 @@
                     Meeting ID: <span id="success-meeting-id" class="font-mono"></span>
                 </p>
             </div>
+
+            <!-- Teammate Detection Notice -->
+            <div id="success-teammates" class="hidden mb-4 p-3 rounded-lg bg-bb-blue/10 dark:bg-bb-blue/20 border border-bb-blue/30">
+                <div class="flex items-start gap-2">
+                    <svg class="w-5 h-5 text-bb-blue flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-medium text-bb-blue dark:text-bb-phantomLight">Teammate detected</p>
+                        <p id="success-teammates-text" class="text-xs text-gray-600 dark:text-gray-400 mt-0.5"></p>
+                    </div>
+                </div>
+            </div>
             
             <!-- Action Buttons -->
             <div class="flex flex-col sm:flex-row gap-3">
@@ -386,6 +646,177 @@
     // Dashboard Data Loading
     // ========================================
     let dashboardData = null;
+    const sortState = {};
+
+    // ========================================
+    // Merge Selection State
+    // ========================================
+    const mergeSelection = new Set();
+
+    function updateMergeToolbar() {
+        const toolbar = document.getElementById('merge-toolbar');
+        const countEl = document.getElementById('merge-toolbar-count');
+
+        if (mergeSelection.size >= 2) {
+            toolbar.classList.remove('hidden');
+        } else {
+            toolbar.classList.add('hidden');
+        }
+        countEl.textContent = `${mergeSelection.size} selected`;
+    }
+
+    /** Toggle selection state of a single avatar button. */
+    function toggleAvatarSelection(btn) {
+        const aid = btn.dataset.assistantId;
+        const initial = btn.dataset.initial;
+        const row = btn.closest('tr');
+        const wasSelected = mergeSelection.has(aid);
+
+        if (wasSelected) {
+            mergeSelection.delete(aid);
+            row.classList.remove('bg-bb-blue/5', 'dark:bg-bb-blue/10');
+            btn.className = btn.className
+                .replace('bg-bb-blue text-white ring-2 ring-bb-blue ring-offset-2 dark:ring-offset-bb-phantom', '')
+                .trim();
+            btn.classList.add('bg-gradient-to-br', 'from-bb-blue', 'to-bb-steel', 'text-white');
+            btn.innerHTML = initial;
+        } else {
+            mergeSelection.add(aid);
+            row.classList.add('bg-bb-blue/5', 'dark:bg-bb-blue/10');
+            btn.classList.remove('bg-gradient-to-br', 'from-bb-blue', 'to-bb-steel');
+            btn.classList.add('bg-bb-blue', 'ring-2', 'ring-bb-blue', 'ring-offset-2', 'dark:ring-offset-bb-phantom');
+            btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+        }
+        updateMergeToolbar();
+    }
+
+    function attachMergeAvatarListeners() {
+        document.querySelectorAll('.merge-avatar').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleAvatarSelection(this);
+            });
+        });
+    }
+
+    function clearMergeSelection() {
+        mergeSelection.clear();
+        // Reset every avatar back to initial state
+        document.querySelectorAll('.merge-avatar').forEach(btn => {
+            const initial = btn.dataset.initial;
+            const row = btn.closest('tr');
+            if (row) row.classList.remove('bg-bb-blue/5', 'dark:bg-bb-blue/10');
+            btn.classList.remove('bg-bb-blue', 'ring-2', 'ring-bb-blue', 'ring-offset-2', 'dark:ring-offset-bb-phantom');
+            btn.classList.add('bg-gradient-to-br', 'from-bb-blue', 'to-bb-steel', 'text-white');
+            btn.innerHTML = initial;
+        });
+        updateMergeToolbar();
+    }
+
+    function showMergeModal() {
+        if (mergeSelection.size < 2) return;
+
+        const listEl = document.getElementById('merge-customer-list');
+        listEl.innerHTML = '';
+
+        // Gather info from selected rows
+        let firstCustomer = null;
+        mergeSelection.forEach(aid => {
+            const row = document.querySelector(`tr[data-assistant-id="${aid}"]`);
+            if (!row) return;
+            const name = row.dataset.companyName || 'Unknown';
+            if (!firstCustomer) {
+                firstCustomer = {
+                    name: name,
+                    domain: row.dataset.domain || '',
+                    industry: row.dataset.industry || '',
+                    size: row.dataset.size || '',
+                };
+            }
+            const initial = (name || 'U')[0].toUpperCase();
+            const item = document.createElement('div');
+            item.className = 'flex items-center gap-3 p-2 rounded-lg bg-white dark:bg-bb-steelDark border border-gray-200 dark:border-gray-700';
+            item.innerHTML = `
+                <div class="w-8 h-8 flex-shrink-0 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white font-semibold text-xs">
+                    ${initial}
+                </div>
+                <span class="text-sm font-medium text-gray-900 dark:text-white truncate">${escapeHtml(name)}</span>
+            `;
+            listEl.appendChild(item);
+        });
+
+        // Pre-fill fields from first customer
+        if (firstCustomer) {
+            document.getElementById('merge-company-name').value = firstCustomer.name;
+            document.getElementById('merge-domain').value = firstCustomer.domain;
+            document.getElementById('merge-industry').value = firstCustomer.industry;
+            document.getElementById('merge-size').value = firstCustomer.size;
+        }
+
+        document.getElementById('merge-modal').classList.remove('hidden');
+    }
+
+    function hideMergeModal() {
+        document.getElementById('merge-modal').classList.add('hidden');
+    }
+
+    async function submitMerge() {
+        const companyName = document.getElementById('merge-company-name').value.trim();
+        if (!companyName) {
+            showToast('Company name is required', 'error');
+            return;
+        }
+
+        const submitBtn = document.getElementById('merge-submit-btn');
+        const submitText = document.getElementById('merge-submit-text');
+        const spinner = document.getElementById('merge-spinner');
+
+        submitBtn.disabled = true;
+        submitText.classList.add('invisible');
+        spinner.classList.remove('hidden');
+
+        const payload = {
+            assistant_ids: Array.from(mergeSelection),
+            company_name: companyName,
+            domain: document.getElementById('merge-domain').value.trim() || null,
+            industry: document.getElementById('merge-industry').value.trim() || null,
+            size: document.getElementById('merge-size').value || null,
+        };
+
+        try {
+            const response = await fetch('/api/customers/merge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Merge failed');
+            }
+
+            showToast('Customers merged successfully!', 'success');
+            hideMergeModal();
+            mergeSelection.clear();
+
+            // Redirect to the new merged customer
+            if (data.customer && data.customer.assistant_id) {
+                if (typeof showLoading === 'function') showLoading();
+                window.location.href = `/customer/${data.customer.assistant_id}`;
+            } else {
+                // Fallback: reload dashboard
+                loadDashboardData();
+            }
+        } catch (err) {
+            showToast(err.message || 'Error merging customers', 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitText.classList.remove('invisible');
+            spinner.classList.add('hidden');
+        }
+    }
 
     // Fetch dashboard data on page load
     async function loadDashboardData() {
@@ -452,7 +883,8 @@
         `;
         
         for (const item of followups) {
-            const initial = (item.customer.company_name || 'U')[0].toUpperCase();
+            const cName = displayCompanyName(item.customer.company_name);
+            const initial = (cName || 'U')[0].toUpperCase();
             const contactText = item.contact_count === 1 ? '1 contact' : `${item.contact_count} contacts`;
             
             let statusBadge;
@@ -473,7 +905,7 @@
                             ${initial}
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(item.customer.company_name)}</p>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">${escapeHtml(cName)}</p>
                             <p class="text-xs text-gray-500 dark:text-gray-400">${contactText}</p>
                         </div>
                     </div>
@@ -507,37 +939,57 @@
         let html = '';
         for (const item of customers) {
             const customer = item.customer;
-            const initial = (customer.company_name || 'U')[0].toUpperCase();
+            const cName = displayCompanyName(customer.company_name);
+            const initial = (cName || 'U')[0].toUpperCase();
             const domain = customer.domain ? `<div class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(customer.domain)}</div>` : '';
             const industry = customer.industry || 'Unknown';
             const lastActivity = item.last_activity ? item.last_activity.substring(0, 10) : 'No activity';
             
+            const isSelected = mergeSelection.has(customer.assistant_id);
             html += `
-                <tr class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors customer-row cursor-pointer"
-                    data-href="/customer/${customer.assistant_id}">
+                <tr class="group hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors customer-row cursor-pointer${isSelected ? ' bg-bb-blue/5 dark:bg-bb-blue/10' : ''}"
+                    data-href="/customer/${customer.assistant_id}"
+                    data-assistant-id="${customer.assistant_id}"
+                    data-company-name="${escapeHtml(cName)}"
+                    data-domain="${escapeHtml(customer.domain || '')}"
+                    data-industry="${escapeHtml(customer.industry || '')}"
+                    data-size="${escapeHtml(customer.size || '')}">
                     <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="sr-only sort-value" data-key="company">${escapeHtml(cName)}</span>
                         <div class="flex items-center">
-                            <div class="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                ${initial}
-                            </div>
+                            <button type="button"
+                                    class="merge-avatar w-10 h-10 flex-shrink-0 rounded-full flex items-center justify-center font-semibold text-sm transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-bb-blue focus:ring-offset-2 dark:focus:ring-offset-bb-phantom ${isSelected
+                                        ? 'bg-bb-blue text-white ring-2 ring-bb-blue ring-offset-2 dark:ring-offset-bb-phantom'
+                                        : 'bg-gradient-to-br from-bb-blue to-bb-steel text-white'}"
+                                    data-assistant-id="${customer.assistant_id}"
+                                    data-initial="${initial}"
+                                    title="Click to select for merge">
+                                ${isSelected
+                                    ? '<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>'
+                                    : initial}
+                            </button>
                             <div class="ml-4">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white customer-name">
-                                    ${escapeHtml(customer.company_name)}
+                                    ${escapeHtml(cName)}
                                 </div>
                                 ${domain}
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="sr-only sort-value" data-key="industry">${escapeHtml(industry)}</span>
                         <span class="badge-gray">${escapeHtml(industry)}</span>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <span class="sr-only sort-value" data-key="opportunities">${item.opportunity_count}</span>
                         ${item.opportunity_count}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
+                        <span class="sr-only sort-value" data-key="activities">${item.activity_count}</span>
                         ${item.activity_count}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        <span class="sr-only sort-value" data-key="last_activity">${lastActivity}</span>
                         ${lastActivity}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
@@ -552,7 +1004,7 @@
                             <button class="delete-customer-btn p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                                     title="Delete customer"
                                     data-assistant-id="${customer.assistant_id}"
-                                    data-company-name="${escapeHtml(customer.company_name)}">
+                                    data-company-name="${escapeHtml(cName)}">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
@@ -568,6 +1020,14 @@
         
         // Attach event listeners to new rows
         attachCustomerRowListeners();
+        attachMergeAvatarListeners();
+        attachSortListeners();
+
+        // Re-apply active sort after re-render (e.g. after delete)
+        reapplySort();
+
+        // Restore merge toolbar state
+        updateMergeToolbar();
     }
 
     function escapeHtml(text) {
@@ -577,12 +1037,18 @@
         return div.innerHTML;
     }
 
+    /** Strip trailing 6-char hex dedup suffix from company names (e.g. "Unknown Company 610fcb"). */
+    function displayCompanyName(name) {
+        if (!name) return 'Unknown';
+        return name.replace(/\s+[0-9a-f]{6}$/i, '');
+    }
+
     function attachCustomerRowListeners() {
         // Customer row click navigation
         document.querySelectorAll('.customer-row').forEach(function(row) {
             row.addEventListener('click', function(e) {
-                // Don't navigate if clicking on action buttons
-                if (e.target.closest('.edit-customer-btn') || e.target.closest('.delete-customer-btn')) {
+                // Don't navigate if clicking on action buttons or merge avatar
+                if (e.target.closest('.edit-customer-btn') || e.target.closest('.delete-customer-btn') || e.target.closest('.merge-avatar')) {
                     return;
                 }
                 const href = this.dataset.href;
@@ -609,35 +1075,120 @@
                     return;
                 }
 
-                // Show loading spinner and hide table
-                document.getElementById('customers-table-container').classList.add('hidden');
-                document.getElementById('customers-loading').classList.remove('hidden');
+                // Remove from merge selection if selected
+                mergeSelection.delete(assistantId);
+                updateMergeToolbar();
 
-                fetch(`/api/customers/${assistantId}`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        showToast(data.error, 'error');
-                        // Hide loading, show table again
-                        document.getElementById('customers-loading').classList.add('hidden');
-                        document.getElementById('customers-table-container').classList.remove('hidden');
-                    } else {
-                        showToast('Customer deleted successfully', 'success');
-                        // Reload dashboard data to refresh everything
-                        loadDashboardData();
+                if (dashboardData && dashboardData.customers) {
+                    dashboardData.customers = dashboardData.customers.filter(
+                        item => item.customer.assistant_id !== assistantId
+                    );
+                    if (dashboardData.todays_followups) {
+                        dashboardData.todays_followups = dashboardData.todays_followups.filter(
+                            item => item.customer.assistant_id !== assistantId
+                        );
                     }
-                })
-                .catch(() => {
-                    showToast('Error deleting customer', 'error');
-                    // Hide loading, show table again
-                    document.getElementById('customers-loading').classList.add('hidden');
-                    document.getElementById('customers-table-container').classList.remove('hidden');
-                });
+                    dashboardData.customer_count = dashboardData.customers.length;
+                    renderDashboard(dashboardData);
+                } else {
+                    const row = this.closest('tr');
+                    if (row) {
+                        row.remove();
+                    }
+                }
+
+                try {
+                    const response = await fetch(`/api/customers/${assistantId}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Failed to delete customer');
+                    }
+                    showToast('Customer deleted successfully', 'success');
+                } catch (err) {
+                    showToast(err.message || 'Error deleting customer', 'error');
+                    loadDashboardData();
+                }
             });
         });
+    }
+
+    // ========================================
+    // Table Sorting
+    // ========================================
+    function attachSortListeners() {
+        document.querySelectorAll('.table-sort').forEach(btn => {
+            // Remove old listeners by cloning
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+
+            newBtn.addEventListener('click', function() {
+                const key = this.dataset.key;
+                const nextDir = sortState[key] === 'asc' ? 'desc' : 'asc';
+
+                // Reset all sort states and indicators
+                Object.keys(sortState).forEach(k => delete sortState[k]);
+                sortState[key] = nextDir;
+
+                // Update sort indicator arrows on all buttons
+                document.querySelectorAll('.table-sort').forEach(b => {
+                    const arrow = b.querySelector('.sort-arrow');
+                    if (arrow) arrow.remove();
+                });
+
+                const arrow = document.createElement('span');
+                arrow.className = 'sort-arrow text-bb-blue dark:text-bb-phantomLight';
+                arrow.textContent = nextDir === 'asc' ? ' ↑' : ' ↓';
+                this.appendChild(arrow);
+
+                sortTableRows(document.getElementById('customer-table-body'), key, nextDir);
+            });
+        });
+    }
+
+    function reapplySort() {
+        const activeKey = Object.keys(sortState)[0];
+        if (!activeKey) return;
+        const direction = sortState[activeKey];
+
+        // Re-sort the rows
+        sortTableRows(document.getElementById('customer-table-body'), activeKey, direction);
+
+        // Re-apply the arrow indicator to the correct button
+        document.querySelectorAll('.table-sort').forEach(b => {
+            const arrow = b.querySelector('.sort-arrow');
+            if (arrow) arrow.remove();
+            if (b.dataset.key === activeKey) {
+                const span = document.createElement('span');
+                span.className = 'sort-arrow text-bb-blue dark:text-bb-phantomLight';
+                span.textContent = direction === 'asc' ? ' ↑' : ' ↓';
+                b.appendChild(span);
+            }
+        });
+    }
+
+    function sortTableRows(body, key, direction) {
+        const rows = Array.from(body.querySelectorAll('tr'));
+        rows.sort((a, b) => {
+            const aValue = getSortValue(a, key);
+            const bValue = getSortValue(b, key);
+            if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+            if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
+        rows.forEach(row => body.appendChild(row));
+    }
+
+    function getSortValue(row, key) {
+        const valueEl = row.querySelector(`.sort-value[data-key="${key}"]`);
+        const rawValue = valueEl ? valueEl.textContent.trim() : '';
+        const numericValue = Number(rawValue);
+        if (!Number.isNaN(numericValue) && rawValue !== '') {
+            return numericValue;
+        }
+        return rawValue.toLowerCase();
     }
 
     // Customer search
@@ -650,6 +1201,8 @@
                 row.style.display = name.includes(query) ? '' : 'none';
             }
         });
+        // Update select-all state after filtering
+        updateMergeToolbar();
     });
 
     // Start loading data immediately
@@ -664,6 +1217,91 @@
 
     function hideIngestModal() {
         document.getElementById('ingest-modal').classList.add('hidden');
+    }
+
+    let bulkUploadInProgress = false;
+    let bulkUploadDone = false;
+    let bulkUploadStopped = false;
+    let bulkReportId = null;
+
+    // Warn user before navigating away during processing
+    window.addEventListener('beforeunload', (e) => {
+        if (bulkUploadInProgress) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+
+    function showBulkUploadModal() {
+        document.getElementById('bulk-upload-modal').classList.remove('hidden');
+    }
+
+    function hideBulkUploadModal() {
+        // Block closing while still processing; allow once done
+        if (bulkUploadInProgress && !bulkUploadDone) return;
+        document.getElementById('bulk-upload-modal').classList.add('hidden');
+        // If done, also hide the pill and fully reset
+        document.getElementById('bulk-progress-pill').classList.add('hidden');
+        resetBulkUploadModal();
+    }
+
+    function minimizeBulkModal() {
+        // Hide modal overlay, show floating pill
+        document.getElementById('bulk-upload-modal').classList.add('hidden');
+        document.getElementById('bulk-progress-pill').classList.remove('hidden');
+    }
+
+    function expandBulkModal() {
+        // Show modal overlay, hide floating pill
+        document.getElementById('bulk-progress-pill').classList.add('hidden');
+        document.getElementById('bulk-upload-modal').classList.remove('hidden');
+    }
+
+    function stopBulkUpload() {
+        // Signal the processing loop to stop after the current row
+        bulkUploadStopped = true;
+        const btn = document.getElementById('bulk-stop-btn');
+        btn.disabled = true;
+        btn.textContent = 'Stopping...';
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    function resetBulkUploadModal() {
+        bulkUploadInProgress = false;
+        bulkUploadDone = false;
+        bulkUploadStopped = false;
+        bulkReportId = null;
+        document.getElementById('bulk-upload-form-section').classList.remove('hidden');
+        document.getElementById('bulk-upload-progress-section').classList.add('hidden');
+        document.getElementById('bulk-upload-close-btn').classList.remove('hidden');
+        document.getElementById('bulk-upload-minimize-btn').classList.add('hidden');
+        document.getElementById('bulk-progress-complete').classList.add('hidden');
+        document.getElementById('bulk-progress-status').innerHTML = '';
+        const bar = document.getElementById('bulk-progress-bar');
+        bar.style.width = '3%';
+        bar.classList.remove('bulk-bar-done');
+        document.getElementById('bulk-progress-pct').textContent = '0%';
+        document.getElementById('bulk-progress-label').textContent = 'Preparing...';
+        document.getElementById('bulk-upload-backdrop').onclick = hideBulkUploadModal;
+        document.getElementById('bulk-csv-file').value = '';
+        // Reset pill state
+        const pill = document.getElementById('bulk-progress-pill');
+        pill.classList.add('hidden');
+        pill.onclick = expandBulkModal;
+        document.getElementById('pill-spinner').classList.remove('hidden');
+        document.getElementById('pill-check').classList.add('hidden');
+        document.getElementById('pill-label').textContent = 'Processing...';
+        // Reset stop button
+        const stopBtn = document.getElementById('bulk-stop-btn');
+        stopBtn.disabled = false;
+        stopBtn.innerHTML = `
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+            </svg>
+            Stop &amp; generate report`;
+        stopBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        document.getElementById('bulk-stop-section').classList.remove('hidden');
     }
 
     function showRecordModal() {
@@ -701,6 +1339,21 @@
         } else {
             newBadge.classList.add('hidden');
             document.getElementById('success-view-btn-text').textContent = 'View Customer';
+        }
+
+        // Show/hide teammate detection notice
+        const teammatesEl = document.getElementById('success-teammates');
+        const teammatesText = document.getElementById('success-teammates-text');
+        const teammates = (data.detected_teammates || []);
+        if (teammates.length > 0) {
+            const names = teammates.map(t => t.user_name).join(', ');
+            teammatesText.textContent =
+                names + (teammates.length === 1
+                    ? ' was recognized as a team member and was not added as a customer contact. This meeting has been linked to their account.'
+                    : ' were recognized as team members and were not added as customer contacts. This meeting has been linked to their accounts.');
+            teammatesEl.classList.remove('hidden');
+        } else {
+            teammatesEl.classList.add('hidden');
         }
         
         document.getElementById('success-modal').classList.remove('hidden');
@@ -1315,22 +1968,18 @@
         
         // Show loading state
         submitBtn.disabled = true;
-        submitText.textContent = 'Processing...';
+        submitText.classList.add('invisible');
         spinner.classList.remove('hidden');
-        
-        const contactHints = form.contact_hints.value.split(',').map(s => s.trim()).filter(s => s);
         
         const payload = {
             transcript: form.transcript.value,
             metadata: {
-                company_hint: form.company_hint.value || null,
-                call_type: form.call_type.value,
-                contact_hints: contactHints
+                call_type: form.call_type.value
             }
         };
         
         try {
-            const response = await fetch('/api/ingest', {
+            const response = await fetch('/api/ingest/multi', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -1340,7 +1989,11 @@
             
             if (response.ok) {
                 hideIngestModal();
-                showSuccessModal(data);
+                if (data.report_id) {
+                    window.location.href = `/report/${data.report_id}`;
+                } else {
+                    showSuccessModal(data);
+                }
             } else {
                 showToast(data.error, 'error');
             }
@@ -1348,9 +2001,315 @@
             showToast(err.message, 'error');
         } finally {
             submitBtn.disabled = false;
-            submitText.textContent = 'Process Transcript';
+            submitText.classList.remove('invisible');
             spinner.classList.add('hidden');
         }
+    }
+
+    // ========================================
+    // CSV Parser
+    // ========================================
+    function parseCSV(text) {
+        const rows = [];
+        let i = 0;
+        const len = text.length;
+
+        while (i < len) {
+            const row = [];
+            while (i < len) {
+                let field = '';
+                if (i < len && text[i] === '"') {
+                    i++;
+                    while (i < len) {
+                        if (text[i] === '"') {
+                            if (i + 1 < len && text[i + 1] === '"') {
+                                field += '"';
+                                i += 2;
+                            } else {
+                                i++;
+                                break;
+                            }
+                        } else {
+                            field += text[i];
+                            i++;
+                        }
+                    }
+                } else {
+                    while (i < len && text[i] !== ',' && text[i] !== '\n' && text[i] !== '\r') {
+                        field += text[i];
+                        i++;
+                    }
+                }
+                row.push(field.trim());
+                if (i < len && text[i] === ',') {
+                    i++;
+                } else {
+                    break;
+                }
+            }
+            if (i < len && text[i] === '\r') i++;
+            if (i < len && text[i] === '\n') i++;
+            if (row.length > 0 && !(row.length === 1 && row[0] === '')) {
+                rows.push(row);
+            }
+        }
+
+        if (rows.length === 0) return { fieldnames: [], rows: [] };
+
+        // Detect if the first row looks like headers or data
+        const firstRow = rows[0];
+        const looksLikeHeaders = firstRow.every(cell =>
+            cell.length < 60 && !cell.includes('@') && !cell.includes(';')
+        );
+
+        let fieldnames;
+        let dataStart;
+
+        if (looksLikeHeaders && rows.length >= 2) {
+            fieldnames = firstRow;
+            dataStart = 1;
+        } else {
+            // Headerless CSV — infer column purpose from all rows
+            fieldnames = firstRow.map((_, colIdx) => {
+                // Check if any cell in this column contains an @ sign → email
+                const hasEmail = rows.some(r => colIdx < r.length && r[colIdx].includes('@'));
+                if (hasEmail) return 'email';
+                // First column is typically the company
+                if (colIdx === 0) return 'company';
+                // Short columns with semicolons → likely contacts
+                const avgLen = rows.reduce((s, r) => s + (r[colIdx] || '').length, 0) / rows.length;
+                if (avgLen < 120 && rows.some(r => (r[colIdx] || '').includes(';'))) return 'contacts';
+                // Long text → notes
+                if (avgLen > 120) return 'notes';
+                return `column_${colIdx + 1}`;
+            });
+            dataStart = 0; // all rows are data
+        }
+
+        const dataRows = rows.slice(dataStart).map(values => {
+            const obj = {};
+            fieldnames.forEach((name, idx) => {
+                obj[name] = idx < values.length ? values[idx] : '';
+            });
+            return obj;
+        });
+
+        return { fieldnames, rows: dataRows };
+    }
+
+    // ========================================
+    // Bulk CSV upload (row-by-row with progress)
+    // ========================================
+    function addBulkProgressStatus(message, success, assistantId) {
+        const container = document.getElementById('bulk-progress-status');
+        const div = document.createElement('div');
+        div.className = 'flex items-center gap-2 text-xs';
+
+        const escaped = escapeHtml(message);
+        const label = (success && assistantId)
+            ? `<a href="/customer/${encodeURIComponent(assistantId)}" target="_blank" class="text-bb-blue hover:text-bb-blueDark dark:text-bb-blue hover:underline truncate">${escaped}</a>`
+            : success
+                ? `<span class="text-gray-600 dark:text-gray-400 truncate">${escaped}</span>`
+                : `<span class="text-red-600 dark:text-red-400 truncate">${escaped}</span>`;
+
+        if (success) {
+            div.innerHTML = `
+                <svg class="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                ${label}
+            `;
+        } else {
+            div.innerHTML = `
+                <svg class="w-3.5 h-3.5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                ${label}
+            `;
+        }
+
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    async function submitBulkUpload(e) {
+        e.preventDefault();
+
+        const fileInput = document.getElementById('bulk-csv-file');
+        const file = fileInput.files[0];
+        if (!file) {
+            showToast('Please select a CSV file', 'error');
+            return;
+        }
+
+        // Read and parse CSV client-side
+        const text = await file.text();
+        const csv = parseCSV(text);
+
+        if (csv.rows.length === 0) {
+            showToast('CSV file contains no data rows', 'error');
+            return;
+        }
+
+        // Switch to progress view
+        bulkUploadInProgress = true;
+        bulkUploadDone = false;
+        bulkUploadStopped = false;
+        document.getElementById('bulk-upload-form-section').classList.add('hidden');
+        document.getElementById('bulk-upload-progress-section').classList.remove('hidden');
+        document.getElementById('bulk-upload-close-btn').classList.add('hidden');
+        document.getElementById('bulk-upload-minimize-btn').classList.remove('hidden');
+        document.getElementById('bulk-upload-backdrop').onclick = null;
+
+        const totalRows = csv.rows.length;
+        const allItems = [];
+        const allFollowups = [];
+        let successCount = 0;
+        let errorCount = 0;
+        let processedRows = 0;
+
+        for (let i = 0; i < totalRows; i++) {
+            // Check if user requested stop
+            if (bulkUploadStopped) {
+                addBulkProgressStatus(`Stopped — skipped ${totalRows - i} remaining rows`, false);
+                break;
+            }
+
+            // Update progress bar (min 3% so stripe is visible)
+            const pct = Math.round((i / totalRows) * 100);
+            document.getElementById('bulk-progress-bar').style.width = `${Math.max(3, pct)}%`;
+            document.getElementById('bulk-progress-pct').textContent = `${pct}%`;
+            document.getElementById('bulk-progress-label').textContent = `Processing row ${i + 1} of ${totalRows}...`;
+            // Sync floating pill label
+            document.getElementById('pill-label').textContent = `Processing ${i + 1}/${totalRows}...`;
+
+            try {
+                const response = await fetch('/api/ingest/opps/bulk/row', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        row: csv.rows[i],
+                        fieldnames: csv.fieldnames,
+                        row_number: i + 1,
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    if (data.items) allItems.push(...data.items);
+                    if (data.followups) allFollowups.push(...data.followups);
+                    successCount++;
+
+                    const companyName = data.items?.[0]?.company_name || `Row ${i + 1}`;
+                    const assistantId = data.items?.[0]?.assistant_id;
+                    addBulkProgressStatus(companyName, true, assistantId);
+                } else {
+                    errorCount++;
+                    addBulkProgressStatus(`Row ${i + 1}: ${data.error || 'Failed'}`, false);
+                }
+            } catch (err) {
+                errorCount++;
+                addBulkProgressStatus(`Row ${i + 1}: ${err.message || 'Network error'}`, false);
+            }
+
+            processedRows = i + 1;
+
+            // Refresh dashboard cards behind the modal
+            loadDashboardData();
+        }
+
+        // Hide stop button
+        document.getElementById('bulk-stop-section').classList.add('hidden');
+
+        // Show completion — stop candy-stripe animation
+        const bar = document.getElementById('bulk-progress-bar');
+        const finalPct = Math.round((processedRows / totalRows) * 100);
+        bar.style.width = `${finalPct}%`;
+        bar.classList.add('bulk-bar-done');
+        document.getElementById('bulk-progress-pct').textContent = `${finalPct}%`;
+
+        const stoppedLabel = bulkUploadStopped ? ' (stopped)' : '';
+        document.getElementById('bulk-progress-label').textContent =
+            `Processed ${processedRows} of ${totalRows} rows — ${successCount} success, ${errorCount} errors${stoppedLabel}`;
+
+        // Mark done so modal can be closed and pill shows completion
+        bulkUploadDone = true;
+        document.getElementById('bulk-upload-close-btn').classList.remove('hidden');
+        document.getElementById('bulk-upload-backdrop').onclick = hideBulkUploadModal;
+
+        // Update completion banner text for stopped vs complete
+        const banner = document.getElementById('bulk-complete-banner');
+        const bannerText = document.getElementById('bulk-complete-text');
+        if (bulkUploadStopped) {
+            banner.classList.remove('text-green-600', 'dark:text-green-400');
+            banner.classList.add('text-yellow-600', 'dark:text-yellow-400');
+            bannerText.textContent = `Stopped — ${successCount} of ${totalRows} rows ingested`;
+        } else {
+            banner.classList.remove('text-yellow-600', 'dark:text-yellow-400');
+            banner.classList.add('text-green-600', 'dark:text-green-400');
+            bannerText.textContent = 'All rows processed';
+        }
+
+        // Create report (with whatever was processed)
+        const reportLabel = bulkUploadStopped
+            ? `${file.name || 'CSV Upload'} (partial — ${processedRows}/${totalRows})`
+            : (file.name || 'CSV Upload');
+
+        try {
+            const reportResponse = await fetch('/api/ingest/opps/bulk/report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: allItems,
+                    followups: allFollowups,
+                    source_label: reportLabel,
+                })
+            });
+
+            const reportData = await reportResponse.json();
+
+            if (reportResponse.ok && reportData.report_id) {
+                bulkReportId = reportData.report_id;
+
+                // Update modal completion section with report link
+                const reportBtn = document.getElementById('bulk-view-report-btn');
+                reportBtn.href = `/report/${reportData.report_id}`;
+                document.getElementById('bulk-progress-complete').classList.remove('hidden');
+
+                // Update pill to done state
+                document.getElementById('pill-spinner').classList.add('hidden');
+                document.getElementById('pill-check').classList.remove('hidden');
+                const pillText = bulkUploadStopped
+                    ? `Stopped (${successCount}/${totalRows}) — View Report`
+                    : 'Bulk complete — View Report';
+                document.getElementById('pill-label').textContent = pillText;
+                document.getElementById('bulk-progress-pill').onclick = () => {
+                    window.location.href = `/report/${reportData.report_id}`;
+                };
+
+                const toastMsg = bulkUploadStopped
+                    ? `Stopped — ${successCount} of ${totalRows} rows ingested`
+                    : `Bulk upload complete — ${successCount} processed`;
+                showToast(toastMsg, 'success');
+            } else {
+                showToast('Upload complete but report creation failed', 'warning');
+                document.getElementById('bulk-progress-complete').classList.remove('hidden');
+                // Update pill to generic done
+                document.getElementById('pill-spinner').classList.add('hidden');
+                document.getElementById('pill-check').classList.remove('hidden');
+                document.getElementById('pill-label').textContent = 'Bulk complete';
+            }
+        } catch (err) {
+            showToast('Upload complete but report creation failed: ' + err.message, 'warning');
+            document.getElementById('bulk-progress-complete').classList.remove('hidden');
+            // Update pill to generic done
+            document.getElementById('pill-spinner').classList.add('hidden');
+            document.getElementById('pill-check').classList.remove('hidden');
+            document.getElementById('pill-label').textContent = 'Bulk complete';
+        }
+
+        bulkUploadInProgress = false;
     }
 
     // ========================================
@@ -1388,11 +2347,22 @@
     // ========================================
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
+            const mergeModal = document.getElementById('merge-modal');
             const recordModal = document.getElementById('record-modal');
             const ingestModal = document.getElementById('ingest-modal');
             const successModal = document.getElementById('success-modal');
-            
-            if (!recordModal.classList.contains('hidden')) {
+            const bulkModal = document.getElementById('bulk-upload-modal');
+
+            if (!mergeModal.classList.contains('hidden')) {
+                hideMergeModal();
+            } else if (!bulkModal.classList.contains('hidden')) {
+                if (bulkUploadInProgress && !bulkUploadDone) {
+                    // Still processing — minimize instead of blocking
+                    minimizeBulkModal();
+                } else {
+                    hideBulkUploadModal();
+                }
+            } else if (!recordModal.classList.contains('hidden')) {
                 hideRecordModal();
             } else if (!ingestModal.classList.contains('hidden')) {
                 hideIngestModal();

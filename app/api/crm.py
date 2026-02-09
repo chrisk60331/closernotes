@@ -8,6 +8,7 @@ from app.schemas.crm import ContactCreate, OpportunityCreate, OpportunityUpdate
 from app.services.backboard import BackboardService
 from app.services.crm import CRMService
 from app.services.customer import CustomerService
+from app.services.cache_store import CacheStoreService
 
 crm_bp = Blueprint("crm", __name__)
 
@@ -58,7 +59,9 @@ def create_contact(assistant_id: str):
         async def _create():
             backboard = BackboardService()
             crm_svc = CRMService(backboard)
-            return await crm_svc.create_contact(assistant_id, data)
+            result = await crm_svc.create_contact(assistant_id, data)
+            await CacheStoreService(backboard).update_customer_summary(assistant_id)
+            return result
 
         contact = run_async(_create())
         return jsonify({"contact": contact.model_dump(mode="json")}), 201
@@ -118,7 +121,10 @@ def update_contact(assistant_id: str, contact_id: str):
         async def _update():
             backboard = BackboardService()
             crm_svc = CRMService(backboard)
-            return await crm_svc.update_contact(assistant_id, contact_id, **json_data)
+            result = await crm_svc.update_contact(assistant_id, contact_id, **json_data)
+            if result:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
+            return result
 
         contact = run_async(_update())
         if not contact:
@@ -146,7 +152,10 @@ def delete_contact(assistant_id: str, contact_id: str):
         async def _delete():
             backboard = BackboardService()
             crm_svc = CRMService(backboard)
-            return await crm_svc.delete_contact(assistant_id, contact_id)
+            result = await crm_svc.delete_contact(assistant_id, contact_id)
+            if result:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
+            return result
 
         deleted = run_async(_delete())
         if not deleted:
@@ -194,7 +203,9 @@ def create_opportunity(assistant_id: str):
         async def _create():
             backboard = BackboardService()
             crm_svc = CRMService(backboard)
-            return await crm_svc.create_opportunity(assistant_id, data)
+            result = await crm_svc.create_opportunity(assistant_id, data)
+            await CacheStoreService(backboard).update_customer_summary(assistant_id)
+            return result
 
         opportunity = run_async(_create())
         return jsonify({"opportunity": opportunity.model_dump(mode="json")}), 201
@@ -259,7 +270,10 @@ def update_opportunity(assistant_id: str, opportunity_id: str):
         async def _update():
             backboard = BackboardService()
             crm_svc = CRMService(backboard)
-            return await crm_svc.update_opportunity(assistant_id, opportunity_id, data)
+            result = await crm_svc.update_opportunity(assistant_id, opportunity_id, data)
+            if result:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
+            return result
 
         opportunity = run_async(_update())
         if not opportunity:
@@ -287,7 +301,10 @@ def delete_opportunity(assistant_id: str, opportunity_id: str):
         async def _delete():
             backboard = BackboardService()
             crm_svc = CRMService(backboard)
-            return await crm_svc.delete_opportunity(assistant_id, opportunity_id)
+            result = await crm_svc.delete_opportunity(assistant_id, opportunity_id)
+            if result:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
+            return result
 
         deleted = run_async(_delete())
         if not deleted:
@@ -385,7 +402,10 @@ def set_customer_followup(assistant_id: str):
         async def _set():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
-            return await customer_svc.set_customer_followup_date(assistant_id, followup_date)
+            result = await customer_svc.set_customer_followup_date(assistant_id, followup_date)
+            if result:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
+            return result
 
         customer = run_async(_set())
         if not customer:

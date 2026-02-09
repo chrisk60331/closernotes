@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from app.schemas.enums import ActivityType, ContactMethod, CustomerSize, OpportunityStage
+from app.schemas.enums import ActivityType, ContactMethod, CustomerSize, LeadSource, OpportunityStage
 
 
 class Customer(BaseModel):
@@ -17,6 +17,8 @@ class Customer(BaseModel):
     industry: str | None = Field(None, description="Industry vertical")
     size: CustomerSize | None = Field(None, description="Company size category")
     assistant_id: str = Field(..., description="Backboard assistant ID for this customer")
+    lead_source: LeadSource | None = Field(None, description="How this customer was first sourced")
+    lead_source_detail: str | None = Field(None, description="Extra context for lead source (e.g. referrer name, event name)")
     next_followup_date: date | None = Field(None, description="Next suggested follow-up date")
     assigned_user_id: str | None = Field(None, description="Assigned user ID for this customer")
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -84,6 +86,8 @@ class Opportunity(BaseModel):
         50, ge=0, le=100, description="Win probability percentage (0-100)"
     )
     competitors: list[str] = Field(default_factory=list, description="Competing vendors")
+    lead_source: LeadSource | None = Field(None, description="How this deal was sourced")
+    lead_source_detail: str | None = Field(None, description="Extra context for lead source")
     loss_reason: str | None = Field(None, description="Reason if closed-lost")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -159,6 +163,10 @@ class Activity(BaseModel):
     action_items: list[ActionItem] = Field(
         default_factory=list, description="Action items from this activity"
     )
+    teammate_user_ids: list[str] = Field(
+        default_factory=list,
+        description="IDs of teammate users who were in this meeting",
+    )
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     def to_memory_content(self) -> str:
@@ -185,6 +193,8 @@ class CustomerCreate(BaseModel):
     domain: str | None = None
     industry: str | None = None
     size: CustomerSize | None = None
+    lead_source: LeadSource | None = None
+    lead_source_detail: str | None = None
 
 
 class ContactCreate(BaseModel):
@@ -211,6 +221,8 @@ class OpportunityCreate(BaseModel):
     close_date_estimate: date | None = None
     confidence: int = 50
     competitors: list[str] = Field(default_factory=list)
+    lead_source: LeadSource | None = None
+    lead_source_detail: str | None = None
 
 
 class OpportunityUpdate(BaseModel):
@@ -222,6 +234,8 @@ class OpportunityUpdate(BaseModel):
     close_date_estimate: date | None = None
     confidence: int | None = None
     competitors: list[str] | None = None
+    lead_source: LeadSource | None = None
+    lead_source_detail: str | None = None
     loss_reason: str | None = None
 
 
@@ -255,5 +269,7 @@ class CustomerUpdate(BaseModel):
     domain: str | None = None
     industry: str | None = None
     size: CustomerSize | None = None
+    lead_source: LeadSource | None = None
+    lead_source_detail: str | None = None
     next_followup_date: date | None = None
     assigned_user_id: str | None = None

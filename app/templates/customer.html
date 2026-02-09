@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ customer.company_name if customer else 'Customer' }} - CloserNotes{% endblock %}
+{% block title %}{{ (customer.company_name|display_name) if customer else 'Customer' }} - CloserNotes{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -16,7 +16,7 @@
         <ol class="flex items-center space-x-2 text-sm">
             <li><a href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Dashboard</a></li>
             <li class="text-gray-400">/</li>
-            <li class="text-gray-900 dark:text-white font-medium">{{ customer.company_name }}</li>
+            <li class="text-gray-900 dark:text-white font-medium">{{ customer.company_name|display_name }}</li>
         </ol>
     </nav>
 
@@ -32,13 +32,13 @@
     <div class="flex items-start justify-between mb-8">
         <div class="flex items-center">
             <div class="w-16 h-16 bg-bb-blue rounded-xl flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-                {{ customer.company_name[0] | upper }}
+                {{ (customer.company_name|display_name)[0] | upper }}
             </div>
             <div class="ml-4">
                 <!-- Display mode -->
                 <div id="customer-display-mode">
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ customer.company_name }}</h1>
-                    <div class="flex items-center mt-1 space-x-3">
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ customer.company_name|display_name }}</h1>
+                    <div class="flex items-center mt-1 space-x-3 flex-wrap gap-y-1">
                         {% if customer.domain %}
                         <span class="text-gray-500 dark:text-gray-400">{{ customer.domain }}</span>
                         {% endif %}
@@ -48,6 +48,26 @@
                         {% if customer.size %}
                         <span class="badge-gray">{{ customer.size }}</span>
                         {% endif %}
+                        {% if customer.lead_source == 'referral' %}
+                        <span class="badge-green">Referral</span>
+                        {% elif customer.lead_source == 'linkedin' %}
+                        <span class="badge-blue">LinkedIn</span>
+                        {% elif customer.lead_source == 'vc_intro' %}
+                        <span class="badge-purple">VC Intro</span>
+                        {% elif customer.lead_source == 'cold_outreach' %}
+                        <span class="badge-gray">Cold Outreach</span>
+                        {% elif customer.lead_source == 'inbound_website' %}
+                        <span class="bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Inbound Website</span>
+                        {% elif customer.lead_source == 'conference_event' %}
+                        <span class="badge-yellow">Conference / Event</span>
+                        {% elif customer.lead_source == 'partner' %}
+                        <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Partner</span>
+                        {% elif customer.lead_source == 'other' %}
+                        <span class="badge-gray">Other</span>
+                        {% endif %}
+                        {% if customer.lead_source_detail %}
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ customer.lead_source_detail }}</span>
+                        {% endif %}
                     </div>
                 </div>
                 <!-- Edit mode -->
@@ -56,7 +76,7 @@
                         <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Company Name</label>
                         <input type="text" id="edit-company-name" 
                                class="input-field text-xl font-bold" 
-                               value="{{ customer.company_name }}"
+                               value="{{ customer.company_name|display_name }}"
                                placeholder="Company Name">
                     </div>
                     <div class="grid grid-cols-3 gap-3">
@@ -85,6 +105,29 @@
                             </select>
                         </div>
                     </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Lead Source</label>
+                            <select id="edit-lead-source" class="input-field text-sm">
+                                <option value="" {% if not customer.lead_source %}selected{% endif %}>-- Not set --</option>
+                                <option value="referral" {% if customer.lead_source == 'referral' %}selected{% endif %}>Referral</option>
+                                <option value="linkedin" {% if customer.lead_source == 'linkedin' %}selected{% endif %}>LinkedIn</option>
+                                <option value="vc_intro" {% if customer.lead_source == 'vc_intro' %}selected{% endif %}>VC Intro</option>
+                                <option value="cold_outreach" {% if customer.lead_source == 'cold_outreach' %}selected{% endif %}>Cold Outreach</option>
+                                <option value="inbound_website" {% if customer.lead_source == 'inbound_website' %}selected{% endif %}>Inbound Website</option>
+                                <option value="conference_event" {% if customer.lead_source == 'conference_event' %}selected{% endif %}>Conference / Event</option>
+                                <option value="partner" {% if customer.lead_source == 'partner' %}selected{% endif %}>Partner</option>
+                                <option value="other" {% if customer.lead_source == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Source Detail</label>
+                            <input type="text" id="edit-lead-source-detail" 
+                                   class="input-field text-sm" 
+                                   value="{{ customer.lead_source_detail or '' }}"
+                                   placeholder="Referrer name, event, etc.">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -100,7 +143,7 @@
                     class="p-2 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                     title="Delete customer"
                     data-assistant-id="{{ customer.assistant_id }}"
-                    data-company-name="{{ customer.company_name }}">
+                    data-company-name="{{ customer.company_name|display_name }}">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                 </svg>
@@ -671,7 +714,7 @@
                             <div>
                                 <label for="meeting-company-hint" class="label">Company Name</label>
                                 <input type="text" id="meeting-company-hint" name="company_hint" class="input-field" 
-                                       value="{{ customer.company_name }}" readonly>
+                                       value="{{ customer.company_name|display_name }}" readonly>
                             </div>
                             <div>
                                 <label for="meeting-call-type" class="label">Call Type</label>
@@ -693,12 +736,14 @@
                     
                     <div class="mt-6 flex justify-end space-x-3">
                         <button type="button" onclick="hideNewMeetingModal()" class="btn-secondary">Cancel</button>
-                        <button type="submit" class="btn-primary" id="meeting-ingest-submit">
+                        <button type="submit" class="btn-primary relative" id="meeting-ingest-submit">
                             <span id="meeting-ingest-submit-text">Process Transcript</span>
-                            <svg id="meeting-ingest-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
+                            <span id="meeting-ingest-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                                <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </span>
                         </button>
                     </div>
                 </form>
@@ -744,12 +789,14 @@
                 
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" onclick="hideAddActionItemModal()" class="btn-secondary">Cancel</button>
-                    <button type="submit" class="btn-primary" id="add-action-item-submit">
+                    <button type="submit" class="btn-primary relative" id="add-action-item-submit">
                         <span id="add-action-item-submit-text">Add Item</span>
-                        <svg id="add-action-item-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <span id="add-action-item-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
                     </button>
                 </div>
             </form>
@@ -782,7 +829,7 @@
         
         // Show loading state
         submitBtn.disabled = true;
-        submitText.textContent = 'Adding...';
+        submitText.classList.add('invisible');
         spinner.classList.remove('hidden');
         
         const payload = {
@@ -812,7 +859,7 @@
             showToast(err.message, 'error');
         } finally {
             submitBtn.disabled = false;
-            submitText.textContent = 'Add Item';
+            submitText.classList.remove('invisible');
             spinner.classList.add('hidden');
         }
     }
@@ -832,6 +879,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const editDomain = document.getElementById('edit-domain');
     const editIndustry = document.getElementById('edit-industry');
     const editSize = document.getElementById('edit-size');
+    const editLeadSource = document.getElementById('edit-lead-source');
+    const editLeadSourceDetail = document.getElementById('edit-lead-source-detail');
     
     let customerEditMode = false;
     let customerPendingUpdates = {};
@@ -895,6 +944,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (data.size) {
                 html += `<span class="badge-gray">${data.size}</span>`;
+            }
+            // Lead source badge
+            const lsLabels = {
+                referral: ['Referral', 'badge-green'],
+                linkedin: ['LinkedIn', 'badge-blue'],
+                vc_intro: ['VC Intro', 'badge-purple'],
+                cold_outreach: ['Cold Outreach', 'badge-gray'],
+                inbound_website: ['Inbound Website', 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 text-xs font-medium px-2.5 py-0.5 rounded-full'],
+                conference_event: ['Conference / Event', 'badge-yellow'],
+                partner: ['Partner', 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs font-medium px-2.5 py-0.5 rounded-full'],
+                other: ['Other', 'badge-gray'],
+            };
+            const ls = data.lead_source;
+            if (ls && lsLabels[ls]) {
+                html += `<span class="${lsLabels[ls][1]}">${lsLabels[ls][0]}</span>`;
+            }
+            if (data.lead_source_detail) {
+                html += `<span class="text-xs text-gray-500 dark:text-gray-400">${data.lead_source_detail}</span>`;
             }
             infoDiv.innerHTML = html;
         }
@@ -978,6 +1045,16 @@ document.addEventListener('DOMContentLoaded', function() {
             queueCustomerUpdate('size', this.value || null);
         });
     }
+    if (editLeadSource) {
+        editLeadSource.addEventListener('change', function() {
+            queueCustomerUpdate('lead_source', this.value || null);
+        });
+    }
+    if (editLeadSourceDetail) {
+        editLeadSourceDetail.addEventListener('input', function() {
+            queueCustomerUpdate('lead_source_detail', this.value.trim() || null);
+        });
+    }
 
     // Delete customer from detail page
     const deleteCustomerBtn = document.getElementById('delete-customer-btn');
@@ -991,6 +1068,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            showProcessing('Deleting Customer', `Removing ${companyName}...`);
+
             fetch(`/api/customers/${assistantId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
@@ -998,13 +1077,14 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
+                    hideProcessing();
                     showToast(data.error, 'error');
                 } else {
-                    showToast('Customer deleted', 'success');
                     window.location.href = '/';
                 }
             })
             .catch(() => {
+                hideProcessing();
                 showToast('Error deleting customer', 'error');
             });
         });
@@ -1977,7 +2057,7 @@ async function submitMeetingIngest(e) {
     const spinner = document.getElementById('meeting-ingest-spinner');
     
     submitBtn.disabled = true;
-    submitText.textContent = 'Processing...';
+    submitText.classList.add('invisible');
     spinner.classList.remove('hidden');
     
     const contactHints = form.contact_hints.value.split(',').map(s => s.trim()).filter(s => s);
@@ -2011,7 +2091,7 @@ async function submitMeetingIngest(e) {
         showToast(err.message, 'error');
     } finally {
         submitBtn.disabled = false;
-        submitText.textContent = 'Process Transcript';
+        submitText.classList.remove('invisible');
         spinner.classList.add('hidden');
     }
 }

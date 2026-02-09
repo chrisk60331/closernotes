@@ -63,6 +63,7 @@ class MeetingService:
         known_contacts: list[str] | None = None,
         current_stage: str | None = None,
         previous_context: str | None = None,
+        teammate_names: list[str] | None = None,
     ) -> tuple[MeetingNotes, Activity]:
         """Process a transcript and extract structured meeting notes.
 
@@ -76,6 +77,7 @@ class MeetingService:
             known_contacts: List of known contact names
             current_stage: Current opportunity stage
             previous_context: Summary of previous meetings
+            teammate_names: Optional list of known system user names
 
         Returns:
             Tuple of (MeetingNotes, Activity) objects
@@ -87,6 +89,7 @@ class MeetingService:
             known_contacts=known_contacts,
             current_stage=current_stage,
             previous_context=previous_context,
+            teammate_names=teammate_names,
         )
 
         # Send to the customer assistant for processing
@@ -208,6 +211,7 @@ class MeetingService:
                                 preferred_contact_method=self._normalize_contact_method(
                                     s.get("preferred_contact_method")
                                 ),
+                                is_teammate=bool(s.get("is_teammate", False)),
                             )
                         )
 
@@ -244,6 +248,8 @@ class MeetingService:
                     sentiment=data.get("sentiment", "neutral"),
                     deal_stage_signal=data.get("deal_stage_signal"),
                     confidence_delta=data.get("confidence_delta", 0),
+                    lead_source=data.get("lead_source"),
+                    lead_source_detail=data.get("lead_source_detail"),
                 )
         except (json.JSONDecodeError, AttributeError, KeyError):
             pass

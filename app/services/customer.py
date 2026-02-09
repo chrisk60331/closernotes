@@ -8,8 +8,9 @@ from typing import Any
 
 from app.prompts.customer import get_customer_prompt
 from app.schemas.crm import Customer, Contact, Opportunity, Activity, PromotedActionItem
-from app.schemas.enums import CustomerSize
+from app.schemas.enums import CustomerSize, LeadSource
 from app.services.backboard import BackboardService
+from app.services.cache import CacheService, CACHE_TTLS, build_cache_key
 from app.tools.definitions import get_customer_assistant_tools
 
 
@@ -23,6 +24,7 @@ class CustomerService:
             backboard: BackboardService instance
         """
         self._backboard = backboard
+        self._cache = CacheService()
 
     def _generate_assistant_name(self, company_name: str) -> str:
         """Generate a unique assistant name for a customer.
@@ -47,6 +49,9 @@ class CustomerService:
         company_domain: str | None = None,
         industry: str | None = None,
         size: CustomerSize | None = None,
+        assigned_user_id: str | None = None,
+        lead_source: "LeadSource | None" = None,
+        lead_source_detail: str | None = None,
     ) -> Customer:
         """Create a new customer with its own assistant.
 
@@ -55,6 +60,9 @@ class CustomerService:
             company_domain: Optional company domain
             industry: Optional industry
             size: Optional company size
+            assigned_user_id: Optional user to assign
+            lead_source: How this customer was first sourced
+            lead_source_detail: Extra context for the lead source
 
         Returns:
             Created Customer object
@@ -85,6 +93,9 @@ class CustomerService:
             industry=industry,
             size=size,
             assistant_id=assistant.assistant_id,
+            lead_source=lead_source,
+            lead_source_detail=lead_source_detail,
+            assigned_user_id=assigned_user_id,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
@@ -95,6 +106,7 @@ class CustomerService:
             content=customer.to_memory_content(),
         )
 
+        self._cache.invalidate_customer(assistant.assistant_id, include_registry=True)
         return customer
 
     async def get_customer(self, assistant_id: str) -> Customer | None:
@@ -106,19 +118,30 @@ class CustomerService:
         Returns:
             Customer object if found, None otherwise
         """
-        try:
-            # Get customer data from memory
-            memories = await self._backboard.get_memories(assistant_id)
-            for memory in memories.memories:
-                try:
-                    data = json.loads(memory.content)
-                    if data.get("id") and data.get("company_name"):
-                        # This looks like a customer object
-                        return Customer.model_validate(data)
-                except (json.JSONDecodeError, ValueError):
-                    continue
-        except Exception:
-            pass
+        cache_key = build_cache_key("customer", assistant_id)
+
+        async def _build():
+            try:
+                memories = await self._backboard.get_memories(assistant_id)
+                for memory in memories.memories:
+                    try:
+                        data = json.loads(memory.content)
+                        if data.get("id") and data.get("company_name"):
+                            return Customer.model_validate(data).model_dump(mode="json")
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+            except Exception:
+                pass
+            return None
+
+        payload = await self._cache.get_or_set(
+            cache_key,
+            self._cache.with_jitter(CACHE_TTLS["customer"]),
+            _build,
+            tags=[f"customer:{assistant_id}"],
+        )
+        if payload:
+            return Customer.model_validate(payload)
         return None
 
     async def update_customer(
@@ -158,10 +181,13 @@ class CustomerService:
                         memory_id=memory.id,
                         content=updated_customer.to_memory_content(),
                     )
+                    self._cache.invalidate_customer(assistant_id)
                     return updated_customer
             except (json.JSONDecodeError, ValueError):
                 continue
 
+        if updated_customer:
+            self._cache.invalidate_customer(assistant_id)
         return updated_customer
 
     async def get_contacts(self, assistant_id: str) -> list[Contact]:
@@ -173,20 +199,30 @@ class CustomerService:
         Returns:
             List of Contact objects
         """
-        contacts = []
-        try:
-            memories = await self._backboard.get_memories(assistant_id)
-            for memory in memories.memories:
-                try:
-                    data = json.loads(memory.content)
-                    # Check if this is a contact by looking for contact-specific fields
-                    if data.get("customer_id") and data.get("name") and "is_champion" in data:
-                        contacts.append(Contact.model_validate(data))
-                except (json.JSONDecodeError, ValueError):
-                    continue
-        except Exception:
-            pass
-        return contacts
+        cache_key = build_cache_key("contacts", assistant_id)
+
+        async def _build():
+            contacts = []
+            try:
+                memories = await self._backboard.get_memories(assistant_id)
+                for memory in memories.memories:
+                    try:
+                        data = json.loads(memory.content)
+                        if data.get("customer_id") and data.get("name") and "is_champion" in data:
+                            contacts.append(Contact.model_validate(data).model_dump(mode="json"))
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+            except Exception:
+                pass
+            return contacts
+
+        payload = await self._cache.get_or_set(
+            cache_key,
+            self._cache.with_jitter(CACHE_TTLS["contacts"]),
+            _build,
+            tags=[f"customer:{assistant_id}"],
+        )
+        return [Contact.model_validate(item) for item in payload]
 
     async def add_contact(
         self,
@@ -233,6 +269,7 @@ class CustomerService:
             content=contact.to_memory_content(),
         )
 
+        self._cache.invalidate_customer(assistant_id)
         return contact
 
     async def get_opportunities(self, assistant_id: str) -> list[Opportunity]:
@@ -244,20 +281,32 @@ class CustomerService:
         Returns:
             List of Opportunity objects
         """
-        opportunities = []
-        try:
-            memories = await self._backboard.get_memories(assistant_id)
-            for memory in memories.memories:
-                try:
-                    data = json.loads(memory.content)
-                    # Check if this is an opportunity by looking for opportunity-specific fields
-                    if data.get("customer_id") and data.get("stage") and "confidence" in data:
-                        opportunities.append(Opportunity.model_validate(data))
-                except (json.JSONDecodeError, ValueError):
-                    continue
-        except Exception:
-            pass
-        return opportunities
+        cache_key = build_cache_key("opportunities", assistant_id)
+
+        async def _build():
+            opportunities = []
+            try:
+                memories = await self._backboard.get_memories(assistant_id)
+                for memory in memories.memories:
+                    try:
+                        data = json.loads(memory.content)
+                        if data.get("customer_id") and data.get("stage") and "confidence" in data:
+                            opportunities.append(
+                                Opportunity.model_validate(data).model_dump(mode="json")
+                            )
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+            except Exception:
+                pass
+            return opportunities
+
+        payload = await self._cache.get_or_set(
+            cache_key,
+            self._cache.with_jitter(CACHE_TTLS["opportunities"]),
+            _build,
+            tags=[f"customer:{assistant_id}"],
+        )
+        return [Opportunity.model_validate(item) for item in payload]
 
     async def get_activities(self, assistant_id: str) -> list[Activity]:
         """Get all activities for a customer.
@@ -268,20 +317,31 @@ class CustomerService:
         Returns:
             List of Activity objects
         """
-        activities = []
-        try:
-            memories = await self._backboard.get_memories(assistant_id)
-            for memory in memories.memories:
-                try:
-                    data = json.loads(memory.content)
-                    # Check if this is an activity by looking for activity-specific fields
-                    if data.get("thread_id") and data.get("activity_type") and data.get("summary"):
-                        activities.append(Activity.model_validate(data))
-                except (json.JSONDecodeError, ValueError):
-                    continue
-        except Exception:
-            pass
-        # Sort by date descending
+        cache_key = build_cache_key("activities", assistant_id)
+
+        async def _build():
+            activities = []
+            try:
+                memories = await self._backboard.get_memories(assistant_id)
+                for memory in memories.memories:
+                    try:
+                        data = json.loads(memory.content)
+                        if data.get("thread_id") and data.get("activity_type") and data.get("summary"):
+                            activities.append(Activity.model_validate(data))
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+            except Exception:
+                pass
+            activities.sort(key=lambda a: a.date, reverse=True)
+            return [a.model_dump(mode="json") for a in activities]
+
+        payload = await self._cache.get_or_set(
+            cache_key,
+            self._cache.with_jitter(CACHE_TTLS["activities"]),
+            _build,
+            tags=[f"customer:{assistant_id}"],
+        )
+        activities = [Activity.model_validate(item) for item in payload]
         activities.sort(key=lambda a: a.date, reverse=True)
         return activities
 
@@ -301,30 +361,44 @@ class CustomerService:
         Returns:
             List of PromotedActionItem objects sorted by created_at descending
         """
-        items = []
-        try:
-            memories = await self._backboard.get_memories(assistant_id)
-            for memory in memories.memories:
-                try:
-                    data = json.loads(memory.content)
-                    # Check if this is a promoted action item
-                    if (
-                        data.get("activity_id")
-                        and data.get("thread_id")
-                        and "source_excerpt" in data
-                        and "is_dismissed" in data
-                    ):
-                        item = PromotedActionItem.model_validate(data)
-                        if not include_dismissed and item.is_dismissed:
-                            continue
-                        items.append(item)
-                except (json.JSONDecodeError, ValueError):
-                    continue
-        except Exception:
-            pass
-        # Sort by created_at descending
-        items.sort(key=lambda i: i.created_at, reverse=True)
-        return items[:limit]
+        cache_key = build_cache_key(
+            "action_items",
+            assistant_id,
+            "include" if include_dismissed else "active",
+            str(limit),
+        )
+
+        async def _build():
+            items = []
+            try:
+                memories = await self._backboard.get_memories(assistant_id)
+                for memory in memories.memories:
+                    try:
+                        data = json.loads(memory.content)
+                        if (
+                            data.get("activity_id")
+                            and data.get("thread_id")
+                            and "source_excerpt" in data
+                            and "is_dismissed" in data
+                        ):
+                            item = PromotedActionItem.model_validate(data)
+                            if not include_dismissed and item.is_dismissed:
+                                continue
+                            items.append(item)
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+            except Exception:
+                pass
+            items.sort(key=lambda i: i.created_at, reverse=True)
+            return [i.model_dump(mode="json") for i in items[:limit]]
+
+        payload = await self._cache.get_or_set(
+            cache_key,
+            self._cache.with_jitter(CACHE_TTLS["action_items"]),
+            _build,
+            tags=[f"customer:{assistant_id}"],
+        )
+        return [PromotedActionItem.model_validate(item) for item in payload]
 
     async def get_customer_summary(self, assistant_id: str) -> dict[str, Any]:
         """Get a comprehensive summary of a customer.
@@ -335,33 +409,41 @@ class CustomerService:
         Returns:
             Dict with customer, contacts, opportunities, recent activities, action items
         """
-        customer = await self.get_customer(assistant_id)
-        contacts = await self.get_contacts(assistant_id)
-        opportunities = await self.get_opportunities(assistant_id)
-        activities = await self.get_activities(assistant_id)
-        action_items = await self.get_promoted_action_items(assistant_id, limit=50)
+        cache_key = build_cache_key("customer_summary", assistant_id)
 
-        # Get only recent activities
-        recent_activities = activities[:10]
-        # Get recent 3 action items for the card
-        recent_action_items = action_items[:3]
+        async def _build():
+            customer = await self.get_customer(assistant_id)
+            contacts = await self.get_contacts(assistant_id)
+            opportunities = await self.get_opportunities(assistant_id)
+            activities = await self.get_activities(assistant_id)
+            action_items = await self.get_promoted_action_items(assistant_id, limit=50)
 
-        return {
-            "customer": customer.model_dump(mode="json") if customer else None,
-            "contacts": [c.model_dump(mode="json") for c in contacts],
-            "opportunities": [o.model_dump(mode="json") for o in opportunities],
-            "recent_activities": [a.model_dump(mode="json") for a in recent_activities],
-            "recent_action_items": [i.model_dump(mode="json") for i in recent_action_items],
-            "stats": {
-                "total_contacts": len(contacts),
-                "total_opportunities": len(opportunities),
-                "total_activities": len(activities),
-                "total_action_items": len(action_items),
-                "pending_action_items": sum(1 for i in action_items if not i.is_completed),
-                "champions": sum(1 for c in contacts if c.is_champion),
-                "decision_makers": sum(1 for c in contacts if c.is_decision_maker),
-            },
-        }
+            recent_activities = activities[:10]
+            recent_action_items = action_items[:3]
+
+            return {
+                "customer": customer.model_dump(mode="json") if customer else None,
+                "contacts": [c.model_dump(mode="json") for c in contacts],
+                "opportunities": [o.model_dump(mode="json") for o in opportunities],
+                "recent_activities": [a.model_dump(mode="json") for a in recent_activities],
+                "recent_action_items": [i.model_dump(mode="json") for i in recent_action_items],
+                "stats": {
+                    "total_contacts": len(contacts),
+                    "total_opportunities": len(opportunities),
+                    "total_activities": len(activities),
+                    "total_action_items": len(action_items),
+                    "pending_action_items": sum(1 for i in action_items if not i.is_completed),
+                    "champions": sum(1 for c in contacts if c.is_champion),
+                    "decision_makers": sum(1 for c in contacts if c.is_decision_maker),
+                },
+            }
+
+        return await self._cache.get_or_set(
+            cache_key,
+            self._cache.with_jitter(CACHE_TTLS["customer_summary"]),
+            _build,
+            tags=[f"customer:{assistant_id}"],
+        )
 
     async def get_pain_points(self, assistant_id: str) -> list[str]:
         """Extract all pain points mentioned across activities.

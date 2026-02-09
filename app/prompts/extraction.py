@@ -11,15 +11,21 @@ HINTS:
 - Caller: [CALLER_PLACEHOLDER]
 - Company: [COMPANY_PLACEHOLDER]
 - Contacts: [CONTACTS_PLACEHOLDER]
+- Known team members (our internal users): [TEAMMATES_PLACEHOLDER]
 
 Extract and return a JSON object with these fields:
 - company_name: detected company name (string or null)
 - company_domain: company website domain if mentioned (string or null)  
-- contacts: array of objects with name, role, email, preferred_contact_method fields
+- contacts: array of objects with name, role, email, preferred_contact_method, is_teammate fields
   - preferred_contact_method: "email", "text", "call", "whatsapp" or null
   - Look for phrases like "reach me via SMS", "prefers text", "call me at", "contact over WhatsApp", "email is best", etc.
+  - is_teammate: true if this person is one of the known team members listed above, false otherwise
+  - IMPORTANT: Do NOT include known team members as customer contacts. If someone is identified as a teammate (matches a name in the known team members list, or is referred to as "my teammate", "my colleague", "my coworker", etc.), set is_teammate to true.
 - signals: array of key discussion topics
 - confidence: number from 0 to 1
+- lead_source: how this lead was sourced — one of "referral", "linkedin", "vc_intro", "cold_outreach", "inbound_website", "conference_event", "partner", "other", or null if unclear
+  - Look for phrases like "John referred them", "connected on LinkedIn", "intro from [VC name]", "they reached out via the website", "met at [conference]", "cold email", "partner introduction", etc.
+- lead_source_detail: freetext detail about the source (e.g. referrer name, VC firm, conference name, partner company) or null
 
 IMPORTANT for company_name extraction:
 - The company_name should be the BUSINESS/PROJECT the caller represents, NOT places mentioned casually
@@ -32,6 +38,11 @@ IMPORTANT for company_name extraction:
 - Prefer project names over casual venue mentions
 - Example: "need to follow up with his developer Chucky... on project Iguana" -> company_name: "Iguana"
 - Example: "going to Barbarians for a steak" -> Barbarians is NOT the company (it's a restaurant)
+
+IMPORTANT for teammate detection:
+- If someone is referred to as "my teammate", "my colleague", "my coworker", "I went with [name]", they are a teammate, not a customer contact
+- Known team member names are provided above — match against those names
+- Teammates should still appear in the contacts array but with is_teammate: true
 
 Return ONLY the JSON object, no other text."""
 
@@ -50,17 +61,17 @@ Rules:
 - Restaurants, bars, or places for social meetings (like "going to Barbarians for dinner") are NOT the company
 - Handle lowercase names and return the normalized proper name (e.g. "iguana" -> "Iguana")
 - If a developer or team member is mentioned working on a project, that project IS the company
-- Return JSON: {"company_name": "<name>" or null}
+- Return JSON: {{"company_name": "<name>" or null}}
 
 Examples:
 Input: "follow up with Chucky about memory for project Iguana"
-Output: {"company_name": "Iguana"}
+Output: {{"company_name": "Iguana"}}
 
 Input: "meeting George at Barbarians restaurant in April, discussing project Iguana"
-Output: {"company_name": "Iguana"}
+Output: {{"company_name": "Iguana"}}
 
 Input: "company signaldesk wants to proceed"
-Output: {"company_name": "Signaldesk"}
+Output: {{"company_name": "Signaldesk"}}
 
 Return ONLY the JSON object."""
 
@@ -76,6 +87,7 @@ CONTEXT:
 - Company: [COMPANY_PLACEHOLDER]
 - Known contacts: [CONTACTS_PLACEHOLDER]
 - Current stage: [STAGE_PLACEHOLDER]
+- Known team members (our internal users): [TEAMMATES_PLACEHOLDER]
 
 Extract and return a JSON object with:
 - summary: 2-3 sentence executive summary
@@ -88,10 +100,12 @@ Extract and return a JSON object with:
 - requirements: array of technical/business requirements
 - next_steps: array of agreed follow-up actions
 - risks: array of deal risks identified
-- stakeholders: array of people mentioned (each with name, role, email, sentiment, preferred_contact_method)
+- stakeholders: array of people mentioned (each with name, role, email, sentiment, preferred_contact_method, is_teammate)
   - email: their email address if mentioned (e.g. "mike@company.com")
   - preferred_contact_method: "email", "text", "call", "whatsapp" or null
   - Look for phrases like "reach me via SMS", "prefers text", "call me at", "contact over WhatsApp", "spoke over email", etc.
+  - is_teammate: true if this person is one of the known team members listed above, or is referred to as "my teammate", "my colleague", "my coworker", etc. — false otherwise
+  - IMPORTANT: Do NOT omit teammates from the stakeholders list — include them but mark is_teammate: true so they are not added as customer contacts
 - action_items: array of tasks, each with:
   - description: what needs to be done
   - owner: who is responsible (us or them)
@@ -101,6 +115,9 @@ Extract and return a JSON object with:
 - sentiment: "positive", "neutral", or "negative"
 - deal_stage_signal: suggested stage
 - confidence_delta: number from -50 to 50
+- lead_source: how this deal was sourced — one of "referral", "linkedin", "vc_intro", "cold_outreach", "inbound_website", "conference_event", "partner", "other", or null if unclear
+  - Look for phrases like "referred by", "connected on LinkedIn", "intro from [VC name]", "found us online", "met at [conference]", "cold email/call", "partner deal", etc.
+- lead_source_detail: freetext detail about the source (e.g. referrer name, VC firm, conference name) or null
 
 Return ONLY the JSON object, no other text."""
 
@@ -110,6 +127,7 @@ def get_entity_extraction_prompt(
     caller_email: str | None = None,
     company_hint: str | None = None,
     contact_hints: list[str] | None = None,
+    teammate_names: list[str] | None = None,
 ) -> str:
     """Generate an entity extraction prompt for a transcript.
 
@@ -118,6 +136,7 @@ def get_entity_extraction_prompt(
         caller_email: Optional hint about the caller
         company_hint: Optional hint about the company name
         contact_hints: Optional list of contact name hints
+        teammate_names: Optional list of known system user names
 
     Returns:
         Formatted extraction prompt
@@ -127,6 +146,7 @@ def get_entity_extraction_prompt(
     prompt = prompt.replace("[CALLER_PLACEHOLDER]", caller_email or "Not provided")
     prompt = prompt.replace("[COMPANY_PLACEHOLDER]", company_hint or "Not provided")
     prompt = prompt.replace("[CONTACTS_PLACEHOLDER]", ", ".join(contact_hints) if contact_hints else "Not provided")
+    prompt = prompt.replace("[TEAMMATES_PLACEHOLDER]", ", ".join(teammate_names) if teammate_names else "None known")
     return prompt
 
 
@@ -143,6 +163,7 @@ def get_meeting_notes_prompt(
     known_contacts: list[str] | None = None,
     current_stage: str | None = None,
     previous_context: str | None = None,
+    teammate_names: list[str] | None = None,
 ) -> str:
     """Generate a meeting notes extraction prompt.
 
@@ -152,6 +173,7 @@ def get_meeting_notes_prompt(
         known_contacts: List of known contact names
         current_stage: Current opportunity stage
         previous_context: Summary of previous meetings
+        teammate_names: Optional list of known system user names
 
     Returns:
         Formatted extraction prompt
@@ -161,4 +183,5 @@ def get_meeting_notes_prompt(
     prompt = prompt.replace("[COMPANY_PLACEHOLDER]", company_name)
     prompt = prompt.replace("[CONTACTS_PLACEHOLDER]", ", ".join(known_contacts) if known_contacts else "None known")
     prompt = prompt.replace("[STAGE_PLACEHOLDER]", current_stage or "Unknown")
+    prompt = prompt.replace("[TEAMMATES_PLACEHOLDER]", ", ".join(teammate_names) if teammate_names else "None known")
     return prompt

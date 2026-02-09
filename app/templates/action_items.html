@@ -163,12 +163,14 @@
                 
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" onclick="hideAddModal()" class="btn-secondary">Cancel</button>
-                    <button type="submit" class="btn-primary" id="add-submit">
+                    <button type="submit" class="btn-primary relative" id="add-submit">
                         <span id="add-submit-text">Add Item</span>
-                        <svg id="add-spinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
+                        <span id="add-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
                     </button>
                 </div>
             </form>
@@ -199,7 +201,7 @@
         
         // Show loading state
         submitBtn.disabled = true;
-        submitText.textContent = 'Adding...';
+        submitText.classList.add('invisible');
         spinner.classList.remove('hidden');
         
         const payload = {
@@ -229,7 +231,7 @@
             showToast(err.message, 'error');
         } finally {
             submitBtn.disabled = false;
-            submitText.textContent = 'Add Item';
+            submitText.classList.remove('invisible');
             spinner.classList.add('hidden');
         }
     }

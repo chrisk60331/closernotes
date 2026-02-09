@@ -86,7 +86,7 @@
     <div class="card mb-8">
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Users</h2>
-            <button onclick="showAddUserModal()" class="btn-primary text-sm">
+            <button onclick="showAddUserModal()" class="btn-primary text-sm whitespace-nowrap inline-flex items-center gap-2">
                 <svg class="w-4 h-4 mr-1 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
@@ -164,6 +164,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Opportunities</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Activities</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Assigned To</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="customers-table-body">
@@ -222,7 +223,15 @@
 
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" onclick="hideAddUserModal()" class="btn-secondary">Cancel</button>
-                    <button type="submit" class="btn-primary" id="add-user-submit">Create User</button>
+                    <button type="submit" class="btn-primary relative" id="add-user-submit">
+                        <span id="add-user-submit-text">Create User</span>
+                        <span id="add-user-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -258,7 +267,66 @@
 
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" onclick="hideResetPasswordModal()" class="btn-secondary">Cancel</button>
-                    <button type="submit" class="btn-primary">Reset Password</button>
+                    <button type="submit" class="btn-primary relative" id="reset-password-submit">
+                        <span id="reset-password-submit-text">Reset Password</span>
+                        <span id="reset-password-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="edit-user-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="fixed inset-0 bg-black/50 transition-opacity" onclick="hideEditUserModal()"></div>
+        <div class="relative bg-bb-cloud dark:bg-bb-phantom rounded-xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit User</h3>
+                <button onclick="hideEditUserModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="edit-user-form" onsubmit="submitEditUser(event)" data-ajax>
+                <input type="hidden" id="edit-user-id" name="user_id">
+                <div class="space-y-4">
+                    <div>
+                        <label for="edit-user-name" class="label">Name</label>
+                        <input type="text" id="edit-user-name" name="name" required class="input-field w-full" placeholder="Jane Doe">
+                    </div>
+                    <div>
+                        <label for="edit-user-email" class="label">Email</label>
+                        <input type="email" id="edit-user-email" name="email" required class="input-field w-full" placeholder="jane@example.com">
+                    </div>
+                    <div>
+                        <label for="edit-user-role" class="label">Role</label>
+                        <select id="edit-user-role" name="role" class="input-field w-full">
+                            <option value="user">User</option>
+                            <option value="manager">Manager</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideEditUserModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary relative" id="edit-user-submit">
+                        <span id="edit-user-submit-text">Save Changes</span>
+                        <span id="edit-user-spinner" class="hidden absolute inset-0 flex items-center justify-center">
+                            <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -353,13 +421,33 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${user.opportunity_count || 0}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${user.activity_count || 0}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <button onclick="showResetPasswordModal('${user.id}', '${escapeHtml(user.name)}')"
-                                class="p-1.5 rounded-md bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors"
-                                title="Reset password">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                            </svg>
-                        </button>
+                        <div class="flex items-center justify-end gap-2">
+                            <button onclick="showEditUserModal('${user.id}')"
+                                    class="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                                    title="Edit user">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="showResetPasswordModal(this.dataset.userId, decodeURIComponent(this.dataset.userName))"
+                                    data-user-id="${user.id}"
+                                    data-user-name="${encodeURIComponent(user.name || '')}"
+                                    class="p-1.5 rounded-md bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors"
+                                    title="Reset password">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                                </svg>
+                            </button>
+                            <button onclick="deleteUser(this.dataset.userId, decodeURIComponent(this.dataset.userName), this)"
+                                    data-user-id="${user.id}"
+                                    data-user-name="${encodeURIComponent(user.name || '')}"
+                                    class="p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                    title="Delete user">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -385,7 +473,8 @@
         let html = '';
         for (const item of customers) {
             const customer = item.customer;
-            const initial = (customer.company_name || 'U')[0].toUpperCase();
+            const cName = displayCompanyName(customer.company_name);
+            const initial = (cName || 'U')[0].toUpperCase();
             const industry = customer.industry || 'Unknown';
 
             // Build user options for dropdown
@@ -396,17 +485,18 @@
             }
 
             html += `
-                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors customer-row"
-                    data-name="${escapeHtml(customer.company_name.toLowerCase())}">
+                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors customer-row cursor-pointer"
+                    data-name="${escapeHtml(cName.toLowerCase())}"
+                    data-href="/customer/${customer.assistant_id}">
                     <td class="px-6 py-4 whitespace-nowrap">
                         <div class="flex items-center">
                             <div class="w-10 h-10 flex-shrink-0 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white font-semibold text-sm">
                                 ${initial}
                             </div>
                             <div class="ml-4">
-                                <a href="/customer/${customer.assistant_id}" class="text-sm font-medium text-gray-900 dark:text-white hover:text-bb-blue dark:hover:text-bb-blue transition-colors">
-                                    ${escapeHtml(customer.company_name)}
-                                </a>
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    ${escapeHtml(cName)}
+                                </div>
                                 ${customer.domain ? `<div class="text-sm text-gray-500 dark:text-gray-400">${escapeHtml(customer.domain)}</div>` : ''}
                             </div>
                         </div>
@@ -416,11 +506,30 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${item.opportunity_count || 0}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">${item.activity_count || 0}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
+                    <td class="px-6 py-4 whitespace-nowrap assign-cell" onclick="event.stopPropagation()">
                         <select onchange="assignCustomer('${customer.assistant_id}', this.value)"
                                 class="input-field py-1 px-2 text-sm w-40">
                             ${userOptions}
                         </select>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right action-cell" onclick="event.stopPropagation()">
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="/customer/${customer.assistant_id}?edit=true"
+                               class="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                               title="Edit customer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2 2 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                            <button onclick="deleteCustomer('${customer.assistant_id}', decodeURIComponent(this.dataset.companyName), this)"
+                                    data-company-name="${encodeURIComponent(cName || '')}"
+                                    class="p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                    title="Delete customer">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7h6m-7 0V5a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `;
@@ -428,6 +537,27 @@
 
         tbody.innerHTML = html;
         tableContainer.classList.remove('hidden');
+        
+        // Attach row click listeners
+        attachCustomerRowListeners();
+    }
+
+    function attachCustomerRowListeners() {
+        document.querySelectorAll('.customer-row').forEach(function(row) {
+            row.addEventListener('click', function(e) {
+                // Don't navigate if clicking on the assign dropdown
+                if (e.target.closest('.assign-cell') || e.target.closest('.action-cell') || e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
+                    return;
+                }
+                const href = this.dataset.href;
+                if (href) {
+                    if (typeof showLoading === 'function') {
+                        showLoading();
+                    }
+                    window.location.href = href;
+                }
+            });
+        });
     }
 
     function escapeHtml(text) {
@@ -435,6 +565,12 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /** Strip trailing 6-char hex dedup suffix from company names (e.g. "Unknown Company 610fcb"). */
+    function displayCompanyName(name) {
+        if (!name) return 'Unknown';
+        return name.replace(/\s+[0-9a-f]{6}$/i, '');
     }
 
     // Customer search
@@ -465,9 +601,59 @@
 
             showToast('Customer assignment updated', 'success');
             // Reload to update user stats
-            loadManagerData();
+            if (data.user) {
+                usersData = usersData.map(user => {
+                    if (user.id !== data.user.id) {
+                        return user;
+                    }
+                    return {
+                        ...user,
+                        name: data.user.name,
+                        email: data.user.email,
+                        role: data.user.role
+                    };
+                });
+                renderUsers(usersData);
+            }
         } catch (err) {
             showToast(err.message, 'error');
+        }
+    }
+
+    // ========================================
+    // Customer Delete
+    // ========================================
+    async function deleteCustomer(assistantId, companyName, buttonEl) {
+        const confirmed = await showConfirm(
+            'Delete Customer',
+            `Delete ${companyName}? This will remove the customer and all related data.`
+        );
+        if (!confirmed) {
+            return;
+        }
+
+        const row = buttonEl ? buttonEl.closest('tr') : null;
+        if (row) {
+            row.remove();
+        }
+
+        const tbody = document.getElementById('customers-table-body');
+        if (tbody && tbody.children.length === 0) {
+            document.getElementById('customers-table-container').classList.add('hidden');
+            document.getElementById('customers-empty').classList.remove('hidden');
+        }
+
+        try {
+            const response = await fetch(`/api/customers/${assistantId}`, { method: 'DELETE' });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to delete customer');
+            }
+            showToast('Customer deleted', 'success');
+            loadManagerData();
+        } catch (err) {
+            showToast(err.message || 'Error deleting customer', 'error');
+            loadManagerData();
         }
     }
 
@@ -487,12 +673,38 @@
         e.preventDefault();
 
         const form = e.target;
+        const submitButton = document.getElementById('add-user-submit');
+        const submitText = document.getElementById('add-user-submit-text');
+        const spinner = document.getElementById('add-user-spinner');
         const payload = {
             name: form.name.value.trim(),
             email: form.email.value.trim(),
             password: form.password.value,
             role: form.role.value
         };
+
+        const tempId = `temp-${Date.now()}`;
+        const optimisticUser = {
+            id: tempId,
+            name: payload.name,
+            email: payload.email,
+            role: payload.role,
+            customer_count: 0,
+            opportunity_count: 0,
+            activity_count: 0
+        };
+
+        usersData = [optimisticUser, ...usersData];
+        renderUsers(usersData);
+        document.getElementById('stat-user-count').textContent = usersData.length;
+        hideAddUserModal();
+        showToast(`User ${payload.name} created`, 'success');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitText.classList.add('invisible');
+            spinner.classList.remove('hidden');
+        }
 
         try {
             const response = await fetch('/api/users', {
@@ -507,11 +719,26 @@
                 throw new Error(data.error || 'Failed to create user');
             }
 
-            hideAddUserModal();
-            showToast(`User ${payload.name} created successfully`, 'success');
-            loadManagerData();
+            usersData = usersData.filter(user => user.id !== tempId);
+            usersData.unshift({
+                ...data.user,
+                customer_count: 0,
+                opportunity_count: 0,
+                activity_count: 0
+            });
+            renderUsers(usersData);
+            document.getElementById('stat-user-count').textContent = usersData.length;
         } catch (err) {
+            usersData = usersData.filter(user => user.id !== tempId);
+            renderUsers(usersData);
+            document.getElementById('stat-user-count').textContent = usersData.length;
             showToast(err.message, 'error');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitText.classList.remove('invisible');
+                spinner.classList.add('hidden');
+            }
         }
     }
 
@@ -533,8 +760,17 @@
         e.preventDefault();
 
         const form = e.target;
+        const submitButton = document.getElementById('reset-password-submit');
+        const submitText = document.getElementById('reset-password-submit-text');
+        const spinner = document.getElementById('reset-password-spinner');
         const userId = form.user_id.value;
         const newPassword = form.new_password.value;
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitText.classList.add('invisible');
+            spinner.classList.remove('hidden');
+        }
 
         try {
             const response = await fetch(`/api/users/${userId}/reset-password`, {
@@ -553,6 +789,136 @@
             showToast('Password reset successfully', 'success');
         } catch (err) {
             showToast(err.message, 'error');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitText.classList.remove('invisible');
+                spinner.classList.add('hidden');
+            }
+        }
+    }
+
+    // ========================================
+    // Edit User Modal
+    // ========================================
+    function showEditUserModal(userId) {
+        const user = usersData.find(item => item.id === userId);
+        if (!user) {
+            showToast('User not found', 'error');
+            return;
+        }
+
+        document.getElementById('edit-user-id').value = user.id;
+        document.getElementById('edit-user-name').value = user.name || '';
+        document.getElementById('edit-user-email').value = user.email || '';
+        document.getElementById('edit-user-role').value = user.role || 'user';
+        document.getElementById('edit-user-modal').classList.remove('hidden');
+    }
+
+    function hideEditUserModal() {
+        document.getElementById('edit-user-modal').classList.add('hidden');
+        document.getElementById('edit-user-form').reset();
+    }
+
+    async function submitEditUser(e) {
+        e.preventDefault();
+
+        const form = e.target;
+        const submitButton = document.getElementById('edit-user-submit');
+        const submitText = document.getElementById('edit-user-submit-text');
+        const spinner = document.getElementById('edit-user-spinner');
+        const userId = form.user_id.value;
+        const payload = {
+            name: form.name.value.trim(),
+            email: form.email.value.trim(),
+            role: form.role.value
+        };
+
+        const originalUsers = [...usersData];
+        usersData = usersData.map(user => {
+            if (user.id !== userId) {
+                return user;
+            }
+            return {
+                ...user,
+                name: payload.name,
+                email: payload.email,
+                role: payload.role
+            };
+        });
+        renderUsers(usersData);
+        hideEditUserModal();
+        showToast('User updated', 'success');
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitText.classList.add('invisible');
+            spinner.classList.remove('hidden');
+        }
+
+        try {
+            const response = await fetch(`/api/users/${userId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to update user');
+            }
+
+            loadManagerData();
+        } catch (err) {
+            usersData = originalUsers;
+            renderUsers(usersData);
+            showToast(err.message, 'error');
+        } finally {
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitText.classList.remove('invisible');
+                spinner.classList.add('hidden');
+            }
+        }
+    }
+
+    // ========================================
+    // Delete User
+    // ========================================
+    async function deleteUser(userId, userName, buttonEl) {
+        const confirmed = await showConfirm('Delete User', `Delete ${userName}? This cannot be undone.`);
+        if (!confirmed) {
+            return;
+        }
+
+        const row = buttonEl ? buttonEl.closest('tr') : null;
+        if (row) {
+            row.remove();
+        }
+
+        const tbody = document.getElementById('users-table-body');
+        if (tbody && tbody.children.length === 0) {
+            document.getElementById('users-table-container').classList.add('hidden');
+        }
+
+        try {
+            const response = await fetch(`/api/users/${userId}`, { method: 'DELETE' });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to delete user');
+            }
+
+            showToast('User deleted', 'success');
+            loadManagerData();
+        } catch (err) {
+            showToast(err.message || 'Error deleting user', 'error');
+            loadManagerData();
+        } finally {
+            if (buttonEl) {
+                buttonEl.disabled = false;
+            }
         }
     }
 
@@ -563,6 +929,7 @@
         if (e.key === 'Escape') {
             hideAddUserModal();
             hideResetPasswordModal();
+            hideEditUserModal();
         }
     });
 

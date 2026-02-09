@@ -7,10 +7,12 @@ from flask import Blueprint, render_template, current_app, request, redirect, ur
 
 from app.services.auth import login_required, manager_required, get_current_user
 from app.services.backboard import BackboardService
-from app.services.orchestrator import OrchestratorService
 from app.services.customer import CustomerService
+from app.services.cache import CacheService, CACHE_TTLS, build_cache_key
+from app.services.cache_store import CacheStoreService
 from app.services.meeting import MeetingService
 from app.services.crm import CRMService
+from app.services.reports import ReportService
 
 ui_bp = Blueprint("ui", __name__)
 
@@ -23,6 +25,17 @@ def run_async(coro):
         return loop.run_until_complete(coro)
     finally:
         loop.close()
+
+
+def _has_customer_access(customer, current_user) -> bool:
+    """Check if current user can access a customer."""
+    if not customer or not current_user:
+        return True
+    if current_user.is_manager():
+        return True
+    if isinstance(customer, dict):
+        return customer.get("assigned_user_id") == current_user.id
+    return customer.assigned_user_id == current_user.id
 
 
 @ui_bp.route("/")
@@ -50,11 +63,59 @@ def manager_dashboard():
     return render_template("manager.html")
 
 
+@ui_bp.route("/report/<report_id>")
+@login_required
+def ingest_report(report_id: str):
+    """Render an ingest report page."""
+    try:
+        current_user = get_current_user()
+
+        async def _get_report():
+            backboard = BackboardService()
+            report_svc = ReportService(backboard)
+            customer_svc = CustomerService(backboard)
+
+            report = await report_svc.get_report(report_id)
+            if not report:
+                return {"report": None}
+
+            visible_items = []
+            for item in report.items:
+                if item.assistant_id:
+                    customer = await customer_svc.get_customer(item.assistant_id)
+                    if customer and not _has_customer_access(customer, current_user):
+                        continue
+                visible_items.append(item.model_dump(mode="json"))
+
+            report_data = report.model_dump(mode="json")
+            report_data["items"] = visible_items
+            return {"report": report_data}
+
+        data = run_async(_get_report())
+        report = data.get("report")
+        if not report:
+            flash("Report not found", "error")
+            return redirect(url_for("ui.dashboard"))
+
+        return render_template(
+            "ingest_report.html",
+            report=report,
+            report_items=report.get("items", []),
+            report_followups=report.get("followups", []),
+        )
+    except Exception:
+        current_app.logger.exception("Error loading ingest report")
+        flash("Unable to load report", "error")
+        return redirect(url_for("ui.dashboard"))
+
+
 @ui_bp.route("/customer/<assistant_id>")
 @login_required
 def customer_detail(assistant_id: str):
     """Render customer detail page."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
@@ -62,6 +123,10 @@ def customer_detail(assistant_id: str):
 
             summary = await customer_svc.get_customer_summary(assistant_id)
             meetings = await meeting_svc.get_customer_meetings(assistant_id, limit=50)
+            customer = summary.get("customer")
+
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
 
             # Get next follow-up date (calculated if not set)
             next_followup_date = await customer_svc.get_customer_next_followup(assistant_id)
@@ -84,6 +149,10 @@ def customer_detail(assistant_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             flash("Customer not found", "error")
@@ -175,6 +244,8 @@ def _linkify_names_in_text(
 def _render_meeting_detail(thread_id: str, assistant_id: str | None = None):
     """Render meeting detail page with optional summary context."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             meeting_svc = MeetingService(backboard)
@@ -198,6 +269,10 @@ def _render_meeting_detail(thread_id: str, assistant_id: str | None = None):
             return meeting, summary, customer, contacts
 
         meeting, summary, customer, contacts = run_async(_get_data())
+
+        if assistant_id and customer and not _has_customer_access(customer, current_user):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not meeting:
             return render_template("meeting.html", error="Meeting not found"), 404
@@ -243,6 +318,172 @@ def meeting_detail_with_customer(assistant_id: str, thread_id: str):
 
 
 # ============================================================================
+# Global List Routes
+# ============================================================================
+
+@ui_bp.route("/contacts")
+@login_required
+def all_contacts():
+    """Render contacts list across all customers.
+
+    Uses cache store summaries for permission filtering (1 API call),
+    then reads contact details from per-customer assistants via
+    the in-process cache.
+    """
+    try:
+        current_user = get_current_user()
+
+        async def _get_data():
+            backboard = BackboardService()
+            cache_store = CacheStoreService(backboard)
+            customer_svc = CustomerService(backboard)
+            cache = CacheService()
+
+            is_manager = current_user and current_user.is_manager()
+            role = "manager" if is_manager else "user"
+            user_id = current_user.id if current_user else "none"
+            cache_key = build_cache_key("global_contacts", role, user_id)
+
+            async def _build():
+                # Use summaries for permission check (1 API call)
+                summaries = await cache_store.get_all_summaries()
+                contacts = []
+                for s in summaries:
+                    if not is_manager and s.assigned_user_id != (current_user.id if current_user else None):
+                        continue
+                    # Per-customer read (backed by in-process cache)
+                    for contact in await customer_svc.get_contacts(s.assistant_id):
+                        contact_data = contact.model_dump(mode="json")
+                        contact_data["assistant_id"] = s.assistant_id
+                        contact_data["company_name"] = s.company_name
+                        contacts.append(contact_data)
+                return {"contacts": contacts}
+
+            return await cache.get_or_set(
+                cache_key,
+                cache.with_jitter(CACHE_TTLS["global_contacts"]),
+                _build,
+                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id}"],
+            )
+
+        data = run_async(_get_data())
+        return render_template("all_contacts.html", **data)
+    except Exception as e:
+        current_app.logger.exception("Error loading all contacts")
+        return render_template("all_contacts.html", error=str(e)), 500
+
+
+@ui_bp.route("/opportunities")
+@login_required
+def all_opportunities():
+    """Render opportunities list across all customers.
+
+    Uses cache store summaries for permission filtering (1 API call),
+    then reads opportunity details from per-customer assistants via
+    the in-process cache.
+    """
+    try:
+        current_user = get_current_user()
+
+        async def _get_data():
+            backboard = BackboardService()
+            cache_store = CacheStoreService(backboard)
+            customer_svc = CustomerService(backboard)
+            cache = CacheService()
+
+            is_manager = current_user and current_user.is_manager()
+            role = "manager" if is_manager else "user"
+            user_id = current_user.id if current_user else "none"
+            cache_key = build_cache_key("global_opportunities", role, user_id)
+
+            async def _build():
+                summaries = await cache_store.get_all_summaries()
+                opportunities = []
+                for s in summaries:
+                    if not is_manager and s.assigned_user_id != (current_user.id if current_user else None):
+                        continue
+                    for opp in await customer_svc.get_opportunities(s.assistant_id):
+                        opp_data = opp.model_dump(mode="json")
+                        opp_data["assistant_id"] = s.assistant_id
+                        opp_data["company_name"] = s.company_name
+                        opportunities.append(opp_data)
+                return {"opportunities": opportunities}
+
+            return await cache.get_or_set(
+                cache_key,
+                cache.with_jitter(CACHE_TTLS["global_opportunities"]),
+                _build,
+                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id}"],
+            )
+
+        data = run_async(_get_data())
+        return render_template("all_opportunities.html", **data)
+    except Exception as e:
+        current_app.logger.exception("Error loading all opportunities")
+        return render_template("all_opportunities.html", error=str(e)), 500
+
+
+@ui_bp.route("/activities")
+@login_required
+def all_activities():
+    """Render activities list across all customers.
+
+    Uses cache store summaries for permission filtering (1 API call),
+    then reads activity details from per-customer assistants via
+    the in-process cache.
+    """
+    try:
+        current_user = get_current_user()
+
+        async def _get_data():
+            backboard = BackboardService()
+            cache_store = CacheStoreService(backboard)
+            customer_svc = CustomerService(backboard)
+            cache = CacheService()
+
+            is_manager = current_user and current_user.is_manager()
+            role = "manager" if is_manager else "user"
+            user_id = current_user.id if current_user else "none"
+            cache_key = build_cache_key("global_activities", role, user_id)
+
+            async def _build():
+                summaries = await cache_store.get_all_summaries()
+                activity_rows = []
+                for s in summaries:
+                    if not is_manager and s.assigned_user_id != (current_user.id if current_user else None):
+                        continue
+                    for activity in await customer_svc.get_activities(s.assistant_id):
+                        activity_rows.append({
+                            "assistant_id": s.assistant_id,
+                            "company_name": s.company_name,
+                            "activity": activity,
+                        })
+
+                activity_rows.sort(key=lambda row: row["activity"].date, reverse=True)
+                activities = []
+                for row in activity_rows:
+                    activity_data = row["activity"].model_dump(mode="json")
+                    activity_data["assistant_id"] = row["assistant_id"]
+                    activity_data["company_name"] = row["company_name"]
+                    activities.append(activity_data)
+
+                return {"activities": activities}
+
+            return await cache.get_or_set(
+                cache_key,
+                cache.with_jitter(CACHE_TTLS["global_activities"]),
+                _build,
+                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id}"],
+            )
+
+        data = run_async(_get_data())
+        return render_template("all_activities.html", **data)
+    except Exception as e:
+        current_app.logger.exception("Error loading all activities")
+        return render_template("all_activities.html", error=str(e)), 500
+
+
+# ============================================================================
 # Contacts Routes
 # ============================================================================
 
@@ -251,12 +492,17 @@ def meeting_detail_with_customer(assistant_id: str, thread_id: str):
 def contacts_list(assistant_id: str):
     """Render contacts list for a customer."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
 
             customer = await customer_svc.get_customer(assistant_id)
             contacts = await customer_svc.get_contacts(assistant_id)
+
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
 
             return {
                 "customer": customer.model_dump(mode="json") if customer else None,
@@ -265,6 +511,10 @@ def contacts_list(assistant_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             return render_template("contacts.html", error="Customer not found"), 404
@@ -281,6 +531,8 @@ def contacts_list(assistant_id: str):
 def contact_detail(assistant_id: str, contact_id: str):
     """Render contact detail page."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
@@ -289,6 +541,9 @@ def contact_detail(assistant_id: str, contact_id: str):
             customer = await customer_svc.get_customer(assistant_id)
             contact = await crm_svc.get_contact(assistant_id, contact_id)
 
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
+
             return {
                 "customer": customer.model_dump(mode="json") if customer else None,
                 "contact": contact.model_dump(mode="json") if contact else None,
@@ -296,6 +551,10 @@ def contact_detail(assistant_id: str, contact_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             return render_template("contact_detail.html", error="Customer not found"), 404
@@ -318,12 +577,17 @@ def contact_detail(assistant_id: str, contact_id: str):
 def opportunities_list(assistant_id: str):
     """Render opportunities list for a customer."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
 
             customer = await customer_svc.get_customer(assistant_id)
             opportunities = await customer_svc.get_opportunities(assistant_id)
+
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
 
             return {
                 "customer": customer.model_dump(mode="json") if customer else None,
@@ -332,6 +596,10 @@ def opportunities_list(assistant_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             return render_template("opportunities.html", error="Customer not found"), 404
@@ -348,6 +616,8 @@ def opportunities_list(assistant_id: str):
 def opportunity_detail(assistant_id: str, opportunity_id: str):
     """Render opportunity detail page."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
@@ -356,6 +626,9 @@ def opportunity_detail(assistant_id: str, opportunity_id: str):
             customer = await customer_svc.get_customer(assistant_id)
             opportunity = await crm_svc.get_opportunity(assistant_id, opportunity_id)
 
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
+
             return {
                 "customer": customer.model_dump(mode="json") if customer else None,
                 "opportunity": opportunity.model_dump(mode="json") if opportunity else None,
@@ -363,6 +636,10 @@ def opportunity_detail(assistant_id: str, opportunity_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             return render_template("opportunity_detail.html", error="Customer not found"), 404
@@ -385,12 +662,17 @@ def opportunity_detail(assistant_id: str, opportunity_id: str):
 def activities_list(assistant_id: str):
     """Render activities list for a customer."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
 
             customer = await customer_svc.get_customer(assistant_id)
             activities = await customer_svc.get_activities(assistant_id)
+
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
 
             return {
                 "customer": customer.model_dump(mode="json") if customer else None,
@@ -399,6 +681,10 @@ def activities_list(assistant_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             return render_template("activities.html", error="Customer not found"), 404
@@ -415,6 +701,8 @@ def activities_list(assistant_id: str):
 def activity_detail(assistant_id: str, activity_id: str):
     """Render activity detail page."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
@@ -423,6 +711,9 @@ def activity_detail(assistant_id: str, activity_id: str):
             customer = await customer_svc.get_customer(assistant_id)
             activity = await crm_svc.get_activity(assistant_id, activity_id)
 
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
+
             return {
                 "customer": customer.model_dump(mode="json") if customer else None,
                 "activity": activity.model_dump(mode="json") if activity else None,
@@ -430,6 +721,10 @@ def activity_detail(assistant_id: str, activity_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             return render_template("activity_detail.html", error="Customer not found"), 404
@@ -452,6 +747,8 @@ def activity_detail(assistant_id: str, activity_id: str):
 def action_items_list(assistant_id: str):
     """Render action items list for a customer."""
     try:
+        current_user = get_current_user()
+
         # Get filter from query params
         filter_status = request.args.get("filter", "all")
 
@@ -461,6 +758,9 @@ def action_items_list(assistant_id: str):
             crm_svc = CRMService(backboard)
 
             customer = await customer_svc.get_customer(assistant_id)
+
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
 
             # Adjust filters based on query param
             include_completed = filter_status in ["all", "completed"]
@@ -492,6 +792,10 @@ def action_items_list(assistant_id: str):
 
         data = run_async(_get_data())
 
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
+
         if not data.get("customer"):
             return render_template("action_items.html", error="Customer not found"), 404
 
@@ -507,6 +811,8 @@ def action_items_list(assistant_id: str):
 def action_item_detail(assistant_id: str, action_item_id: str):
     """Render action item detail/lineage page."""
     try:
+        current_user = get_current_user()
+
         async def _get_data():
             backboard = BackboardService()
             customer_svc = CustomerService(backboard)
@@ -520,6 +826,9 @@ def action_item_detail(assistant_id: str, action_item_id: str):
             if action_item:
                 activity = await crm_svc.get_activity(assistant_id, action_item.activity_id)
 
+            if customer and not _has_customer_access(customer, current_user):
+                return {"forbidden": True}
+
             return {
                 "customer": customer.model_dump(mode="json") if customer else None,
                 "action_item": action_item.model_dump(mode="json") if action_item else None,
@@ -528,6 +837,10 @@ def action_item_detail(assistant_id: str, action_item_id: str):
             }
 
         data = run_async(_get_data())
+
+        if data.get("forbidden"):
+            flash("You don't have permission to access this customer.", "error")
+            return redirect(url_for("ui.dashboard"))
 
         if not data.get("customer"):
             return render_template("action_item_detail.html", error="Customer not found"), 404

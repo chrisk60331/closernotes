@@ -84,29 +84,6 @@ class BackboardService:
         async with BackboardClient(api_key=self._api_key) as client:
             return await client.get_assistant(assistant_id)
 
-    async def list_assistants(
-        self, skip: int = 0, limit: int = 100
-    ) -> list[dict[str, Any]]:
-        """List all assistants."""
-        async with BackboardClient(api_key=self._api_key) as client:
-            results = await client.list_assistants(skip=skip, limit=limit)
-            return [_ensure_string_id(r, "assistant_id") for r in results]
-
-    async def find_assistant_by_name(self, name: str) -> dict[str, Any] | None:
-        """Find an assistant by its name.
-
-        Args:
-            name: The assistant name to search for
-
-        Returns:
-            The assistant if found, None otherwise
-        """
-        assistants = await self.list_assistants(limit=500)
-        for assistant in assistants:
-            if assistant.name == name:
-                return assistant
-        return None
-
     async def update_assistant(
         self,
         assistant_id: str,

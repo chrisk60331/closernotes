@@ -169,6 +169,51 @@
                     </dd>
                 </div>
                 <div>
+                    <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Lead Source</dt>
+                    <dd class="mt-1 text-gray-900 dark:text-white">
+                        <span class="opp-display" data-edit-display="lead_source">
+                            {% if opportunity.lead_source == 'referral' %}
+                            <span class="badge-green">Referral</span>
+                            {% elif opportunity.lead_source == 'linkedin' %}
+                            <span class="badge-blue">LinkedIn</span>
+                            {% elif opportunity.lead_source == 'vc_intro' %}
+                            <span class="badge-purple">VC Intro</span>
+                            {% elif opportunity.lead_source == 'cold_outreach' %}
+                            <span class="badge-gray">Cold Outreach</span>
+                            {% elif opportunity.lead_source == 'inbound_website' %}
+                            <span class="bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Inbound Website</span>
+                            {% elif opportunity.lead_source == 'conference_event' %}
+                            <span class="badge-yellow">Conference / Event</span>
+                            {% elif opportunity.lead_source == 'partner' %}
+                            <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Partner</span>
+                            {% elif opportunity.lead_source == 'other' %}
+                            <span class="badge-gray">Other</span>
+                            {% else %}
+                            <span class="text-gray-400 text-base font-normal">Not set</span>
+                            {% endif %}
+                            {% if opportunity.lead_source_detail %}
+                            <span class="text-sm text-gray-500 dark:text-gray-400 ml-1">{{ opportunity.lead_source_detail }}</span>
+                            {% endif %}
+                        </span>
+                        <div class="opp-input hidden space-y-2" data-edit-input="lead_source">
+                            <select id="lead-source-select" class="input-field w-full">
+                                <option value="" {% if not opportunity.lead_source %}selected{% endif %}>-- Not set --</option>
+                                <option value="referral" {% if opportunity.lead_source == 'referral' %}selected{% endif %}>Referral</option>
+                                <option value="linkedin" {% if opportunity.lead_source == 'linkedin' %}selected{% endif %}>LinkedIn</option>
+                                <option value="vc_intro" {% if opportunity.lead_source == 'vc_intro' %}selected{% endif %}>VC Intro</option>
+                                <option value="cold_outreach" {% if opportunity.lead_source == 'cold_outreach' %}selected{% endif %}>Cold Outreach</option>
+                                <option value="inbound_website" {% if opportunity.lead_source == 'inbound_website' %}selected{% endif %}>Inbound Website</option>
+                                <option value="conference_event" {% if opportunity.lead_source == 'conference_event' %}selected{% endif %}>Conference / Event</option>
+                                <option value="partner" {% if opportunity.lead_source == 'partner' %}selected{% endif %}>Partner</option>
+                                <option value="other" {% if opportunity.lead_source == 'other' %}selected{% endif %}>Other</option>
+                            </select>
+                            <input type="text" id="lead-source-detail-input" class="input-field w-full"
+                                   placeholder="Detail (e.g. referrer name, event, VC firm)"
+                                   value="{{ opportunity.lead_source_detail or '' }}">
+                        </div>
+                    </dd>
+                </div>
+                <div>
                     <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created</dt>
                     <dd class="mt-1 text-gray-900 dark:text-white">{{ opportunity.created_at[:10] if opportunity.created_at else 'Unknown' }}</dd>
                 </div>
@@ -291,21 +336,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            showProcessing('Deleting Opportunity', `Removing "${oppName}"...`);
+            
             fetch(`/api/customers/${assistantId}/opportunities/${opportunityId}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' }
             })
             .then(response => {
                 if (response.ok) {
-                    showToast('Opportunity deleted', 'success');
                     window.location.href = `/customer/${assistantId}/opportunities`;
                 } else {
+                    hideProcessing();
                     return response.json().then(data => {
                         showToast(data.error || 'Failed to delete', 'error');
                     });
                 }
             })
             .catch(err => {
+                hideProcessing();
                 showToast('Error deleting opportunity', 'error');
             });
         });
@@ -356,6 +404,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 display.textContent = value || 'Not set';
             } else if (field === 'confidence') {
                 display.textContent = value;
+            } else if (field === 'lead_source' || field === 'lead_source_detail') {
+                // Re-render lead source badge + detail together
+                const lsDisplay = document.querySelector('[data-edit-display="lead_source"]');
+                if (lsDisplay) {
+                    const lsSel = document.getElementById('lead-source-select');
+                    const lsDet = document.getElementById('lead-source-detail-input');
+                    const src = lsSel ? lsSel.value : '';
+                    const det = lsDet ? lsDet.value.trim() : '';
+                    const labels = {
+                        referral: ['Referral', 'badge-green'],
+                        linkedin: ['LinkedIn', 'badge-blue'],
+                        vc_intro: ['VC Intro', 'badge-purple'],
+                        cold_outreach: ['Cold Outreach', 'badge-gray'],
+                        inbound_website: ['Inbound Website', 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 text-xs font-medium px-2.5 py-0.5 rounded-full'],
+                        conference_event: ['Conference / Event', 'badge-yellow'],
+                        partner: ['Partner', 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs font-medium px-2.5 py-0.5 rounded-full'],
+                        other: ['Other', 'badge-gray'],
+                    };
+                    let html = '';
+                    if (src && labels[src]) {
+                        html = `<span class="${labels[src][1]}">${labels[src][0]}</span>`;
+                    } else {
+                        html = '<span class="text-gray-400 text-base font-normal">Not set</span>';
+                    }
+                    if (det) {
+                        html += ` <span class="text-sm text-gray-500 dark:text-gray-400 ml-1">${det}</span>`;
+                    }
+                    lsDisplay.innerHTML = html;
+                }
             } else if (field === 'competitors') {
                 if (value && value.length > 0) {
                     let html = '<div class="space-y-2">';
@@ -424,7 +501,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Text/number inputs
-    document.querySelectorAll('.opp-input input[type="text"], .opp-input input[type="number"], .opp-input input[type="date"]').forEach(input => {
+    document.querySelectorAll(
+        '[data-edit-input] input[type="text"], [data-edit-input] input[type="number"], [data-edit-input] input[type="date"], input[data-edit-input][type="text"], input[data-edit-input][type="number"], input[data-edit-input][type="date"]'
+    ).forEach(input => {
         input.addEventListener('input', function() {
             const field = this.closest('[data-edit-input]').dataset.editInput;
             let value = this.value.trim();
@@ -438,6 +517,22 @@ document.addEventListener('DOMContentLoaded', function() {
             queueUpdate(field, value);
         });
     });
+
+    // Lead source select
+    const leadSourceSelect = document.getElementById('lead-source-select');
+    const leadSourceDetailInput = document.getElementById('lead-source-detail-input');
+    if (leadSourceSelect) {
+        leadSourceSelect.addEventListener('change', function() {
+            const value = this.value || null;
+            queueUpdate('lead_source', value);
+        });
+    }
+    if (leadSourceDetailInput) {
+        leadSourceDetailInput.addEventListener('input', function() {
+            const value = this.value.trim() || null;
+            queueUpdate('lead_source_detail', value);
+        });
+    }
 
     // Competitors textarea
     document.querySelectorAll('.opp-input textarea').forEach(textarea => {

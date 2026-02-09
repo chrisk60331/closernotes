@@ -3,9 +3,10 @@
 import asyncio
 from flask import Blueprint, request, jsonify, current_app
 
-from app.schemas.user import UserRole
+from app.schemas.user import UserRole, UserUpdate
 from app.services.auth import manager_required
 from app.services.backboard import BackboardService
+from app.services.cache import CacheService
 from app.services.user import UserService
 
 users_bp = Blueprint("users", __name__)
@@ -181,4 +182,65 @@ def delete_user(user_id: str):
 
     except Exception as e:
         current_app.logger.exception("Error deleting user")
+        return jsonify({"error": str(e)}), 500
+
+
+@users_bp.route("/users/<user_id>", methods=["PATCH"])
+@manager_required
+def update_user(user_id: str):
+    """Update a user (manager only).
+
+    Request body:
+        {
+            "email": "new@example.com",
+            "name": "New Name",
+            "role": "user" or "manager"
+        }
+
+    Returns:
+        JSON with updated user
+    """
+    try:
+        json_data = request.get_json()
+        if not json_data:
+            return jsonify({"error": "Request body is required"}), 400
+
+        try:
+            update = UserUpdate.model_validate(json_data)
+        except Exception as e:
+            return jsonify({"error": f"Invalid request: {str(e)}"}), 400
+
+        async def _update():
+            backboard = BackboardService()
+            user_svc = UserService(backboard)
+
+            if update.email:
+                existing = await user_svc.get_user_by_email(update.email)
+                if existing and existing.id != user_id:
+                    raise ValueError("Email already in use")
+
+            return await user_svc.update_user(user_id, update)
+
+        user = run_async(_update())
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # Bust cached manager dashboard so the next load reflects the change
+        CacheService().invalidate_by_tags(["dashboards"])
+
+        return jsonify({
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "role": user.role.value,
+                "created_at": user.created_at.isoformat(),
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        current_app.logger.exception("Error updating user")
         return jsonify({"error": str(e)}), 500

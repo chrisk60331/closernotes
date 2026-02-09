@@ -297,6 +297,23 @@
         </div>
     </div>
 
+    <!-- Processing/Loading Modal -->
+    <div id="processing-modal" class="fixed inset-0 z-[160] hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+            <div class="relative bg-white dark:bg-bb-steelDark rounded-xl shadow-xl max-w-sm w-full p-8 transform transition-all text-center">
+                <div class="flex justify-center mb-5">
+                    <svg class="animate-spin h-10 w-10 text-bb-blue dark:text-bb-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </div>
+                <h3 id="processing-title" class="text-lg font-semibold text-gray-900 dark:text-white">Processing</h3>
+                <p id="processing-message" class="mt-2 text-sm text-gray-600 dark:text-gray-300">Please wait...</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         // User menu toggle
         function toggleUserMenu() {
@@ -488,6 +505,21 @@
                 hideConfirm(false);
             }
         });
+
+        // ===== Processing Modal System =====
+        function showProcessing(title, message) {
+            const modal = document.getElementById('processing-modal');
+            const titleEl = document.getElementById('processing-title');
+            const messageEl = document.getElementById('processing-message');
+            titleEl.textContent = title || 'Processing';
+            messageEl.textContent = message || 'Please wait...';
+            modal.classList.remove('hidden');
+        }
+
+        function hideProcessing() {
+            const modal = document.getElementById('processing-modal');
+            modal.classList.add('hidden');
+        }
     </script>
     
     {% block scripts %}{% endblock %}

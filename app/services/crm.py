@@ -19,6 +19,7 @@ from app.schemas.crm import (
 )
 from app.schemas.enums import ActivityType, ContactMethod, OpportunityStage
 from app.services.backboard import BackboardService
+from app.services.cache import CacheService
 
 
 class CRMService:
@@ -31,6 +32,7 @@ class CRMService:
             backboard: BackboardService instance
         """
         self._backboard = backboard
+        self._cache = CacheService()
 
     # Contact operations
     async def create_contact(
@@ -68,6 +70,7 @@ class CRMService:
             content=contact.to_memory_content(),
         )
 
+        self._cache.invalidate_customer(assistant_id)
         return contact
 
     async def get_contact(
@@ -157,6 +160,7 @@ class CRMService:
                             memory_id=memory.id,
                             content=updated_contact.to_memory_content(),
                         )
+                        self._cache.invalidate_customer(assistant_id)
                         return updated_contact
                 except (json.JSONDecodeError, ValueError):
                     continue
@@ -186,6 +190,7 @@ class CRMService:
                     # Check if this is a contact and matches the ID
                     if data.get("id") == contact_id and "is_champion" in data:
                         await self._backboard.delete_memory(assistant_id, memory.id)
+                        self._cache.invalidate_customer(assistant_id)
                         return True
                 except (json.JSONDecodeError, ValueError):
                     continue
@@ -217,6 +222,8 @@ class CRMService:
             close_date_estimate=data.close_date_estimate,
             confidence=data.confidence,
             competitors=data.competitors,
+            lead_source=data.lead_source,
+            lead_source_detail=data.lead_source_detail,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow(),
         )
@@ -227,6 +234,7 @@ class CRMService:
             content=opportunity.to_memory_content(),
         )
 
+        self._cache.invalidate_customer(assistant_id)
         return opportunity
 
     async def get_opportunity(
@@ -329,6 +337,7 @@ class CRMService:
                             memory_id=memory.id,
                             content=updated_opp.to_memory_content(),
                         )
+                        self._cache.invalidate_customer(assistant_id)
                         return updated_opp
                 except (json.JSONDecodeError, ValueError):
                     continue
@@ -361,6 +370,7 @@ class CRMService:
                             assistant_id=assistant_id,
                             memory_id=memory.id,
                         )
+                        self._cache.invalidate_customer(assistant_id)
                         return True
                 except (json.JSONDecodeError, ValueError):
                     continue
@@ -480,6 +490,7 @@ class CRMService:
             content=activity.to_memory_content(),
         )
 
+        self._cache.invalidate_customer(assistant_id)
         return activity
 
     async def get_activity(
@@ -622,6 +633,7 @@ class CRMService:
             content=action_item.to_memory_content(),
         )
 
+        self._cache.invalidate_customer(assistant_id)
         return action_item
 
     async def get_promoted_action_item(
@@ -744,6 +756,7 @@ class CRMService:
                             memory_id=memory.id,
                             content=updated_item.to_memory_content(),
                         )
+                        self._cache.invalidate_customer(assistant_id)
                         return updated_item
                 except (json.JSONDecodeError, ValueError):
                     continue
@@ -785,6 +798,7 @@ class CRMService:
                             memory_id=memory.id,
                             content=updated_item.to_memory_content(),
                         )
+                        self._cache.invalidate_customer(assistant_id)
                         return updated_item
                 except (json.JSONDecodeError, ValueError):
                     continue

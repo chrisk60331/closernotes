@@ -7,6 +7,7 @@ from flask import Blueprint, request, jsonify, current_app
 from app.schemas.crm import PromotedActionItemUpdate
 from app.services.backboard import BackboardService
 from app.services.crm import CRMService
+from app.services.cache_store import CacheStoreService
 
 action_items_bp = Blueprint("action_items", __name__)
 
@@ -73,6 +74,7 @@ def create_action_item(assistant_id: str):
                 source_excerpt=None,
             )
 
+            await CacheStoreService(backboard).update_customer_summary(assistant_id)
             return action_item, None
 
         action_item, error = run_async(_create())
@@ -118,6 +120,8 @@ def update_action_item(assistant_id: str, action_item_id: str):
                 data=update_data,
             )
 
+            if updated:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
             return updated
 
         updated = run_async(_update())
@@ -149,6 +153,8 @@ def dismiss_action_item(assistant_id: str, action_item_id: str):
                 action_item_id=action_item_id,
             )
 
+            if dismissed:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
             return dismissed
 
         dismissed = run_async(_dismiss())
@@ -188,6 +194,8 @@ def toggle_action_item(assistant_id: str, action_item_id: str):
                 data=update_data,
             )
 
+            if updated:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
             return updated
 
         updated = run_async(_toggle())
@@ -229,6 +237,8 @@ def backfill_action_items(assistant_id: str):
                 customer_id=customer.id,
             )
 
+            if count and count > 0:
+                await CacheStoreService(backboard).update_customer_summary(assistant_id)
             return count, None
 
         count, error = run_async(_backfill())
