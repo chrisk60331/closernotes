@@ -2,7 +2,7 @@
 
 import re
 
-from flask import Flask
+from flask import Flask, render_template
 
 from app.config import get_settings
 
@@ -63,5 +63,14 @@ def create_app() -> Flask:
         if not value:
             return "Unknown"
         return _HEX_SUFFIX_RE.sub("", value)
+
+    # ---- Custom error pages ----
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template("404.html"), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return render_template("500.html"), 500
 
     return app

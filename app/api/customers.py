@@ -827,3 +827,198 @@ def get_manager_dashboard():
     except Exception as e:
         current_app.logger.exception("Error getting manager dashboard data")
         return jsonify({"error": str(e)}), 500
+
+
+@customers_bp.route("/global/contacts", methods=["GET"])
+@login_required
+def get_global_contacts():
+    """Get all contacts across customers for async loading.
+
+    Uses cache store summaries for permission filtering, then fetches
+    per-customer contacts in parallel via asyncio.gather().
+
+    Returns:
+        JSON with contacts list
+    """
+    try:
+        current_user = get_current_user()
+        is_manager = current_user and current_user.is_manager()
+        user_id = current_user.id if current_user else None
+
+        async def _get_data():
+            backboard = BackboardService()
+            cache_store = CacheStoreService(backboard)
+            customer_svc = CustomerService(backboard)
+            cache = CacheService()
+
+            role = "manager" if is_manager else "user"
+            cache_key = build_cache_key("global_contacts", role, user_id or "none")
+
+            async def _build():
+                summaries = await cache_store.get_all_summaries()
+
+                # Permission filter
+                if not is_manager:
+                    summaries = [s for s in summaries if s.assigned_user_id == user_id]
+
+                # Parallel fetch all customer contacts
+                async def _fetch_contacts(s):
+                    result = []
+                    for contact in await customer_svc.get_contacts(s.assistant_id):
+                        contact_data = contact.model_dump(mode="json")
+                        contact_data["assistant_id"] = s.assistant_id
+                        contact_data["company_name"] = s.company_name
+                        result.append(contact_data)
+                    return result
+
+                batches = await asyncio.gather(
+                    *[_fetch_contacts(s) for s in summaries]
+                )
+                contacts = [c for batch in batches for c in batch]
+                return {"contacts": contacts}
+
+            return await cache.get_or_set(
+                cache_key,
+                cache.with_jitter(CACHE_TTLS["global_contacts"]),
+                _build,
+                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id or 'none'}"],
+            )
+
+        data = run_async(_get_data())
+        return jsonify(data), 200
+
+    except Exception as e:
+        current_app.logger.exception("Error getting global contacts")
+        return jsonify({"error": str(e)}), 500
+
+
+@customers_bp.route("/global/opportunities", methods=["GET"])
+@login_required
+def get_global_opportunities():
+    """Get all opportunities across customers for async loading.
+
+    Uses cache store summaries for permission filtering, then fetches
+    per-customer opportunities in parallel via asyncio.gather().
+
+    Returns:
+        JSON with opportunities list
+    """
+    try:
+        current_user = get_current_user()
+        is_manager = current_user and current_user.is_manager()
+        user_id = current_user.id if current_user else None
+
+        async def _get_data():
+            backboard = BackboardService()
+            cache_store = CacheStoreService(backboard)
+            customer_svc = CustomerService(backboard)
+            cache = CacheService()
+
+            role = "manager" if is_manager else "user"
+            cache_key = build_cache_key("global_opportunities", role, user_id or "none")
+
+            async def _build():
+                summaries = await cache_store.get_all_summaries()
+
+                if not is_manager:
+                    summaries = [s for s in summaries if s.assigned_user_id == user_id]
+
+                async def _fetch_opps(s):
+                    result = []
+                    for opp in await customer_svc.get_opportunities(s.assistant_id):
+                        opp_data = opp.model_dump(mode="json")
+                        opp_data["assistant_id"] = s.assistant_id
+                        opp_data["company_name"] = s.company_name
+                        result.append(opp_data)
+                    return result
+
+                batches = await asyncio.gather(
+                    *[_fetch_opps(s) for s in summaries]
+                )
+                opportunities = [o for batch in batches for o in batch]
+                return {"opportunities": opportunities}
+
+            return await cache.get_or_set(
+                cache_key,
+                cache.with_jitter(CACHE_TTLS["global_opportunities"]),
+                _build,
+                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id or 'none'}"],
+            )
+
+        data = run_async(_get_data())
+        return jsonify(data), 200
+
+    except Exception as e:
+        current_app.logger.exception("Error getting global opportunities")
+        return jsonify({"error": str(e)}), 500
+
+
+@customers_bp.route("/global/activities", methods=["GET"])
+@login_required
+def get_global_activities():
+    """Get all activities across customers for async loading.
+
+    Uses cache store summaries for permission filtering, then fetches
+    per-customer activities in parallel via asyncio.gather().
+
+    Returns:
+        JSON with activities list (sorted by date descending)
+    """
+    try:
+        current_user = get_current_user()
+        is_manager = current_user and current_user.is_manager()
+        user_id = current_user.id if current_user else None
+
+        async def _get_data():
+            backboard = BackboardService()
+            cache_store = CacheStoreService(backboard)
+            customer_svc = CustomerService(backboard)
+            cache = CacheService()
+
+            role = "manager" if is_manager else "user"
+            cache_key = build_cache_key("global_activities", role, user_id or "none")
+
+            async def _build():
+                summaries = await cache_store.get_all_summaries()
+
+                if not is_manager:
+                    summaries = [s for s in summaries if s.assigned_user_id == user_id]
+
+                async def _fetch_activities(s):
+                    result = []
+                    for activity in await customer_svc.get_activities(s.assistant_id):
+                        result.append({
+                            "assistant_id": s.assistant_id,
+                            "company_name": s.company_name,
+                            "activity": activity,
+                        })
+                    return result
+
+                batches = await asyncio.gather(
+                    *[_fetch_activities(s) for s in summaries]
+                )
+                activity_rows = [r for batch in batches for r in batch]
+                activity_rows.sort(key=lambda row: row["activity"].date, reverse=True)
+
+                activities = []
+                for row in activity_rows:
+                    activity_data = row["activity"].model_dump(mode="json")
+                    activity_data["assistant_id"] = row["assistant_id"]
+                    activity_data["company_name"] = row["company_name"]
+                    activities.append(activity_data)
+
+                return {"activities": activities}
+
+            return await cache.get_or_set(
+                cache_key,
+                cache.with_jitter(CACHE_TTLS["global_activities"]),
+                _build,
+                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id or 'none'}"],
+            )
+
+        data = run_async(_get_data())
+        return jsonify(data), 200
+
+    except Exception as e:
+        current_app.logger.exception("Error getting global activities")
+        return jsonify({"error": str(e)}), 500

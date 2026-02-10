@@ -139,15 +139,17 @@
 @layer components {
     .btn-primary {
         @apply px-4 py-2 bg-bb-blue text-white rounded-lg hover:bg-bb-blueDark
-               transition-colors duration-200 font-medium
+               transition-all duration-200 font-medium
                dark:bg-bb-blueDark dark:hover:bg-bb-blue
-               disabled:opacity-50 disabled:cursor-not-allowed;
+               disabled:opacity-50 disabled:cursor-not-allowed
+               active:scale-[0.97];
     }
 
     .btn-secondary {
         @apply px-4 py-2 bg-bb-steel text-bb-phantom rounded-lg hover:bg-bb-steel/80
-               transition-colors duration-200 font-medium
-               dark:bg-bb-steelDark dark:text-bb-phantomLight dark:hover:bg-bb-steelDark/80;
+               transition-all duration-200 font-medium
+               dark:bg-bb-steelDark dark:text-bb-phantomLight dark:hover:bg-bb-steelDark/80
+               active:scale-[0.97];
     }
 
     .card {
@@ -159,8 +161,8 @@
         @apply w-full px-4 py-2 rounded-lg border border-bb-steel
                dark:border-bb-steelDark bg-bb-cloud dark:bg-bb-phantom
                text-bb-phantom dark:text-bb-phantomLight
-               focus:ring-2 focus:ring-bb-blue focus:border-transparent
-               transition-colors duration-200;
+               focus:ring-2 focus:ring-bb-blue/30 focus:border-bb-blue focus:shadow-[0_0_0_3px_rgba(0,123,252,0.1)]
+               transition-all duration-200;
     }
 
     .label {
@@ -452,3 +454,550 @@
 #confirm-modal .relative {
     animation: modal-content-in 0.2s ease-out;
 }
+
+/* ============================================
+   MICRO-INTERACTIONS & MOTION DESIGN
+   ============================================ */
+
+/* --- Page Fade-Up Transition --- */
+@keyframes page-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-enter {
+    animation: page-fade-up 0.35s ease-out both;
+}
+
+/* --- Staggered List / Grid Animation --- */
+@keyframes stagger-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stagger-item {
+    opacity: 0;
+    animation: stagger-in 0.4s ease-out forwards;
+    animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* For table rows — more subtle */
+.stagger-row {
+    opacity: 0;
+    animation: stagger-in 0.3s ease-out forwards;
+    animation-delay: calc(var(--i, 0) * 30ms);
+}
+
+/* --- Card Hover Depth --- */
+.card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.dark .card-hover:hover {
+    box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 10px -5px rgba(0, 0, 0, 0.2);
+}
+
+/* Row hover lift — subtle for table rows */
+.row-hover {
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.row-hover:hover {
+    transform: translateX(2px);
+}
+
+/* --- Stats Card Pulse (number change) --- */
+@keyframes stat-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.stat-pop {
+    animation: stat-pop 0.35s ease-out;
+}
+
+/* --- Skeleton → Content Crossfade --- */
+@keyframes skeleton-out {
+    from { opacity: 1; }
+    to { opacity: 0; position: absolute; }
+}
+
+@keyframes content-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.skeleton-fade-out {
+    animation: skeleton-out 0.3s ease-out forwards;
+}
+
+.content-fade-in {
+    animation: content-in 0.35s ease-out 0.1s both;
+}
+
+/* --- Checkmark Morph (action item completion) --- */
+@keyframes check-morph {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    50% {
+        transform: scale(1.3);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.check-morph {
+    animation: check-morph 0.35s ease-out;
+}
+
+/* Strikethrough animation for completed items */
+@keyframes strike-through {
+    from {
+        text-decoration-color: transparent;
+    }
+    to {
+        text-decoration-color: currentColor;
+    }
+}
+
+.strike-animate {
+    text-decoration: line-through;
+    animation: strike-through 0.3s ease-out forwards;
+}
+
+/* --- Confetti Burst --- */
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-10px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(calc(100vh + 20px)) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.confetti-piece {
+    position: fixed;
+    top: -10px;
+    width: 10px;
+    height: 10px;
+    z-index: 9998;
+    pointer-events: none;
+    animation: confetti-fall var(--duration, 2.5s) ease-in forwards;
+    animation-delay: var(--delay, 0s);
+}
+
+/* --- Empty State Animations --- */
+@keyframes empty-float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+@keyframes empty-check-draw {
+    from {
+        stroke-dashoffset: 24;
+    }
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.empty-float {
+    animation: empty-float 3s ease-in-out infinite;
+}
+
+.empty-check-draw {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    animation: empty-check-draw 0.6s ease-out 0.3s forwards;
+}
+
+/* --- Walkthrough Overlay --- */
+@keyframes walkthrough-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes walkthrough-step-in {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.walkthrough-overlay {
+    animation: walkthrough-fade-in 0.3s ease-out;
+}
+
+.walkthrough-card {
+    animation: walkthrough-step-in 0.4s ease-out;
+}
+
+/* --- Button Press Effect --- */
+.btn-press:active {
+    transform: scale(0.97);
+    transition: transform 0.08s ease;
+}
+
+/* --- Autosave indicator enhanced --- */
+@keyframes save-pop-in {
+    0% {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.9);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes save-fade-out {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-4px) scale(0.9);
+    }
+}
+
+.save-pop-in {
+    animation: save-pop-in 0.25s ease-out both;
+}
+
+.save-fade-out {
+    animation: save-fade-out 0.3s ease-in both;
+}
+
+/* ============================================
+   INLINE EDITING — FIELD FOCUS EFFECTS
+   ============================================ */
+
+/* When a section is in "edit-focus" mode, dim siblings */
+.edit-focus-dim {
+    opacity: 0.45;
+    transition: opacity 0.25s ease;
+    pointer-events: auto;
+}
+
+.edit-focus-dim.edit-focus-active {
+    opacity: 1;
+}
+
+/* Enhanced inline save checkmark next to field */
+@keyframes field-save-check {
+    0% {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes field-save-fade {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+.field-save-check {
+    animation: field-save-check 0.3s ease-out both;
+}
+
+.field-save-check-out {
+    animation: field-save-fade 0.25s ease-in both;
+}
+
+/* ============================================
+   UNDO TOAST
+   ============================================ */
+@keyframes undo-toast-in {
+    0% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes undo-toast-out {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(16px) scale(0.95);
+    }
+}
+
+.undo-toast-enter {
+    animation: undo-toast-in 0.3s ease-out both;
+}
+
+.undo-toast-exit {
+    animation: undo-toast-out 0.25s ease-in both;
+}
+
+/* Undo toast progress bar */
+@keyframes undo-progress {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+.undo-progress-bar {
+    animation: undo-progress var(--undo-duration, 5s) linear forwards;
+}
+
+/* ============================================
+   LOADING QUOTE ROTATION
+   ============================================ */
+@keyframes quote-fade {
+    0% { opacity: 0; transform: translateY(4px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-4px); }
+}
+
+.loading-quote {
+    animation: quote-fade 2.5s ease-in-out;
+}
+
+/* ============================================
+   COFFEE CUP LOADER
+   Solid mug spins clockwise. Coffee inside
+   counter-rotates so it always stays level
+   (gravity-correct) and rises to fill the cup.
+   ============================================ */
+@keyframes coffee-cup-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes coffee-cup-counter-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+}
+
+@keyframes coffee-cup-fill {
+    0%   { transform: translateY(26px); }
+    10%  { transform: translateY(24px); }
+    55%  { transform: translateY(5px); }
+    70%  { transform: translateY(2px); }
+    88%  { transform: translateY(2px); }
+    100% { transform: translateY(26px); }
+}
+
+.coffee-cup-loader {
+    animation: coffee-cup-spin 4s linear infinite;
+}
+
+.coffee-cup-counter-spin {
+    animation: coffee-cup-counter-spin 4s linear infinite;
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+}
+
+.coffee-cup-fill-anim {
+    fill: #6F4E37;
+    animation: coffee-cup-fill 4s ease-in-out infinite;
+}
+
+html.dark .coffee-cup-fill-anim {
+    fill: #8B6544;
+}
+
+/* ============================================
+   COFFEE-FOR-CLOSERS EASTER EGG (all items done)
+   ============================================ */
+@keyframes coffee-reward-in {
+    0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes coffee-reward-out {
+    0% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+}
+
+.coffee-reward-in {
+    animation: coffee-reward-in 0.5s ease-out both;
+}
+
+.coffee-reward-out {
+    animation: coffee-reward-out 0.4s ease-in both;
+}
+
+/* ============================================
+   404 ERROR PAGE
+   ============================================ */
+@keyframes ice-cube-float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    33% { transform: translateY(-6px) rotate(2deg); }
+    66% { transform: translateY(3px) rotate(-1deg); }
+}
+
+.ice-cube-float {
+    animation: ice-cube-float 4s ease-in-out infinite;
+}
+
+/* Optimistic update flash */
+@keyframes optimistic-flash {
+    0% { background-color: rgba(0, 123, 252, 0.08); }
+    100% { background-color: transparent; }
+}
+
+.optimistic-flash {
+    animation: optimistic-flash 0.6s ease-out;
+}
+
+/* ============================================
+   COMMAND PALETTE
+   ============================================ */
+@keyframes cmd-panel-in {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#command-palette:not(.hidden) #cmd-panel {
+    animation: cmd-panel-in 0.15s ease-out;
+}
+
+#command-palette:not(.hidden) #cmd-backdrop {
+    animation: walkthrough-fade-in 0.15s ease-out;
+}
+
+/* ============================================
+   NAV ACTIVE INDICATOR
+   ============================================ */
+.nav-link {
+    position: relative;
+}
+
+/* Active underline bar animation */
+@keyframes nav-indicator-in {
+    from {
+        transform: scaleX(0);
+        opacity: 0;
+    }
+    to {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+}
+
+.nav-link > span:last-child {
+    animation: nav-indicator-in 0.25s ease-out;
+}
+
+/* ============================================
+   CONTEXTUAL BACK BUTTON
+   ============================================ */
+.back-link {
+    @apply inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400
+           hover:text-bb-blue dark:hover:text-blue-400 transition-colors -mt-1 mb-4;
+}
+
+.back-link svg {
+    @apply w-4 h-4 transition-transform;
+}
+
+.back-link:hover svg {
+    transform: translateX(-2px);
+}
+
+/* ============================================
+   MOBILE NAV MENU
+   ============================================ */
+@keyframes mobile-menu-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#mobile-menu:not(.hidden) {
+    animation: mobile-menu-in 0.2s ease-out;
+}
+
+.mobile-nav-link {
+    /* Stagger entrance */
+    opacity: 0;
+    animation: stagger-in 0.25s ease-out forwards;
+}
+
+#mobile-menu:not(.hidden) .mobile-nav-link:nth-child(1) { animation-delay: 0ms; }
+#mobile-menu:not(.hidden) .mobile-nav-link:nth-child(2) { animation-delay: 30ms; }
+#mobile-menu:not(.hidden) .mobile-nav-link:nth-child(3) { animation-delay: 60ms; }
+#mobile-menu:not(.hidden) .mobile-nav-link:nth-child(4) { animation-delay: 90ms; }
+#mobile-menu:not(.hidden) .mobile-nav-link:nth-child(5) { animation-delay: 120ms; }
+#mobile-menu:not(.hidden) .mobile-nav-link:nth-child(6) { animation-delay: 150ms; }
+#mobile-menu:not(.hidden) button { animation-delay: 180ms; }

@@ -4,18 +4,19 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    {% if error %}
-    <div class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-        <p class="text-red-800 dark:text-red-200">{{ error }}</p>
+    <!-- Error container (hidden by default) -->
+    <div id="error-container" class="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hidden">
+        <p id="error-message" class="text-red-800 dark:text-red-200"></p>
         <a href="/" class="text-red-600 dark:text-red-400 underline mt-2 inline-block">Back to Dashboard</a>
     </div>
-    {% else %}
 
     <!-- Header -->
     <div class="flex items-center justify-between mb-8">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Opportunities</h1>
-            <p class="mt-1 text-gray-500 dark:text-gray-400">{{ opportunities|length }} opportunit{% if opportunities|length == 1 %}y{% else %}ies{% endif %} across all customers</p>
+            <p id="opportunities-subtitle" class="mt-1 text-gray-500 dark:text-gray-400">
+                <span class="inline-block w-16 h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse align-middle"></span>
+            </p>
         </div>
         <div class="relative">
             <input type="text" id="opportunities-search" placeholder="Search opportunities..." class="input-field pl-10 w-64">
@@ -25,209 +26,300 @@
         </div>
     </div>
 
-    {% if opportunities %}
-    <div class="card">
+    <!-- Skeleton loading state -->
+    <div id="opportunities-loading" class="card">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead>
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="customer">Customer</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="name">Name</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="stage">Stage</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="lead_source">Lead Source</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="value">Value</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="close_date">Close Date</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="confidence">Confidence</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="created">Created</button>
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            <button type="button" class="table-sort text-left" data-key="updated">Updated</button>
-                        </th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                            Actions
-                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Stage</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Lead Source</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Value</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Close Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Confidence</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Created</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Updated</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="opportunities-table-body">
-                    {% for opp in opportunities %}
-                    <tr class="opportunity-row hover:bg-gray-50 dark:hover:bg-gray-800/40">
-                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                            <span class="sr-only sort-value" data-key="customer">{{ opp.company_name or "Unknown" }}</span>
-                            <a href="/customer/{{ opp.assistant_id }}" class="text-bb-blue hover:text-bb-blueDark dark:text-bb-blueDark dark:hover:text-bb-blue">
-                                {{ opp.company_name or "Unknown" }}
-                            </a>
-                        </td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
-                            <span class="sr-only sort-value" data-key="name">{{ opp.name }}</span>
-                            <a href="/customer/{{ opp.assistant_id }}/opportunity/{{ opp.id }}" class="hover:underline">
-                                {{ opp.name }}
-                            </a>
-                        </td>
-                        <td class="px-6 py-4 text-sm">
-                            <span class="sr-only sort-value" data-key="stage">{{ opp.stage or "" }}</span>
-                            {% if opp.stage == 'discovery' %}
-                            <span class="badge-blue text-xs">Discovery</span>
-                            {% elif opp.stage == 'qualification' %}
-                            <span class="badge-yellow text-xs">Qualified</span>
-                            {% elif opp.stage == 'proposal' %}
-                            <span class="badge-blue text-xs">Proposal</span>
-                            {% elif opp.stage == 'negotiation' %}
-                            <span class="badge-yellow text-xs">Negotiation</span>
-                            {% elif opp.stage == 'closed_won' %}
-                            <span class="badge-green text-xs">Sold</span>
-                            {% elif opp.stage == 'closed_lost' %}
-                            <span class="badge-red text-xs">Closed Lost</span>
-                            {% elif opp.stage == 'delivered' %}
-                            <span class="badge-purple text-xs">Delivered</span>
-                            {% elif opp.stage == 'blocked' %}
-                            <span class="badge-red text-xs">Blocked</span>
-                            {% else %}
-                            <span class="badge-gray text-xs">{{ opp.stage or 'Unknown' }}</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm">
-                            <span class="sr-only sort-value" data-key="lead_source">{{ opp.lead_source or "" }}</span>
-                            {% if opp.lead_source == 'referral' %}
-                            <span class="badge-green text-xs">Referral</span>
-                            {% elif opp.lead_source == 'linkedin' %}
-                            <span class="badge-blue text-xs">LinkedIn</span>
-                            {% elif opp.lead_source == 'vc_intro' %}
-                            <span class="badge-purple text-xs">VC Intro</span>
-                            {% elif opp.lead_source == 'cold_outreach' %}
-                            <span class="badge-gray text-xs">Cold Outreach</span>
-                            {% elif opp.lead_source == 'inbound_website' %}
-                            <span class="bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Inbound</span>
-                            {% elif opp.lead_source == 'conference_event' %}
-                            <span class="badge-yellow text-xs">Event</span>
-                            {% elif opp.lead_source == 'partner' %}
-                            <span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Partner</span>
-                            {% elif opp.lead_source == 'other' %}
-                            <span class="badge-gray text-xs">Other</span>
-                            {% else %}
-                            <span class="text-gray-400">-</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                            <span class="sr-only sort-value" data-key="value">{{ opp.value or "" }}</span>
-                            {% if opp.value %}
-                            ${{ "{:,.0f}".format(opp.value) }}
-                            {% else %}
-                            -
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                            <span class="sr-only sort-value" data-key="close_date">{{ opp.close_date_estimate or "" }}</span>
-                            {{ opp.close_date_estimate or "-" }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
-                            <span class="sr-only sort-value" data-key="confidence">{{ opp.confidence }}</span>
-                            {{ opp.confidence }}%
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                            <span class="sr-only sort-value" data-key="created">{{ opp.created_at or "" }}</span>
-                            {{ opp.created_at[:10] if opp.created_at else "-" }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                            <span class="sr-only sort-value" data-key="updated">{{ opp.updated_at or "" }}</span>
-                            {{ opp.updated_at[:10] if opp.updated_at else "-" }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-right whitespace-nowrap">
-                            <div class="flex items-center justify-end gap-1">
-                                <a href="/customer/{{ opp.assistant_id }}/opportunity/{{ opp.id }}"
-                                   class="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                                   title="Edit opportunity">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                </a>
-                                <button type="button"
-                                        class="p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                                        title="Delete opportunity"
-                                        onclick="deleteOpportunity('{{ opp.assistant_id }}', '{{ opp.id }}', this)">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for i in range(6) %}
+                    <tr class="stagger-row" style="--i: {{ i }}">
+                        <td class="px-6 py-4"><span class="block h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-5 w-16 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-4 w-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-4 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></span></td>
+                        <td class="px-6 py-4"><span class="block h-4 w-8 bg-gray-200 dark:bg-gray-700 rounded animate-pulse ml-auto"></span></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-    {% else %}
-    <div class="card text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No opportunities yet</h3>
-        <p class="mt-2 text-gray-500 dark:text-gray-400">Opportunities will appear here as they are detected.</p>
-    </div>
-    {% endif %}
 
-    {% endif %}
+    <!-- Data container (hidden until loaded) -->
+    <div id="opportunities-data" class="hidden"></div>
+
+    <!-- Empty state (hidden until loaded) -->
+    <div id="opportunities-empty" class="hidden card text-center py-16">
+        <div class="empty-float inline-block mb-4">
+            <svg class="mx-auto w-20 h-20" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M16 44l8-8 6 2 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 dark:text-gray-600"/>
+                <path d="M38 30l8 8 6-2 8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 dark:text-gray-600"/>
+                <path d="M28 42l12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="text-bb-blue/40"/>
+                <path d="M40 42l-12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="text-bb-blue/40"/>
+                <circle cx="40" cy="28" r="10" stroke="currentColor" stroke-width="1.5" class="text-bb-blue/30"/>
+                <path d="M40 22v12M37 25a3 3 0 013-1h0a3 3 0 010 6h0a3 3 0 000 6h0a3 3 0 003-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" class="text-bb-blue/50"/>
+                <path d="M58 16l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="currentColor" class="text-bb-blue/40"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">No opportunities yet</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+            Every deal starts somewhere. Record your first meeting to get started.
+        </p>
+        <a href="/" class="inline-flex items-center mt-6 btn-primary btn-press px-5 py-2.5">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+            </svg>
+            Record a Meeting
+        </a>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-function deleteOpportunity(assistantId, oppId, btn) {
-    if (!confirm('Are you sure you want to delete this opportunity? This cannot be undone.')) return;
-    fetch(`/api/customers/${assistantId}/opportunities/${oppId}`, { method: 'DELETE' })
-        .then(resp => {
-            if (resp.ok) {
-                const row = btn.closest('tr');
-                row.style.transition = 'opacity 0.3s';
-                row.style.opacity = '0';
-                setTimeout(() => row.remove(), 300);
-            } else {
-                return resp.json().then(d => { throw new Error(d.error || 'Delete failed'); });
-            }
-        })
-        .catch(err => alert('Error: ' + err.message));
+document.addEventListener('DOMContentLoaded', function() {
+    loadOpportunities();
+});
+
+async function loadOpportunities() {
+    try {
+        const response = await fetch('/api/global/opportunities');
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load opportunities');
+        }
+
+        renderOpportunities(data.opportunities || []);
+    } catch (err) {
+        console.error('Error loading opportunities:', err);
+        document.getElementById('opportunities-loading').classList.add('hidden');
+        const container = document.getElementById('error-container');
+        document.getElementById('error-message').textContent = err.message;
+        container.classList.remove('hidden');
+    }
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('opportunities-search');
-    if (!searchInput) {
+function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function formatCurrency(value) {
+    if (!value) return '-';
+    return '$' + Number(value).toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
+function stageBadge(stage) {
+    const map = {
+        'discovery':     '<span class="badge-blue text-xs">Discovery</span>',
+        'qualification': '<span class="badge-yellow text-xs">Qualified</span>',
+        'proposal':      '<span class="badge-blue text-xs">Proposal</span>',
+        'negotiation':   '<span class="badge-yellow text-xs">Negotiation</span>',
+        'closed_won':    '<span class="badge-green text-xs">Sold</span>',
+        'closed_lost':   '<span class="badge-red text-xs">Closed Lost</span>',
+        'delivered':     '<span class="badge-purple text-xs">Delivered</span>',
+        'blocked':       '<span class="badge-red text-xs">Blocked</span>',
+    };
+    return map[stage] || `<span class="badge-gray text-xs">${escHtml(stage || 'Unknown')}</span>`;
+}
+
+function leadSourceBadge(src) {
+    const map = {
+        'referral':         '<span class="badge-green text-xs">Referral</span>',
+        'linkedin':         '<span class="badge-blue text-xs">LinkedIn</span>',
+        'vc_intro':         '<span class="badge-purple text-xs">VC Intro</span>',
+        'cold_outreach':    '<span class="badge-gray text-xs">Cold Outreach</span>',
+        'inbound_website':  '<span class="bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Inbound</span>',
+        'conference_event': '<span class="badge-yellow text-xs">Event</span>',
+        'partner':          '<span class="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-xs font-medium px-2.5 py-0.5 rounded-full">Partner</span>',
+        'other':            '<span class="badge-gray text-xs">Other</span>',
+    };
+    return map[src] || '<span class="text-gray-400">-</span>';
+}
+
+function renderOpportunities(opportunities) {
+    const loadingEl = document.getElementById('opportunities-loading');
+    const dataEl = document.getElementById('opportunities-data');
+    const emptyEl = document.getElementById('opportunities-empty');
+    const subtitle = document.getElementById('opportunities-subtitle');
+
+    const count = opportunities.length;
+    subtitle.textContent = `${count} opportunit${count === 1 ? 'y' : 'ies'} across all customers`;
+
+    loadingEl.classList.add('hidden');
+
+    if (count === 0) {
+        emptyEl.classList.remove('hidden');
         return;
     }
+
+    let html = `<div class="card"><div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead><tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="customer">Customer</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="name">Name</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="stage">Stage</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="lead_source">Lead Source</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="value">Value</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="close_date">Close Date</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="confidence">Confidence</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="created">Created</button></th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    <button type="button" class="table-sort text-left" data-key="updated">Updated</button></th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+            </tr></thead>
+            <tbody class="divide-y divide-gray-200 dark:divide-gray-700" id="opportunities-table-body">`;
+
+    opportunities.forEach((opp, i) => {
+        const company = escHtml(opp.company_name || 'Unknown');
+        const name = escHtml(opp.name || '');
+        const detailHref = `/customer/${opp.assistant_id}/opportunity/${opp.id}`;
+        const custHref = `/customer/${opp.assistant_id}`;
+        const created = opp.created_at ? opp.created_at.slice(0, 10) : '-';
+        const updated = opp.updated_at ? opp.updated_at.slice(0, 10) : '-';
+
+        html += `
+            <tr class="opportunity-row row-hover hover:bg-gray-50 dark:hover:bg-gray-800/40 stagger-row" style="--i: ${i}">
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                    <span class="sr-only sort-value" data-key="customer">${company}</span>
+                    <a href="${custHref}" class="text-bb-blue hover:text-bb-blueDark dark:text-bb-blueDark dark:hover:text-bb-blue">${company}</a>
+                </td>
+                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                    <span class="sr-only sort-value" data-key="name">${name}</span>
+                    <a href="${detailHref}" class="hover:underline">${name}</a>
+                </td>
+                <td class="px-6 py-4 text-sm">
+                    <span class="sr-only sort-value" data-key="stage">${escHtml(opp.stage || '')}</span>
+                    ${stageBadge(opp.stage)}
+                </td>
+                <td class="px-6 py-4 text-sm">
+                    <span class="sr-only sort-value" data-key="lead_source">${escHtml(opp.lead_source || '')}</span>
+                    ${leadSourceBadge(opp.lead_source)}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                    <span class="sr-only sort-value" data-key="value">${opp.value || ''}</span>
+                    ${formatCurrency(opp.value)}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                    <span class="sr-only sort-value" data-key="close_date">${escHtml(opp.close_date_estimate || '')}</span>
+                    ${escHtml(opp.close_date_estimate || '-')}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                    <span class="sr-only sort-value" data-key="confidence">${opp.confidence}</span>
+                    ${opp.confidence}%
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span class="sr-only sort-value" data-key="created">${escHtml(opp.created_at || '')}</span>
+                    ${created}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                    <span class="sr-only sort-value" data-key="updated">${escHtml(opp.updated_at || '')}</span>
+                    ${updated}
+                </td>
+                <td class="px-6 py-4 text-sm text-right whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-1">
+                        <a href="${detailHref}"
+                           class="p-1.5 rounded-md bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                           title="Edit opportunity">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </a>
+                        <button type="button"
+                                class="p-1.5 rounded-md bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                                title="Delete opportunity"
+                                onclick="deleteOpportunity('${opp.assistant_id}', '${opp.id}', this)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+    });
+
+    html += '</tbody></table></div></div>';
+    dataEl.innerHTML = html;
+    dataEl.classList.remove('hidden');
+
+    attachOppBehaviors();
+}
+
+function deleteOpportunity(assistantId, oppId, btn) {
+    showConfirm('Delete Opportunity', 'Are you sure you want to delete this opportunity? This cannot be undone.')
+        .then(confirmed => {
+            if (!confirmed) return;
+            fetch(`/api/customers/${assistantId}/opportunities/${oppId}`, { method: 'DELETE' })
+                .then(resp => {
+                    if (resp.ok) {
+                        const row = btn.closest('tr');
+                        row.style.transition = 'opacity 0.3s';
+                        row.style.opacity = '0';
+                        setTimeout(() => row.remove(), 300);
+                        showToast('Opportunity deleted', 'success');
+                    } else {
+                        return resp.json().then(d => { throw new Error(d.error || 'Delete failed'); });
+                    }
+                })
+                .catch(err => showToast('Error: ' + err.message, 'error'));
+        });
+}
+
+function attachOppBehaviors() {
+    const searchInput = document.getElementById('opportunities-search');
     const tableBody = document.getElementById('opportunities-table-body');
     const sortButtons = document.querySelectorAll('.table-sort');
     const sortState = {};
 
-    searchInput.addEventListener('input', function(e) {
-        const query = e.target.value.toLowerCase();
-        document.querySelectorAll('.opportunity-row').forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(query) ? '' : 'none';
+    if (searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            const query = e.target.value.toLowerCase();
+            document.querySelectorAll('.opportunity-row').forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
         });
-    });
+    }
 
-    sortButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const key = btn.dataset.key;
-            const nextDir = sortState[key] === 'asc' ? 'desc' : 'asc';
-            sortState[key] = nextDir;
-            sortTableRows(tableBody, key, nextDir);
+    if (tableBody) {
+        sortButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const key = btn.dataset.key;
+                const nextDir = sortState[key] === 'asc' ? 'desc' : 'asc';
+                sortState[key] = nextDir;
+                sortTableRows(tableBody, key, nextDir);
+            });
         });
-    });
+    }
 
     function sortTableRows(body, key, direction) {
         const rows = Array.from(body.querySelectorAll('tr'));
@@ -250,6 +342,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return rawValue.toLowerCase();
     }
-});
+}
 </script>
 {% endblock %}

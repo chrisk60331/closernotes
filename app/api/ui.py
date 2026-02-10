@@ -8,8 +8,6 @@ from flask import Blueprint, render_template, current_app, request, redirect, ur
 from app.services.auth import login_required, manager_required, get_current_user
 from app.services.backboard import BackboardService
 from app.services.customer import CustomerService
-from app.services.cache import CacheService, CACHE_TTLS, build_cache_key
-from app.services.cache_store import CacheStoreService
 from app.services.meeting import MeetingService
 from app.services.crm import CRMService
 from app.services.reports import ReportService
@@ -324,163 +322,31 @@ def meeting_detail_with_customer(assistant_id: str, thread_id: str):
 @ui_bp.route("/contacts")
 @login_required
 def all_contacts():
-    """Render contacts list across all customers.
+    """Render contacts list page.
 
-    Uses cache store summaries for permission filtering (1 API call),
-    then reads contact details from per-customer assistants via
-    the in-process cache.
+    Renders immediately with loading state, data is fetched via AJAX.
     """
-    try:
-        current_user = get_current_user()
-
-        async def _get_data():
-            backboard = BackboardService()
-            cache_store = CacheStoreService(backboard)
-            customer_svc = CustomerService(backboard)
-            cache = CacheService()
-
-            is_manager = current_user and current_user.is_manager()
-            role = "manager" if is_manager else "user"
-            user_id = current_user.id if current_user else "none"
-            cache_key = build_cache_key("global_contacts", role, user_id)
-
-            async def _build():
-                # Use summaries for permission check (1 API call)
-                summaries = await cache_store.get_all_summaries()
-                contacts = []
-                for s in summaries:
-                    if not is_manager and s.assigned_user_id != (current_user.id if current_user else None):
-                        continue
-                    # Per-customer read (backed by in-process cache)
-                    for contact in await customer_svc.get_contacts(s.assistant_id):
-                        contact_data = contact.model_dump(mode="json")
-                        contact_data["assistant_id"] = s.assistant_id
-                        contact_data["company_name"] = s.company_name
-                        contacts.append(contact_data)
-                return {"contacts": contacts}
-
-            return await cache.get_or_set(
-                cache_key,
-                cache.with_jitter(CACHE_TTLS["global_contacts"]),
-                _build,
-                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id}"],
-            )
-
-        data = run_async(_get_data())
-        return render_template("all_contacts.html", **data)
-    except Exception as e:
-        current_app.logger.exception("Error loading all contacts")
-        return render_template("all_contacts.html", error=str(e)), 500
+    return render_template("all_contacts.html", contacts=None)
 
 
 @ui_bp.route("/opportunities")
 @login_required
 def all_opportunities():
-    """Render opportunities list across all customers.
+    """Render opportunities list page.
 
-    Uses cache store summaries for permission filtering (1 API call),
-    then reads opportunity details from per-customer assistants via
-    the in-process cache.
+    Renders immediately with loading state, data is fetched via AJAX.
     """
-    try:
-        current_user = get_current_user()
-
-        async def _get_data():
-            backboard = BackboardService()
-            cache_store = CacheStoreService(backboard)
-            customer_svc = CustomerService(backboard)
-            cache = CacheService()
-
-            is_manager = current_user and current_user.is_manager()
-            role = "manager" if is_manager else "user"
-            user_id = current_user.id if current_user else "none"
-            cache_key = build_cache_key("global_opportunities", role, user_id)
-
-            async def _build():
-                summaries = await cache_store.get_all_summaries()
-                opportunities = []
-                for s in summaries:
-                    if not is_manager and s.assigned_user_id != (current_user.id if current_user else None):
-                        continue
-                    for opp in await customer_svc.get_opportunities(s.assistant_id):
-                        opp_data = opp.model_dump(mode="json")
-                        opp_data["assistant_id"] = s.assistant_id
-                        opp_data["company_name"] = s.company_name
-                        opportunities.append(opp_data)
-                return {"opportunities": opportunities}
-
-            return await cache.get_or_set(
-                cache_key,
-                cache.with_jitter(CACHE_TTLS["global_opportunities"]),
-                _build,
-                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id}"],
-            )
-
-        data = run_async(_get_data())
-        return render_template("all_opportunities.html", **data)
-    except Exception as e:
-        current_app.logger.exception("Error loading all opportunities")
-        return render_template("all_opportunities.html", error=str(e)), 500
+    return render_template("all_opportunities.html", opportunities=None)
 
 
 @ui_bp.route("/activities")
 @login_required
 def all_activities():
-    """Render activities list across all customers.
+    """Render activities list page.
 
-    Uses cache store summaries for permission filtering (1 API call),
-    then reads activity details from per-customer assistants via
-    the in-process cache.
+    Renders immediately with loading state, data is fetched via AJAX.
     """
-    try:
-        current_user = get_current_user()
-
-        async def _get_data():
-            backboard = BackboardService()
-            cache_store = CacheStoreService(backboard)
-            customer_svc = CustomerService(backboard)
-            cache = CacheService()
-
-            is_manager = current_user and current_user.is_manager()
-            role = "manager" if is_manager else "user"
-            user_id = current_user.id if current_user else "none"
-            cache_key = build_cache_key("global_activities", role, user_id)
-
-            async def _build():
-                summaries = await cache_store.get_all_summaries()
-                activity_rows = []
-                for s in summaries:
-                    if not is_manager and s.assigned_user_id != (current_user.id if current_user else None):
-                        continue
-                    for activity in await customer_svc.get_activities(s.assistant_id):
-                        activity_rows.append({
-                            "assistant_id": s.assistant_id,
-                            "company_name": s.company_name,
-                            "activity": activity,
-                        })
-
-                activity_rows.sort(key=lambda row: row["activity"].date, reverse=True)
-                activities = []
-                for row in activity_rows:
-                    activity_data = row["activity"].model_dump(mode="json")
-                    activity_data["assistant_id"] = row["assistant_id"]
-                    activity_data["company_name"] = row["company_name"]
-                    activities.append(activity_data)
-
-                return {"activities": activities}
-
-            return await cache.get_or_set(
-                cache_key,
-                cache.with_jitter(CACHE_TTLS["global_activities"]),
-                _build,
-                tags=["global_lists", "registry", f"role:{role}", f"user:{user_id}"],
-            )
-
-        data = run_async(_get_data())
-        return render_template("all_activities.html", **data)
-    except Exception as e:
-        current_app.logger.exception("Error loading all activities")
-        return render_template("all_activities.html", error=str(e)), 500
+    return render_template("all_activities.html", activities=None)
 
 
 # ============================================================================

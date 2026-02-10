@@ -11,13 +11,19 @@
     </div>
     {% else %}
     
-    <!-- Autosave Indicator -->
-    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+    <!-- Autosave Indicator (enhanced) -->
+    <div id="autosave-indicator" class="fixed top-20 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-md border border-emerald-200 dark:border-emerald-800/50">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
         </svg>
         <span>Saved</span>
     </div>
+
+    <!-- Back button with context -->
+    <a href="/customer/{{ assistant_id }}/action-items" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Action Items · {{ customer.company_name }}
+    </a>
 
     <!-- Breadcrumb -->
     <nav class="mb-6">
@@ -198,15 +204,14 @@ document.addEventListener('DOMContentLoaded', function() {
     let pendingUpdates = {};
     let saveTimer = null;
     let isSaving = false;
+    let lastEditedField = null;
     
     // Check if we should start in edit mode from URL param
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('edit') === 'true') {
-        // Remove the query param from URL without reload
         const url = new URL(window.location);
         url.searchParams.delete('edit');
         window.history.replaceState({}, '', url);
-        // Start in edit mode
         toggleEditMode(true);
         setTimeout(() => document.getElementById('edit-description').focus(), 100);
     }
@@ -223,13 +228,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function scheduleSave(field, value) {
+    function queueSave(field, value) {
         pendingUpdates[field] = value;
-        
-        if (saveTimer) {
-            clearTimeout(saveTimer);
-        }
-        
+        if (saveTimer) clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
             if (Object.keys(pendingUpdates).length > 0 && !isSaving) {
                 saveChanges();
@@ -243,6 +244,17 @@ document.addEventListener('DOMContentLoaded', function() {
         isSaving = true;
         const updates = { ...pendingUpdates };
         pendingUpdates = {};
+
+        // Capture previous values for undo
+        const previousValues = {};
+        if (updates.description) previousValues.description = document.getElementById('description-text').textContent;
+        if (updates.owner !== undefined) previousValues.owner = document.querySelector('[data-edit-display="owner"]').textContent;
+        if (updates.due_date !== undefined) previousValues.due_date = document.querySelector('[data-edit-display="due_date"]').textContent;
+        
+        // Optimistic: update displays immediately
+        if (updates.description) document.getElementById('description-text').textContent = updates.description;
+        if (updates.owner !== undefined) document.querySelector('[data-edit-display="owner"]').textContent = updates.owner || 'Not assigned';
+        if (updates.due_date !== undefined) document.querySelector('[data-edit-display="due_date"]').textContent = updates.due_date || 'Not set';
         
         try {
             const response = await fetch(`/api/action-items/${assistantId}/${itemId}`, {
@@ -254,37 +266,46 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (response.ok) {
-                // Update display values
-                if (updates.description) {
-                    document.getElementById('description-text').textContent = updates.description;
-                }
-                if (updates.owner !== undefined) {
-                    document.querySelector('[data-edit-display="owner"]').textContent = updates.owner || 'Not assigned';
-                }
-                if (updates.due_date !== undefined) {
-                    document.querySelector('[data-edit-display="due_date"]').textContent = updates.due_date || 'Not set';
-                }
-                
-                // Update last updated timestamp
                 const now = new Date().toISOString().slice(0, 10);
                 document.getElementById('updated-at').textContent = now;
                 
-                // Show saved indicator
-                autosaveIndicator.classList.remove('hidden');
-                autosaveIndicator.classList.add('flex');
-                setTimeout(() => {
-                    autosaveIndicator.classList.add('hidden');
-                    autosaveIndicator.classList.remove('flex');
-                }, 2000);
+                showSavedBubble(autosaveIndicator);
+
+                // Field-level checkmark
+                if (lastEditedField) showFieldSaveCheck(lastEditedField);
+
+                // Undo toast
+                showUndoToast('Action item saved', () => {
+                    // Revert
+                    Object.entries(previousValues).forEach(([field, val]) => {
+                        if (field === 'description') {
+                            document.getElementById('description-text').textContent = val;
+                            document.getElementById('edit-description').value = val;
+                        } else if (field === 'owner') {
+                            document.querySelector('[data-edit-display="owner"]').textContent = val;
+                            document.getElementById('edit-owner').value = val === 'Not assigned' ? '' : val;
+                        } else if (field === 'due_date') {
+                            document.querySelector('[data-edit-display="due_date"]').textContent = val;
+                            document.getElementById('edit-due-date').value = val === 'Not set' ? '' : val;
+                        }
+                    });
+                    pendingUpdates = {};
+                    Object.entries(previousValues).forEach(([k, v]) => {
+                        pendingUpdates[k] = (v === 'Not assigned' || v === 'Not set') ? null : v;
+                    });
+                    saveChanges();
+                });
             } else {
+                // Revert optimistic update
+                if (previousValues.description) document.getElementById('description-text').textContent = previousValues.description;
+                if (previousValues.owner) document.querySelector('[data-edit-display="owner"]').textContent = previousValues.owner;
+                if (previousValues.due_date) document.querySelector('[data-edit-display="due_date"]').textContent = previousValues.due_date;
                 showToast(data.error || 'Failed to save', 'error');
             }
         } catch (err) {
             showToast('Error saving changes', 'error');
         } finally {
             isSaving = false;
-            
-            // If more updates came in while saving, save again
             if (Object.keys(pendingUpdates).length > 0) {
                 saveChanges();
             }
@@ -297,26 +318,74 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleEditMode();
     });
     
-    // Input change handlers
-    document.getElementById('edit-description').addEventListener('input', function() {
-        scheduleSave('description', this.value);
+    // Input change handlers with focus tracking
+    const descInput = document.getElementById('edit-description');
+    const ownerInput = document.getElementById('edit-owner');
+    const dueDateInput = document.getElementById('edit-due-date');
+
+    [descInput, ownerInput, dueDateInput].forEach(inp => {
+        if (!inp) return;
+        inp.addEventListener('focus', function() {
+            lastEditedField = this;
+            // Dim sibling cards
+            const card = this.closest('.card');
+            if (card && card.parentElement) {
+                card.parentElement.querySelectorAll('.card').forEach(s => {
+                    if (s !== card) s.classList.add('edit-focus-dim');
+                    else s.classList.add('edit-focus-active');
+                });
+            }
+        });
+        inp.addEventListener('blur', function() {
+            document.querySelectorAll('.edit-focus-dim, .edit-focus-active').forEach(el => {
+                el.classList.remove('edit-focus-dim', 'edit-focus-active');
+            });
+        });
+    });
+
+    descInput.addEventListener('input', function() {
+        lastEditedField = this;
+        queueSave('description', this.value);
     });
     
-    document.getElementById('edit-owner').addEventListener('input', function() {
-        scheduleSave('owner', this.value || null);
+    ownerInput.addEventListener('input', function() {
+        lastEditedField = this;
+        queueSave('owner', this.value || null);
     });
     
-    document.getElementById('edit-due-date').addEventListener('change', function() {
-        scheduleSave('due_date', this.value || null);
+    dueDateInput.addEventListener('change', function() {
+        lastEditedField = this;
+        queueSave('due_date', this.value || null);
     });
     
-    // Handle checkbox toggle
+    // Handle checkbox toggle - OPTIMISTIC
     const checkbox = document.getElementById('main-checkbox');
     const toggleBtn = document.getElementById('toggle-btn');
     const descriptionText = document.getElementById('description-text');
     const statusBadge = document.getElementById('status-badge');
     
     function toggleComplete() {
+        const wasCompleted = checkbox.checked;
+        const nowCompleted = !wasCompleted;
+
+        // Optimistic UI update
+        checkbox.checked = nowCompleted;
+        if (nowCompleted) {
+            descriptionText.classList.add('line-through', 'text-gray-500', 'dark:text-gray-400');
+            toggleBtn.textContent = 'Mark Pending';
+            statusBadge.className = 'badge-green';
+            statusBadge.textContent = 'Completed';
+        } else {
+            descriptionText.classList.remove('line-through', 'text-gray-500', 'dark:text-gray-400');
+            toggleBtn.textContent = 'Mark Complete';
+            statusBadge.className = 'badge-yellow';
+            statusBadge.textContent = 'Pending';
+        }
+
+        // Flash the card
+        const card = checkbox.closest('.card');
+        if (card) card.classList.add('optimistic-flash');
+
         fetch(`/api/action-items/${assistantId}/${itemId}/toggle`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
@@ -324,11 +393,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                showToast(data.error, 'error');
-            } else {
-                // Update UI
-                checkbox.checked = data.is_completed;
-                if (data.is_completed) {
+                // Revert on error
+                checkbox.checked = wasCompleted;
+                if (wasCompleted) {
                     descriptionText.classList.add('line-through', 'text-gray-500', 'dark:text-gray-400');
                     toggleBtn.textContent = 'Mark Pending';
                     statusBadge.className = 'badge-green';
@@ -339,9 +406,23 @@ document.addEventListener('DOMContentLoaded', function() {
                     statusBadge.className = 'badge-yellow';
                     statusBadge.textContent = 'Pending';
                 }
+                showToast(data.error, 'error');
             }
         })
         .catch(err => {
+            // Revert on network error
+            checkbox.checked = wasCompleted;
+            if (wasCompleted) {
+                descriptionText.classList.add('line-through', 'text-gray-500', 'dark:text-gray-400');
+                toggleBtn.textContent = 'Mark Pending';
+                statusBadge.className = 'badge-green';
+                statusBadge.textContent = 'Completed';
+            } else {
+                descriptionText.classList.remove('line-through', 'text-gray-500', 'dark:text-gray-400');
+                toggleBtn.textContent = 'Mark Complete';
+                statusBadge.className = 'badge-yellow';
+                statusBadge.textContent = 'Pending';
+            }
             showToast('Error toggling action item', 'error');
         });
     }

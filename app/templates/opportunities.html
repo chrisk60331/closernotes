@@ -11,6 +11,12 @@
     </div>
     {% else %}
     
+    <!-- Back button with context -->
+    <a href="/customer/{{ assistant_id }}" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to {{ customer.company_name }}
+    </a>
+
     <!-- Breadcrumb -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm">
@@ -34,7 +40,7 @@
     {% if opportunities %}
     <div class="space-y-4">
         {% for opp in opportunities %}
-        <div class="card hover:border-blue-500 dark:hover:border-blue-500 transition-colors" data-opp-id="{{ opp.id }}">
+        <div class="card card-hover hover:border-blue-500 dark:hover:border-blue-500 transition-colors stagger-item" style="--i: {{ loop.index0 }}" data-opp-id="{{ opp.id }}">
             <a href="/customer/{{ assistant_id }}/opportunity/{{ opp.id }}" class="block">
                 <div class="flex items-center justify-between">
                     <div class="flex-1">
@@ -125,12 +131,26 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="card text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No opportunities yet</h3>
-        <p class="mt-2 text-gray-500 dark:text-gray-400">Opportunities are created automatically when deal signals are detected.</p>
+    <div class="card text-center py-16">
+        <div class="empty-float inline-block mb-4">
+            <svg class="mx-auto w-20 h-20" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="28" r="10" stroke="currentColor" stroke-width="1.5" class="text-bb-blue/30"/>
+                <path d="M40 22v12M37 25a3 3 0 013-1h0a3 3 0 010 6h0a3 3 0 000 6h0a3 3 0 003-1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" class="text-bb-blue/50"/>
+                <path d="M16 44l8-8 6 2 8-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 dark:text-gray-600"/>
+                <path d="M38 30l8 8 6-2 8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 dark:text-gray-600"/>
+                <path d="M58 16l1.5 3 3 1.5-3 1.5-1.5 3-1.5-3-3-1.5 3-1.5z" fill="currentColor" class="text-bb-blue/40"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">No opportunities yet</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+            Every deal starts somewhere. Record a meeting to detect opportunities automatically.
+        </p>
+        <a href="/" class="inline-flex items-center mt-6 btn-primary btn-press px-5 py-2.5">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+            </svg>
+            Record a Meeting
+        </a>
     </div>
     {% endif %}
     
@@ -244,6 +264,11 @@ async function changeOpportunityState(oppId, newState, event) {
 function showCoffeeAnimation() {
     const overlay = document.getElementById('coffeeOverlay');
     overlay.classList.remove('hidden', 'fade-out');
+    
+    // Fire confetti alongside coffee animation
+    if (typeof fireConfetti === 'function') {
+        setTimeout(() => fireConfetti(50), 400);
+    }
     
     // Auto-hide after 3 seconds
     setTimeout(() => {

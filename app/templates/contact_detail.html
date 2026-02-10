@@ -18,14 +18,20 @@
     </div>
     {% else %}
     
-    <!-- Autosave Indicator -->
-    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+    <!-- Autosave Indicator (enhanced) -->
+    <div id="autosave-indicator" class="fixed top-20 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-md border border-emerald-200 dark:border-emerald-800/50">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
         </svg>
         <span>Saved</span>
     </div>
     
+    <!-- Back button with context -->
+    <a href="/customer/{{ assistant_id }}/contacts" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Contacts · {{ customer.company_name }}
+    </a>
+
     <!-- Breadcrumb -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm">
@@ -262,6 +268,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let pendingUpdates = {};
     let saveTimer = null;
     let isSaving = false;
+    let lastSavedValues = {};  // Track previous values for undo
+    let lastEditedField = null; // Track last focused input for field checkmark
 
     function toggleEditMode(forceValue) {
         editMode = typeof forceValue === 'boolean' ? forceValue : !editMode;
@@ -273,16 +281,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showSavedIndicator() {
-        if (!autosaveIndicator) return;
-        autosaveIndicator.classList.remove('hidden');
-        autosaveIndicator.classList.add('flex');
-        autosaveIndicator.style.display = 'flex';
-        autosaveIndicator.style.opacity = '1';
-        setTimeout(() => {
-            autosaveIndicator.classList.add('hidden');
-            autosaveIndicator.classList.remove('flex');
-            autosaveIndicator.style.display = 'none';
-        }, 2000);
+        showSavedBubble(autosaveIndicator);
     }
 
     function renderEmail(value) {
@@ -351,6 +350,22 @@ document.addEventListener('DOMContentLoaded', function() {
         const payload = { ...pendingUpdates };
         pendingUpdates = {};
         isSaving = true;
+
+        // Capture previous values for undo
+        const previousValues = { ...lastSavedValues };
+        Object.keys(payload).forEach(k => {
+            if (!(k in previousValues)) {
+                // Grab current display value as fallback
+                const input = document.querySelector(`[data-edit-input="${k}"]`);
+                if (input && input.tagName === 'INPUT') {
+                    previousValues[k] = input.defaultValue || null;
+                }
+            }
+        });
+
+        // Optimistic: update displays immediately
+        updateDisplays(payload);
+
         try {
             const response = await fetch(`/api/customers/${assistantId}/contacts/${contactId}`, {
                 method: 'PATCH',
@@ -359,12 +374,42 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             const data = await response.json();
             if (data.error) {
+                // Revert optimistic update
+                updateDisplays(previousValues);
                 showToast(data.error, 'error');
             } else {
-                updateDisplays(payload);
+                // Store saved values for future undo
+                Object.assign(lastSavedValues, payload);
                 showSavedIndicator();
+
+                // Show field-level checkmark on the last edited input
+                if (lastEditedField) {
+                    showFieldSaveCheck(lastEditedField);
+                }
+
+                // Show undo toast
+                showUndoToast('Contact saved', () => {
+                    // Undo: restore previous values
+                    const revertPayload = {};
+                    Object.keys(payload).forEach(k => {
+                        if (k in previousValues) {
+                            revertPayload[k] = previousValues[k];
+                        }
+                    });
+                    if (Object.keys(revertPayload).length > 0) {
+                        pendingUpdates = revertPayload;
+                        // Also revert inputs
+                        Object.entries(revertPayload).forEach(([field, val]) => {
+                            const inp = document.querySelector(`input[data-edit-input="${field}"], .contact-input[data-edit-input="${field}"]`);
+                            if (inp) inp.value = val || '';
+                        });
+                        updateDisplays(revertPayload);
+                        saveChanges();
+                    }
+                });
             }
         } catch (err) {
+            updateDisplays(previousValues);
             showToast('Error saving contact', 'error');
         } finally {
             isSaving = false;
@@ -392,12 +437,29 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     textInputs.forEach(input => {
-        input.addEventListener('input', function() {
+        input.addEventListener('focus', function() {
+            lastEditedField = this;
+            // Dim sibling cards for focus effect
+            const card = this.closest('.card');
+            if (card) {
+                const siblings = card.parentElement.querySelectorAll('.card');
+                siblings.forEach(s => {
+                    if (s !== card) s.classList.add('edit-focus-dim');
+                    else s.classList.add('edit-focus-active');
+                });
+            }
+        });
+        input.addEventListener('blur', function() {
+            // Remove focus dimming
+            document.querySelectorAll('.edit-focus-dim, .edit-focus-active').forEach(el => {
+                el.classList.remove('edit-focus-dim', 'edit-focus-active');
+            });
             const field = this.dataset.editInput;
             const value = this.value.trim() || null;
             queueUpdate(field, value);
         });
-        input.addEventListener('blur', function() {
+        input.addEventListener('input', function() {
+            lastEditedField = this;
             const field = this.dataset.editInput;
             const value = this.value.trim() || null;
             queueUpdate(field, value);

@@ -142,43 +142,98 @@
     <nav class="bg-bb-cloud dark:bg-bb-phantom border-b border-bb-steel/60 dark:border-bb-steelDark sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <a href="/" class="flex items-center space-x-3">
-                        <div class="w-8 h-8 bg-bb-blue rounded-lg flex items-center justify-center">
-                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                <!-- Left: Logo -->
+                <div class="flex items-center flex-shrink-0">
+                    <a href="/" class="flex items-center space-x-2 sm:space-x-3">
+                        <div class="w-8 h-8 bg-bb-blue rounded-lg flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M7 3v2M11 2v2M15 3v2"/>
+                                <path d="M4 8h14v9a4 4 0 01-4 4H8a4 4 0 01-4-4V8z"/>
+                                <path d="M18 10h1a3.5 3.5 0 010 7h-1"/>
                             </svg>
                         </div>
-                        <span class="text-xl font-semibold">CloserNotes</span>
+                        <span class="text-xl font-semibold hidden sm:inline">CloserNotes</span>
+                        <span class="text-lg font-semibold sm:hidden">Closer</span>
                     </a>
                 </div>
-                
-                <div class="flex items-center space-x-4">
-                    <!-- Navigation links -->
-                    <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+
+                <!-- Center: Desktop nav links (hidden on mobile) -->
+                <div class="hidden md:flex items-center space-x-1">
+                    <a href="/" class="nav-link relative px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        {% if request.path == '/' %}
+                            text-bb-blue dark:text-blue-400 bg-bb-blue/8 dark:bg-bb-blue/15
+                        {% else %}
+                            text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60
+                        {% endif %}">
                         Dashboard
+                        {% if request.path == '/' %}
+                        <span class="absolute bottom-0 left-3 right-3 h-0.5 bg-bb-blue dark:bg-blue-400 rounded-full"></span>
+                        {% endif %}
                     </a>
-                    
+                    <a href="/contacts" class="nav-link relative px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        {% if request.path == '/contacts' %}
+                            text-bb-blue dark:text-blue-400 bg-bb-blue/8 dark:bg-bb-blue/15
+                        {% else %}
+                            text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60
+                        {% endif %}">
+                        Contacts
+                        {% if request.path == '/contacts' %}
+                        <span class="absolute bottom-0 left-3 right-3 h-0.5 bg-bb-blue dark:bg-blue-400 rounded-full"></span>
+                        {% endif %}
+                    </a>
+                    <a href="/opportunities" class="nav-link relative px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        {% if request.path == '/opportunities' %}
+                            text-bb-blue dark:text-blue-400 bg-bb-blue/8 dark:bg-bb-blue/15
+                        {% else %}
+                            text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60
+                        {% endif %}">
+                        Opps
+                        {% if request.path == '/opportunities' %}
+                        <span class="absolute bottom-0 left-3 right-3 h-0.5 bg-bb-blue dark:bg-blue-400 rounded-full"></span>
+                        {% endif %}
+                    </a>
+                    <a href="/activities" class="nav-link relative px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        {% if request.path == '/activities' %}
+                            text-bb-blue dark:text-blue-400 bg-bb-blue/8 dark:bg-bb-blue/15
+                        {% else %}
+                            text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60
+                        {% endif %}">
+                        Activity
+                        {% if request.path == '/activities' %}
+                        <span class="absolute bottom-0 left-3 right-3 h-0.5 bg-bb-blue dark:bg-blue-400 rounded-full"></span>
+                        {% endif %}
+                    </a>
                     {% if session.get('user_id') %}
-                    <!-- Manager link (managers only) -->
                     {% if session.get('user_role') == 'manager' %}
-                    <a href="/manager" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                    <a href="/manager" class="nav-link relative px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                        {% if request.path == '/manager' %}
+                            text-bb-blue dark:text-blue-400 bg-bb-blue/8 dark:bg-bb-blue/15
+                        {% else %}
+                            text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60
+                        {% endif %}">
                         Manager
+                        {% if request.path == '/manager' %}
+                        <span class="absolute bottom-0 left-3 right-3 h-0.5 bg-bb-blue dark:bg-blue-400 rounded-full"></span>
+                        {% endif %}
                     </a>
                     {% endif %}
-                    
-                    <!-- User dropdown -->
-                    <div class="relative" x-data="{ open: false }">
-                        <button onclick="toggleUserMenu()" id="user-menu-button" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
-                            <div class="w-7 h-7 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white text-xs font-semibold">
+                    {% endif %}
+                </div>
+
+                <!-- Right: action buttons + hamburger -->
+                <div class="flex items-center space-x-1 sm:space-x-2">
+                    {% if session.get('user_id') %}
+                    <!-- User dropdown (always visible) -->
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" id="user-menu-button" class="flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                            <div class="w-7 h-7 bg-gradient-to-br from-bb-blue to-bb-steel rounded-full flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">
                                 {{ session.get('user_name', 'U')[0].upper() }}
                             </div>
-                            <span class="hidden sm:inline">{{ session.get('user_name', 'User') }}</span>
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <span class="hidden lg:inline">{{ session.get('user_name', 'User') }}</span>
+                            <svg class="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
-                        
                         <!-- Dropdown menu -->
                         <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-bb-steelDark rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
                             <div class="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
@@ -199,12 +254,20 @@
                         </div>
                     </div>
                     {% else %}
-                    <!-- Login link for unauthenticated users -->
                     <a href="{{ url_for('auth.login') }}" class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
                         Sign in
                     </a>
                     {% endif %}
-                    
+
+                    <!-- Command Palette trigger (desktop only) -->
+                    <button id="cmd-k-trigger" onclick="openCommandPalette()" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" title="Search (⌘K)">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <span class="hidden lg:inline">Search</span>
+                        <kbd class="hidden lg:inline-flex items-center gap-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-1.5 py-0.5 text-[10px] font-mono text-gray-400 dark:text-gray-500">⌘K</kbd>
+                    </button>
+
                     <!-- Dark mode toggle -->
                     <button id="theme-toggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
                         <svg id="theme-toggle-dark-icon" class="hidden w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -214,21 +277,90 @@
                             <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path>
                         </svg>
                     </button>
+
+                    <!-- Hamburger button (mobile only) -->
+                    <button id="mobile-menu-btn" class="md:hidden p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors" aria-label="Open menu" aria-expanded="false">
+                        <svg id="hamburger-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                        <svg id="hamburger-close-icon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Mobile nav menu (slide-down) -->
+        <div id="mobile-menu" class="md:hidden hidden border-t border-bb-steel/40 dark:border-bb-steelDark bg-bb-cloud dark:bg-bb-phantom">
+            <div class="px-4 py-3 space-y-1">
+                <a href="/" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    {% if request.path == '/' %}text-bb-blue dark:text-blue-400 bg-bb-blue/10 dark:bg-bb-blue/15{% else %}text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60{% endif %}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Dashboard
+                </a>
+                <a href="/contacts" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    {% if request.path == '/contacts' %}text-bb-blue dark:text-blue-400 bg-bb-blue/10 dark:bg-bb-blue/15{% else %}text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60{% endif %}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Contacts
+                </a>
+                <a href="/opportunities" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    {% if request.path == '/opportunities' %}text-bb-blue dark:text-blue-400 bg-bb-blue/10 dark:bg-bb-blue/15{% else %}text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60{% endif %}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0H8m8 0h2a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h2"/></svg>
+                    Opportunities
+                </a>
+                <a href="/activities" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    {% if request.path == '/activities' %}text-bb-blue dark:text-blue-400 bg-bb-blue/10 dark:bg-bb-blue/15{% else %}text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60{% endif %}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Activities
+                </a>
+                {% if session.get('user_id') and session.get('user_role') == 'manager' %}
+                <a href="/manager" class="mobile-nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    {% if request.path == '/manager' %}text-bb-blue dark:text-blue-400 bg-bb-blue/10 dark:bg-bb-blue/15{% else %}text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60{% endif %}">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    Manager
+                </a>
+                {% endif %}
+
+                <!-- Mobile search button -->
+                <button onclick="closeMobileMenu(); openCommandPalette();" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-bb-steel/50 dark:hover:bg-bb-steelDark/60 transition-colors">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    Search...
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- Global Loading Overlay -->
+    <!-- Global Loading Overlay with Glengarry Quotes -->
     <div id="loading-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center bg-bb-cloud/80 dark:bg-bb-phantom/80 backdrop-blur-sm">
         <div class="card flex flex-col items-center space-y-4 px-8 py-6">
-            <svg class="w-12 h-12 text-bb-blue animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            <svg class="w-14 h-14 coffee-cup-loader text-bb-blue dark:text-blue-400" viewBox="0 0 64 64" fill="none">
+                <defs>
+                    <clipPath id="cup-int-1">
+                        <rect x="18" y="24" width="22" height="24" rx="4"/>
+                    </clipPath>
+                </defs>
+                <!-- Solid mug body -->
+                <rect x="15" y="22" width="28" height="30" rx="7" fill="currentColor"/>
+                <!-- Rim -->
+                <rect x="14" y="20" width="30" height="4" rx="2" fill="currentColor"/>
+                <!-- Interior recess -->
+                <rect x="18" y="24" width="22" height="24" rx="4" fill="#0a0a2e" opacity="0.3"/>
+                <!-- Coffee liquid — counter-rotates to stay level -->
+                <g clip-path="url(#cup-int-1)">
+                    <g class="coffee-cup-counter-spin">
+                        <rect class="coffee-cup-fill-anim" x="-10" y="24" width="84" height="48"/>
+                    </g>
+                </g>
+                <!-- Handle -->
+                <path d="M43 29h3a5 5 0 010 10h-3" stroke="currentColor" stroke-width="3.5" fill="none" stroke-linecap="round"/>
             </svg>
-            <span class="text-sm font-medium text-gray-600 dark:text-gray-300">Loading...</span>
+            <span id="loading-quote" class="text-sm font-medium text-gray-600 dark:text-gray-300 text-center max-w-xs italic loading-quote">Loading...</span>
         </div>
     </div>
+
+    <!-- Undo Toast Container (bottom-center) -->
+    <div id="undo-toast-container" class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[250] flex flex-col items-center gap-2 pointer-events-none"></div>
 
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -256,10 +388,13 @@
         {% endif %}
     {% endwith %}
 
-    <!-- Main content -->
-    <main class="min-h-[calc(100vh-4rem)]">
+    <!-- Main content with page transition -->
+    <main class="min-h-[calc(100vh-4rem)] page-enter">
         {% block content %}{% endblock %}
     </main>
+
+    <!-- Confetti Container -->
+    <div id="confetti-container" class="fixed inset-0 pointer-events-none z-[9998]" aria-hidden="true"></div>
 
     <!-- Footer -->
     <footer class="bg-bb-cloud dark:bg-bb-phantom border-t border-bb-steel/60 dark:border-bb-steelDark py-4">
@@ -303,13 +438,56 @@
             <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
             <div class="relative bg-white dark:bg-bb-steelDark rounded-xl shadow-xl max-w-sm w-full p-8 transform transition-all text-center">
                 <div class="flex justify-center mb-5">
-                    <svg class="animate-spin h-10 w-10 text-bb-blue dark:text-bb-blue" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg class="coffee-cup-loader h-10 w-10 text-bb-blue dark:text-blue-400" viewBox="0 0 64 64" fill="none">
+                        <defs>
+                            <clipPath id="cup-int-2">
+                                <rect x="18" y="24" width="22" height="24" rx="4"/>
+                            </clipPath>
+                        </defs>
+                        <rect x="15" y="22" width="28" height="30" rx="7" fill="currentColor"/>
+                        <rect x="14" y="20" width="30" height="4" rx="2" fill="currentColor"/>
+                        <rect x="18" y="24" width="22" height="24" rx="4" fill="#0a0a2e" opacity="0.3"/>
+                        <g clip-path="url(#cup-int-2)">
+                            <g class="coffee-cup-counter-spin">
+                                <rect class="coffee-cup-fill-anim" x="-10" y="24" width="84" height="48"/>
+                            </g>
+                        </g>
+                        <path d="M43 29h3a5 5 0 010 10h-3" stroke="currentColor" stroke-width="3.5" fill="none" stroke-linecap="round"/>
                     </svg>
                 </div>
                 <h3 id="processing-title" class="text-lg font-semibold text-gray-900 dark:text-white">Processing</h3>
                 <p id="processing-message" class="mt-2 text-sm text-gray-600 dark:text-gray-300">Please wait...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Command Palette (⌘K) ===== -->
+    <div id="command-palette" class="fixed inset-0 z-[400] hidden" role="dialog" aria-modal="true" aria-label="Command palette">
+        <!-- Backdrop -->
+        <div id="cmd-backdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
+        <!-- Panel -->
+        <div class="relative flex items-start justify-center pt-[15vh] px-4">
+            <div id="cmd-panel" class="w-full max-w-lg bg-white dark:bg-bb-steelDark rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden transform transition-all">
+                <!-- Search input -->
+                <div class="flex items-center px-4 border-b border-gray-200 dark:border-gray-700">
+                    <svg class="w-5 h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                    <input id="cmd-input" type="text" class="w-full px-3 py-4 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-base focus:outline-none" placeholder="Search customers, pages, actions..." autocomplete="off" spellcheck="false">
+                    <kbd class="hidden sm:inline-flex items-center rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 px-1.5 py-0.5 text-[10px] font-mono text-gray-400 dark:text-gray-500 flex-shrink-0">ESC</kbd>
+                </div>
+                <!-- Results -->
+                <div id="cmd-results" class="max-h-[340px] overflow-y-auto py-2">
+                    <!-- Populated by JS -->
+                </div>
+                <!-- Footer -->
+                <div class="flex items-center justify-between px-4 py-2 border-t border-gray-100 dark:border-gray-700/50 text-[11px] text-gray-400 dark:text-gray-500">
+                    <div class="flex items-center gap-3">
+                        <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 font-mono">↑↓</kbd> Navigate</span>
+                        <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 font-mono">↵</kbd> Open</span>
+                    </div>
+                    <span class="flex items-center gap-1"><kbd class="px-1 py-0.5 rounded border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 font-mono">esc</kbd> Close</span>
+                </div>
             </div>
         </div>
     </div>
@@ -330,6 +508,44 @@
             if (menu && button && !button.contains(e.target) && !menu.contains(e.target)) {
                 menu.classList.add('hidden');
             }
+        });
+
+        // ===== Mobile Hamburger Menu =====
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const hamburgerIcon = document.getElementById('hamburger-icon');
+        const hamburgerCloseIcon = document.getElementById('hamburger-close-icon');
+
+        function toggleMobileMenu() {
+            const isOpen = !mobileMenu.classList.contains('hidden');
+            if (isOpen) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        }
+
+        function openMobileMenu() {
+            mobileMenu.classList.remove('hidden');
+            hamburgerIcon.classList.add('hidden');
+            hamburgerCloseIcon.classList.remove('hidden');
+            mobileMenuBtn.setAttribute('aria-expanded', 'true');
+        }
+
+        function closeMobileMenu() {
+            mobileMenu.classList.add('hidden');
+            hamburgerIcon.classList.remove('hidden');
+            hamburgerCloseIcon.classList.add('hidden');
+            mobileMenuBtn.setAttribute('aria-expanded', 'false');
+        }
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+        }
+
+        // Close mobile menu when clicking a nav link inside it
+        mobileMenu?.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
         });
 
         // Theme toggle functionality
@@ -506,6 +722,46 @@
             }
         });
 
+        // ===== Confetti System =====
+        function fireConfetti(count = 40) {
+            const container = document.getElementById('confetti-container');
+            if (!container) return;
+            const colors = ['#007BFC', '#0066D6', '#22c55e', '#eab308', '#ef4444', '#a855f7', '#D4A574'];
+            const shapes = ['square', 'circle'];
+            
+            for (let i = 0; i < count; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const shape = shapes[Math.floor(Math.random() * shapes.length)];
+                const left = Math.random() * 100;
+                const duration = 1.8 + Math.random() * 1.5;
+                const delay = Math.random() * 0.5;
+                const size = 6 + Math.random() * 8;
+                
+                piece.style.cssText = `
+                    left: ${left}%;
+                    width: ${size}px;
+                    height: ${size}px;
+                    background: ${color};
+                    border-radius: ${shape === 'circle' ? '50%' : '2px'};
+                    --duration: ${duration}s;
+                    --delay: ${delay}s;
+                `;
+                container.appendChild(piece);
+                
+                // Cleanup after animation
+                setTimeout(() => piece.remove(), (duration + delay) * 1000 + 100);
+            }
+        }
+
+        // ===== Stat Pop Animation =====
+        function animateStatPop(el) {
+            el.classList.remove('stat-pop');
+            void el.offsetWidth; // trigger reflow
+            el.classList.add('stat-pop');
+        }
+
         // ===== Processing Modal System =====
         function showProcessing(title, message) {
             const modal = document.getElementById('processing-modal');
@@ -520,6 +776,418 @@
             const modal = document.getElementById('processing-modal');
             modal.classList.add('hidden');
         }
+
+        // ===== Glengarry Loading Quotes =====
+        const glengarryQuotes = [
+            "Put that coffee down...",
+            "A-B-C: Always Be Closing",
+            "These are the new leads...",
+            "Coffee is for closers only",
+            "First prize is a Cadillac Eldorado",
+            "You see this watch?",
+            "Good father? Forget about it",
+            "The leads are weak? You're weak!",
+            "Get them to sign on the line which is dotted",
+            "You got the prospects coming in...",
+            "Nice guy? I don't give a shit",
+            "Only one thing counts in this life..."
+        ];
+        let _quoteIndex = Math.floor(Math.random() * glengarryQuotes.length);
+        let _quoteInterval = null;
+
+        function startLoadingQuotes() {
+            const el = document.getElementById('loading-quote');
+            if (!el) return;
+            el.textContent = glengarryQuotes[_quoteIndex];
+            _quoteInterval = setInterval(() => {
+                _quoteIndex = (_quoteIndex + 1) % glengarryQuotes.length;
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(-4px)';
+                setTimeout(() => {
+                    el.textContent = glengarryQuotes[_quoteIndex];
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, 200);
+            }, 2500);
+        }
+
+        function stopLoadingQuotes() {
+            if (_quoteInterval) {
+                clearInterval(_quoteInterval);
+                _quoteInterval = null;
+            }
+        }
+
+        // Override showLoading to start quotes
+        const _origShowLoading = showLoading;
+        showLoading = function() {
+            _origShowLoading();
+            startLoadingQuotes();
+        };
+
+        // ===== Undo Toast System =====
+        let _undoTimers = [];
+
+        /**
+         * Show an undo toast at the bottom of the screen.
+         * @param {string} message - e.g. "Saved"
+         * @param {Function} undoCallback - called if user clicks Undo
+         * @param {number} duration - ms before it auto-dismisses (default 5000)
+         * @returns {HTMLElement} the toast element
+         */
+        function showUndoToast(message, undoCallback, duration = 5000) {
+            const container = document.getElementById('undo-toast-container');
+            if (!container) return null;
+            const toast = document.createElement('div');
+            toast.className = 'pointer-events-auto relative flex items-center gap-3 pl-4 pr-3 py-3 rounded-xl shadow-lg border bg-white dark:bg-bb-steelDark border-gray-200 dark:border-gray-700 min-w-[280px] max-w-sm overflow-hidden';
+            toast.innerHTML = `
+                <div class="flex items-center gap-2 flex-1">
+                    <svg class="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    <span class="text-sm font-medium text-gray-800 dark:text-gray-200">${escapeHtml(message)}</span>
+                </div>
+                <button class="undo-btn text-sm font-semibold text-bb-blue hover:text-bb-blueDark dark:text-blue-400 dark:hover:text-blue-300 transition-colors px-2 py-1 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20">Undo</button>
+                <div class="absolute bottom-0 left-0 h-0.5 bg-bb-blue/40 dark:bg-bb-blue/30 undo-progress-bar" style="--undo-duration: ${duration}ms"></div>
+            `;
+
+            container.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('undo-toast-enter'));
+
+            let dismissed = false;
+
+            function dismiss() {
+                if (dismissed) return;
+                dismissed = true;
+                toast.classList.remove('undo-toast-enter');
+                toast.classList.add('undo-toast-exit');
+                toast.addEventListener('animationend', () => toast.remove());
+            }
+
+            // Undo click
+            toast.querySelector('.undo-btn').addEventListener('click', () => {
+                if (undoCallback) undoCallback();
+                dismiss();
+            });
+
+            // Auto-dismiss
+            const timer = setTimeout(dismiss, duration);
+            _undoTimers.push(timer);
+
+            return toast;
+        }
+
+        // ===== Inline Field Save Checkmark =====
+        /**
+         * Show a tiny green checkmark next to a field that just saved.
+         * @param {HTMLElement} field - the input/textarea that was saved
+         */
+        function showFieldSaveCheck(field) {
+            if (!field) return;
+            // Remove any existing checkmark
+            const existing = field.parentElement.querySelector('.field-check-indicator');
+            if (existing) existing.remove();
+
+            const check = document.createElement('span');
+            check.className = 'field-check-indicator absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/40 field-save-check';
+            check.innerHTML = `<svg class="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+            </svg>`;
+
+            // Ensure parent is positioned
+            const parent = field.parentElement;
+            if (!parent.style.position && !['relative', 'absolute', 'fixed', 'sticky'].includes(getComputedStyle(parent).position)) {
+                parent.style.position = 'relative';
+            }
+            parent.appendChild(check);
+
+            // Fade out after delay
+            setTimeout(() => {
+                check.classList.remove('field-save-check');
+                check.classList.add('field-save-check-out');
+                check.addEventListener('animationend', () => check.remove());
+            }, 1500);
+        }
+
+        // ===== Enhanced Autosave Indicator (Google Docs style) =====
+        function showSavedBubble(indicatorEl) {
+            if (!indicatorEl) return;
+            indicatorEl.classList.remove('hidden', 'save-fade-out');
+            indicatorEl.classList.add('flex', 'save-pop-in');
+            indicatorEl.style.display = 'flex';
+
+            setTimeout(() => {
+                indicatorEl.classList.remove('save-pop-in');
+                indicatorEl.classList.add('save-fade-out');
+                indicatorEl.addEventListener('animationend', function handler() {
+                    indicatorEl.classList.add('hidden');
+                    indicatorEl.classList.remove('flex', 'save-fade-out');
+                    indicatorEl.style.display = '';
+                    indicatorEl.removeEventListener('animationend', handler);
+                });
+            }, 1800);
+        }
+
+        // ===== Optimistic Update Helper =====
+        /**
+         * Performs an optimistic update: immediately applies UI change,
+         * sends the API request, and reverts on failure.
+         * @param {Object} opts
+         * @param {Function} opts.apply - fn to apply the optimistic UI change
+         * @param {Function} opts.revert - fn to revert on failure
+         * @param {Function} opts.request - async fn that performs the API call
+         * @param {string} [opts.successMsg] - optional toast message on success
+         * @param {string} [opts.errorMsg] - optional toast message on failure
+         */
+        async function optimisticUpdate({ apply, revert, request, successMsg, errorMsg }) {
+            // Apply immediately
+            apply();
+            try {
+                await request();
+                if (successMsg) showToast(successMsg, 'success');
+            } catch (err) {
+                revert();
+                showToast(errorMsg || 'Something went wrong. Change reverted.', 'error');
+            }
+        }
+
+        // ===== Command Palette (⌘K) =====
+        const cmdPalette = document.getElementById('command-palette');
+        const cmdInput = document.getElementById('cmd-input');
+        const cmdResults = document.getElementById('cmd-results');
+        const cmdBackdrop = document.getElementById('cmd-backdrop');
+        let cmdActiveIndex = 0;
+        let cmdItems = [];
+        let cmdCustomersCache = null;
+        let cmdFetchingCustomers = false;
+
+        // Static navigation items
+        const cmdStaticItems = [
+            { type: 'nav', icon: 'home', label: 'Dashboard', desc: 'Go to dashboard', url: '/' },
+            { type: 'nav', icon: 'users', label: 'All Contacts', desc: 'View all contacts', url: '/contacts' },
+            { type: 'nav', icon: 'briefcase', label: 'All Opportunities', desc: 'View all opportunities', url: '/opportunities' },
+            { type: 'nav', icon: 'calendar', label: 'All Activities', desc: 'View all activities', url: '/activities' },
+            {% if session.get('user_role') == 'manager' %}
+            { type: 'nav', icon: 'shield', label: 'Manager Dashboard', desc: 'Team overview', url: '/manager' },
+            {% endif %}
+            { type: 'action', icon: 'mic', label: 'Record a Meeting', desc: 'Start voice recording', action: 'record' },
+            { type: 'action', icon: 'clipboard', label: 'Paste Transcript', desc: 'Ingest a meeting transcript', action: 'ingest' },
+            { type: 'action', icon: 'moon', label: 'Toggle Dark Mode', desc: 'Switch appearance', action: 'theme' },
+        ];
+
+        const cmdIcons = {
+            home: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>`,
+            users: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>`,
+            briefcase: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0H8m8 0h2a2 2 0 012 2v9a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h2"/>`,
+            calendar: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>`,
+            shield: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>`,
+            building: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>`,
+            mic: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>`,
+            clipboard: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>`,
+            moon: `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`,
+        };
+
+        function getCmdIcon(name) {
+            return `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">${cmdIcons[name] || cmdIcons.home}</svg>`;
+        }
+
+        function openCommandPalette() {
+            cmdPalette.classList.remove('hidden');
+            cmdInput.value = '';
+            cmdActiveIndex = 0;
+            renderCmdResults('');
+            requestAnimationFrame(() => {
+                cmdInput.focus();
+                // Animate in
+                document.getElementById('cmd-panel').style.transform = 'scale(1)';
+                document.getElementById('cmd-panel').style.opacity = '1';
+            });
+            // Fetch customers in background
+            fetchCustomersForPalette();
+        }
+
+        function closeCommandPalette() {
+            cmdPalette.classList.add('hidden');
+            cmdInput.value = '';
+        }
+
+        async function fetchCustomersForPalette() {
+            if (cmdCustomersCache || cmdFetchingCustomers) return;
+            cmdFetchingCustomers = true;
+            try {
+                const resp = await fetch('/api/customers');
+                if (resp.ok) {
+                    const data = await resp.json();
+                    cmdCustomersCache = (data.customers || []).map(c => ({
+                        type: 'customer',
+                        icon: 'building',
+                        label: c.company_name || 'Unknown',
+                        desc: 'Customer',
+                        url: '/customer/' + c.assistant_id,
+                        assistantId: c.assistant_id,
+                    }));
+                    // Re-render if palette is open
+                    if (!cmdPalette.classList.contains('hidden')) {
+                        renderCmdResults(cmdInput.value);
+                    }
+                }
+            } catch (e) {
+                // Silent fail
+            } finally {
+                cmdFetchingCustomers = false;
+            }
+        }
+
+        function fuzzyMatch(query, text) {
+            if (!query) return true;
+            const q = query.toLowerCase();
+            const t = text.toLowerCase();
+            // Simple substring match + starts-with boost
+            if (t.startsWith(q)) return 2;
+            if (t.includes(q)) return 1;
+            // Character-by-character fuzzy
+            let qi = 0;
+            for (let ti = 0; ti < t.length && qi < q.length; ti++) {
+                if (t[ti] === q[qi]) qi++;
+            }
+            return qi === q.length ? 0.5 : 0;
+        }
+
+        function renderCmdResults(query) {
+            const allItems = [...cmdStaticItems];
+            if (cmdCustomersCache) {
+                allItems.push(...cmdCustomersCache);
+            }
+
+            // Score and filter
+            const scored = allItems.map(item => ({
+                ...item,
+                score: Math.max(fuzzyMatch(query, item.label), fuzzyMatch(query, item.desc))
+            })).filter(i => i.score > 0);
+
+            // Sort: higher score first, then alphabetical
+            scored.sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
+
+            cmdItems = scored;
+            cmdActiveIndex = Math.min(cmdActiveIndex, Math.max(0, cmdItems.length - 1));
+
+            if (cmdItems.length === 0) {
+                cmdResults.innerHTML = `
+                    <div class="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+                        No results for "${escapeHtml(query)}"
+                    </div>
+                `;
+                return;
+            }
+
+            // Group items by type
+            const groups = {};
+            cmdItems.forEach((item, idx) => {
+                const group = item.type === 'customer' ? 'Customers' : item.type === 'action' ? 'Quick Actions' : 'Navigation';
+                if (!groups[group]) groups[group] = [];
+                groups[group].push({ ...item, globalIdx: idx });
+            });
+
+            let html = '';
+            const groupOrder = ['Navigation', 'Customers', 'Quick Actions'];
+            groupOrder.forEach(groupName => {
+                const items = groups[groupName];
+                if (!items) return;
+                html += `<div class="px-3 pt-2 pb-1"><span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">${groupName}</span></div>`;
+                items.forEach(item => {
+                    const isActive = item.globalIdx === cmdActiveIndex;
+                    html += `
+                        <div class="cmd-result flex items-center gap-3 px-4 py-2.5 mx-2 rounded-lg cursor-pointer transition-colors ${isActive ? 'bg-bb-blue/10 dark:bg-bb-blue/20 text-bb-blue dark:text-blue-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'}"
+                             data-index="${item.globalIdx}"
+                             onmouseenter="cmdHover(${item.globalIdx})"
+                             onclick="cmdSelect(${item.globalIdx})">
+                            <span class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${isActive ? 'bg-bb-blue/15 dark:bg-bb-blue/25' : 'bg-gray-100 dark:bg-gray-800'}">
+                                ${getCmdIcon(item.icon)}
+                            </span>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-medium truncate">${highlightMatch(item.label, query)}</div>
+                                <div class="text-xs ${isActive ? 'text-bb-blue/70 dark:text-blue-400/70' : 'text-gray-400 dark:text-gray-500'} truncate">${escapeHtml(item.desc)}</div>
+                            </div>
+                            ${item.type === 'customer' ? '<span class="text-[10px] text-gray-400 dark:text-gray-500">↵ open</span>' : ''}
+                        </div>`;
+                });
+            });
+            cmdResults.innerHTML = html;
+
+            // Scroll active into view
+            const activeEl = cmdResults.querySelector(`[data-index="${cmdActiveIndex}"]`);
+            if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
+        }
+
+        function highlightMatch(text, query) {
+            if (!query) return escapeHtml(text);
+            const idx = text.toLowerCase().indexOf(query.toLowerCase());
+            if (idx === -1) return escapeHtml(text);
+            const before = text.slice(0, idx);
+            const match = text.slice(idx, idx + query.length);
+            const after = text.slice(idx + query.length);
+            return `${escapeHtml(before)}<span class="font-bold underline underline-offset-2">${escapeHtml(match)}</span>${escapeHtml(after)}`;
+        }
+
+        function cmdHover(idx) {
+            cmdActiveIndex = idx;
+            renderCmdResults(cmdInput.value);
+        }
+
+        function cmdSelect(idx) {
+            const item = cmdItems[idx];
+            if (!item) return;
+            closeCommandPalette();
+
+            if (item.url) {
+                window.location.href = item.url;
+            } else if (item.action === 'record') {
+                if (typeof showRecordModal === 'function') showRecordModal();
+            } else if (item.action === 'ingest') {
+                if (typeof showIngestModal === 'function') showIngestModal();
+            } else if (item.action === 'theme') {
+                document.getElementById('theme-toggle').click();
+            }
+        }
+
+        // Keyboard handling
+        cmdInput?.addEventListener('input', () => {
+            cmdActiveIndex = 0;
+            renderCmdResults(cmdInput.value);
+        });
+
+        cmdInput?.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                cmdActiveIndex = Math.min(cmdActiveIndex + 1, cmdItems.length - 1);
+                renderCmdResults(cmdInput.value);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                cmdActiveIndex = Math.max(cmdActiveIndex - 1, 0);
+                renderCmdResults(cmdInput.value);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                cmdSelect(cmdActiveIndex);
+            }
+        });
+
+        // ⌘K / Ctrl+K to open/close
+        document.addEventListener('keydown', (e) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                if (cmdPalette.classList.contains('hidden')) {
+                    openCommandPalette();
+                } else {
+                    closeCommandPalette();
+                }
+            }
+            if (e.key === 'Escape' && !cmdPalette.classList.contains('hidden')) {
+                closeCommandPalette();
+            }
+        });
+
+        // Click backdrop to close
+        cmdBackdrop?.addEventListener('click', closeCommandPalette);
     </script>
     
     {% block scripts %}{% endblock %}

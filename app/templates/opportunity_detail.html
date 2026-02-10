@@ -18,13 +18,19 @@
     </div>
     {% else %}
     
-    <!-- Autosave Indicator -->
-    <div id="autosave-indicator" class="fixed top-4 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-sm">
+    <!-- Autosave Indicator (enhanced) -->
+    <div id="autosave-indicator" class="fixed top-20 right-6 z-50 hidden items-center gap-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-200 shadow-md border border-emerald-200 dark:border-emerald-800/50">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
         </svg>
         <span>Saved</span>
     </div>
+
+    <!-- Back button with context -->
+    <a href="/customer/{{ assistant_id }}/opportunities" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Opportunities · {{ customer.company_name }}
+    </a>
 
     <!-- Breadcrumb -->
     <nav class="mb-6">
@@ -140,7 +146,7 @@
     <!-- Details Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Deal Info -->
-        <div class="card">
+        <div class="card card-hover stagger-item" style="--i: 0">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Deal Information</h2>
             <dl class="space-y-4">
                 <div>
@@ -225,7 +231,7 @@
         </div>
 
         <!-- Competitors -->
-        <div class="card">
+        <div class="card card-hover stagger-item" style="--i: 1">
             <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Competition</h2>
             <div class="opp-display" data-edit-display="competitors">
                 {% if opportunity.competitors %}
@@ -371,17 +377,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    let lastEditedField = null;
+
     function showSavedIndicator() {
-        if (!autosaveIndicator) return;
-        autosaveIndicator.classList.remove('hidden');
-        autosaveIndicator.classList.add('flex');
-        autosaveIndicator.style.display = 'flex';
-        autosaveIndicator.style.opacity = '1';
-        setTimeout(() => {
-            autosaveIndicator.classList.add('hidden');
-            autosaveIndicator.classList.remove('flex');
-            autosaveIndicator.style.display = 'none';
-        }, 2000);
+        showSavedBubble(autosaveIndicator);
     }
 
     function formatCurrency(value) {
@@ -458,6 +457,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const payload = { ...pendingUpdates };
         pendingUpdates = {};
         isSaving = true;
+
+        // Optimistic: update displays immediately
+        updateDisplays(payload);
         
         try {
             const response = await fetch(`/api/customers/${assistantId}/opportunities/${opportunityId}`, {
@@ -469,8 +471,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.error) {
                 showToast(data.error, 'error');
             } else {
-                updateDisplays(payload);
                 showSavedIndicator();
+
+                // Field-level checkmark
+                if (lastEditedField) showFieldSaveCheck(lastEditedField);
+
+                // Undo toast
+                showUndoToast('Opportunity saved', null);
             }
         } catch (err) {
             showToast('Error saving opportunity', 'error');
@@ -500,11 +507,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Text/number inputs
+    // Text/number inputs with focus tracking
     document.querySelectorAll(
         '[data-edit-input] input[type="text"], [data-edit-input] input[type="number"], [data-edit-input] input[type="date"], input[data-edit-input][type="text"], input[data-edit-input][type="number"], input[data-edit-input][type="date"]'
     ).forEach(input => {
+        input.addEventListener('focus', function() {
+            lastEditedField = this;
+            const card = this.closest('.card');
+            if (card && card.parentElement) {
+                card.parentElement.querySelectorAll('.card').forEach(s => {
+                    if (s !== card) s.classList.add('edit-focus-dim');
+                    else s.classList.add('edit-focus-active');
+                });
+            }
+        });
+        input.addEventListener('blur', function() {
+            document.querySelectorAll('.edit-focus-dim, .edit-focus-active').forEach(el => {
+                el.classList.remove('edit-focus-dim', 'edit-focus-active');
+            });
+        });
         input.addEventListener('input', function() {
+            lastEditedField = this;
             const field = this.closest('[data-edit-input]').dataset.editInput;
             let value = this.value.trim();
             
@@ -543,10 +566,38 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // State change function (global for onclick handlers)
+    // State change function — OPTIMISTIC with revert on failure
     window.changeOpportunityState = async function(newState) {
         if (newState === currentStage) return;
         
+        const previousStage = currentStage;
+        
+        // Optimistic: update UI immediately
+        currentStage = newState;
+        stateButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.state === newState) {
+                btn.classList.add('active');
+            }
+        });
+        
+        const badgeContainer = document.getElementById('stage-badge');
+        const previousBadgeHTML = badgeContainer ? badgeContainer.innerHTML : '';
+        if (badgeContainer) {
+            const badgeClass = stageBadgeClasses[newState] || 'badge-gray';
+            const displayName = stageDisplayNames[newState] || newState;
+            badgeContainer.innerHTML = `<span class="${badgeClass} text-base px-4 py-1">${displayName}</span>`;
+        }
+
+        // Flash the stage section
+        const stageSection = badgeContainer ? badgeContainer.closest('.card') : null;
+        if (stageSection) stageSection.classList.add('optimistic-flash');
+        
+        // Trigger coffee animation if sold (optimistic)
+        if (newState === 'closed_won') {
+            showCoffeeAnimation();
+        }
+
         stateButtons.forEach(btn => btn.disabled = true);
         
         try {
@@ -560,34 +611,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 throw new Error('Failed to update opportunity');
             }
             
-            currentStage = newState;
+            showSavedIndicator();
             
-            // Update button states
+        } catch (error) {
+            // Revert to previous state
+            currentStage = previousStage;
             stateButtons.forEach(btn => {
                 btn.classList.remove('active');
-                if (btn.dataset.state === newState) {
+                if (btn.dataset.state === previousStage) {
                     btn.classList.add('active');
                 }
             });
+            if (badgeContainer) badgeContainer.innerHTML = previousBadgeHTML;
             
-            // Update badge
-            const badgeContainer = document.getElementById('stage-badge');
-            if (badgeContainer) {
-                const badgeClass = stageBadgeClasses[newState] || 'badge-gray';
-                const displayName = stageDisplayNames[newState] || newState;
-                badgeContainer.innerHTML = `<span class="${badgeClass} text-base px-4 py-1">${displayName}</span>`;
-            }
-            
-            showSavedIndicator();
-            
-            // Trigger coffee animation if sold
-            if (newState === 'closed_won') {
-                showCoffeeAnimation();
-            }
-            
-        } catch (error) {
-            console.error('Error updating opportunity:', error);
-            showToast('Failed to update opportunity status. Please try again.', 'error');
+            showToast('Failed to update status. Change reverted.', 'error');
         } finally {
             stateButtons.forEach(btn => btn.disabled = false);
         }
@@ -597,6 +634,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const overlay = document.getElementById('coffeeOverlay');
         if (!overlay) return;
         overlay.classList.remove('hidden', 'fade-out');
+        
+        // Fire confetti alongside coffee animation
+        if (typeof fireConfetti === 'function') {
+            setTimeout(() => fireConfetti(50), 400);
+        }
         
         setTimeout(() => {
             overlay.classList.add('fade-out');

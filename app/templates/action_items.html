@@ -11,6 +11,12 @@
     </div>
     {% else %}
     
+    <!-- Back button with context -->
+    <a href="/customer/{{ assistant_id }}" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to {{ customer.company_name }}
+    </a>
+
     <!-- Breadcrumb -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm">
@@ -56,7 +62,7 @@
     {% if action_items %}
     <div class="space-y-3">
         {% for item in action_items %}
-        <div class="card flex items-start p-4 group" data-action-item-id="{{ item.id }}">
+        <div class="card card-hover flex items-start p-4 group stagger-item" style="--i: {{ loop.index0 }}" data-action-item-id="{{ item.id }}">
             <div class="flex-shrink-0 mr-4 pt-0.5">
                 <input type="checkbox" 
                        class="action-item-checkbox w-5 h-5 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500 dark:focus:ring-blue-400 dark:bg-gray-800"
@@ -114,12 +120,44 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="card text-center py-12">
-        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-        </svg>
-        <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No action items</h3>
-        <p class="mt-2 text-gray-500 dark:text-gray-400">Action items are automatically extracted from meeting transcripts.</p>
+    <div class="card text-center py-16">
+        {% if filter_status == 'pending' %}
+        <!-- Celebratory empty state for "no pending items" -->
+        <div class="inline-block mb-4">
+            <div class="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-green-500 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path class="empty-check-draw" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All clear!</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+            You're on top of things. No pending action items for this customer.
+        </p>
+        {% else %}
+        <div class="empty-float inline-block mb-4">
+            <svg class="mx-auto w-16 h-16" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Clipboard wireframe -->
+                <rect x="14" y="8" width="36" height="48" rx="4" stroke="currentColor" stroke-width="1.5" class="text-gray-300 dark:text-gray-600"/>
+                <rect x="24" y="4" width="16" height="8" rx="2" stroke="currentColor" stroke-width="1.5" class="text-gray-300 dark:text-gray-600"/>
+                <!-- Checkmark lines -->
+                <path d="M22 26l3 3 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-bb-blue/40"/>
+                <path d="M36 26h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="text-gray-300 dark:text-gray-600"/>
+                <path d="M22 38l3 3 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-bb-blue/40"/>
+                <path d="M36 38h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="text-gray-300 dark:text-gray-600"/>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">No action items</h3>
+        <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-xs mx-auto">
+            Action items are automatically extracted from meeting transcripts, or you can add them manually.
+        </p>
+        <button onclick="showAddModal()" class="inline-flex items-center mt-6 btn-primary btn-press px-5 py-2.5">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add Action Item
+        </button>
+        {% endif %}
     </div>
     {% endif %}
     
@@ -247,13 +285,62 @@
     });
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle checkbox toggle
+    // ===== "Coffee is for closers" easter egg =====
+    function checkAllCompleteEasterEgg() {
+        const checkboxes = document.querySelectorAll('.action-item-checkbox');
+        if (checkboxes.length === 0) return;
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        if (allChecked && checkboxes.length >= 2) {
+            // Trigger coffee celebration!
+            setTimeout(() => {
+                if (typeof fireConfetti === 'function') fireConfetti(30);
+                showCoffeeReward();
+            }, 400);
+        }
+    }
+
+    function showCoffeeReward() {
+        // Create floating reward banner
+        const reward = document.createElement('div');
+        reward.className = 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[300] flex flex-col items-center coffee-reward-in';
+        reward.innerHTML = `
+            <div class="bg-white dark:bg-bb-steelDark rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 px-8 py-6 text-center max-w-sm">
+                <div class="text-5xl mb-3">☕</div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Coffee is for closers!</h3>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">All action items complete. You've earned your coffee.</p>
+            </div>
+        `;
+        document.body.appendChild(reward);
+
+        setTimeout(() => {
+            reward.classList.remove('coffee-reward-in');
+            reward.classList.add('coffee-reward-out');
+            reward.addEventListener('animationend', () => reward.remove());
+        }, 3000);
+    }
+
+    // Handle checkbox toggle — OPTIMISTIC
     document.querySelectorAll('.action-item-checkbox').forEach(function(checkbox) {
         checkbox.addEventListener('change', function(e) {
             e.stopPropagation();
             const assistantId = this.dataset.assistantId;
             const itemId = this.dataset.itemId;
+            const wasChecked = !this.checked; // It already toggled
+            const card = this.closest('[data-action-item-id]');
+            const description = card.querySelector('p');
+
+            // Optimistic UI update
+            if (this.checked) {
+                this.classList.add('check-morph');
+                description.classList.add('strike-animate', 'text-gray-500', 'dark:text-gray-400');
+                setTimeout(() => this.classList.remove('check-morph'), 350);
+                card.classList.add('optimistic-flash');
+            } else {
+                description.classList.remove('line-through', 'strike-animate', 'text-gray-500', 'dark:text-gray-400');
+                description.style.textDecoration = '';
+            }
             
+            const self = this;
             fetch(`/api/action-items/${assistantId}/${itemId}/toggle`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' }
@@ -261,22 +348,30 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
-                    showToast(data.error, 'error');
-                    this.checked = !this.checked;
-                } else {
-                    // Update the UI
-                    const card = this.closest('[data-action-item-id]');
-                    const description = card.querySelector('p');
-                    if (data.is_completed) {
-                        description.classList.add('line-through', 'text-gray-500', 'dark:text-gray-400');
+                    // Revert
+                    self.checked = wasChecked;
+                    if (wasChecked) {
+                        description.classList.add('strike-animate', 'text-gray-500', 'dark:text-gray-400');
                     } else {
-                        description.classList.remove('line-through', 'text-gray-500', 'dark:text-gray-400');
+                        description.classList.remove('line-through', 'strike-animate', 'text-gray-500', 'dark:text-gray-400');
+                        description.style.textDecoration = '';
                     }
+                    showToast(data.error, 'error');
+                } else {
+                    // Check easter egg
+                    checkAllCompleteEasterEgg();
                 }
             })
             .catch(err => {
+                // Revert
+                self.checked = wasChecked;
+                if (wasChecked) {
+                    description.classList.add('strike-animate', 'text-gray-500', 'dark:text-gray-400');
+                } else {
+                    description.classList.remove('line-through', 'strike-animate', 'text-gray-500', 'dark:text-gray-400');
+                    description.style.textDecoration = '';
+                }
                 showToast('Error toggling action item', 'error');
-                this.checked = !this.checked;
             });
         });
     });

@@ -16,11 +16,11 @@ HINTS:
 Extract and return a JSON object with these fields:
 - company_name: detected company name (string or null)
 - company_domain: company website domain if mentioned (string or null)  
-- contacts: array of objects with name, role, email, preferred_contact_method, is_teammate fields
+- contacts: array of people ACTUALLY MENTIONED BY NAME in the transcript, each with name, role, email, preferred_contact_method, is_teammate fields
+  - ONLY include people whose names appear in the transcript text. NEVER add names that are not in the transcript.
   - preferred_contact_method: "email", "text", "call", "whatsapp" or null
   - Look for phrases like "reach me via SMS", "prefers text", "call me at", "contact over WhatsApp", "email is best", etc.
-  - is_teammate: true if this person is one of the known team members listed above, false otherwise
-  - IMPORTANT: Do NOT include known team members as customer contacts. If someone is identified as a teammate (matches a name in the known team members list, or is referred to as "my teammate", "my colleague", "my coworker", etc.), set is_teammate to true.
+  - is_teammate: true if this person matches a known team member name listed above OR is referred to as "my teammate", "my colleague", "my coworker", etc. — false otherwise
 - signals: array of key discussion topics
 - confidence: number from 0 to 1
 - lead_source: how this lead was sourced — one of "referral", "linkedin", "vc_intro", "cold_outreach", "inbound_website", "conference_event", "partner", "other", or null if unclear
@@ -40,9 +40,10 @@ IMPORTANT for company_name extraction:
 - Example: "going to Barbarians for a steak" -> Barbarians is NOT the company (it's a restaurant)
 
 IMPORTANT for teammate detection:
-- If someone is referred to as "my teammate", "my colleague", "my coworker", "I went with [name]", they are a teammate, not a customer contact
-- Known team member names are provided above — match against those names
-- Teammates should still appear in the contacts array but with is_teammate: true
+- If someone MENTIONED IN THE TRANSCRIPT is referred to as "my teammate", "my colleague", "my coworker", "I went with [name]", they are a teammate, not a customer contact
+- Known team member names are provided above — if a person mentioned in the transcript matches one of those names, set is_teammate: true
+- NEVER add team member names to the contacts array unless they are explicitly mentioned in the transcript text
+- Only extract people who actually appear in the transcript
 
 Return ONLY the JSON object, no other text."""
 
@@ -100,12 +101,13 @@ Extract and return a JSON object with:
 - requirements: array of technical/business requirements
 - next_steps: array of agreed follow-up actions
 - risks: array of deal risks identified
-- stakeholders: array of people mentioned (each with name, role, email, sentiment, preferred_contact_method, is_teammate)
+- stakeholders: array of people ACTUALLY MENTIONED BY NAME in the transcript (each with name, role, email, sentiment, preferred_contact_method, is_teammate)
+  - ONLY include people whose names appear in the transcript text. NEVER add names that are not in the transcript.
   - email: their email address if mentioned (e.g. "mike@company.com")
   - preferred_contact_method: "email", "text", "call", "whatsapp" or null
   - Look for phrases like "reach me via SMS", "prefers text", "call me at", "contact over WhatsApp", "spoke over email", etc.
-  - is_teammate: true if this person is one of the known team members listed above, or is referred to as "my teammate", "my colleague", "my coworker", etc. — false otherwise
-  - IMPORTANT: Do NOT omit teammates from the stakeholders list — include them but mark is_teammate: true so they are not added as customer contacts
+  - is_teammate: true if this person matches a known team member name listed above, or is referred to as "my teammate", "my colleague", "my coworker", etc. — false otherwise
+  - If a mentioned person is a teammate, still include them in the stakeholders list but mark is_teammate: true
 - action_items: array of tasks, each with:
   - description: what needs to be done
   - owner: who is responsible (us or them)

@@ -11,6 +11,19 @@
     </div>
     {% else %}
     
+    <!-- Back button with context -->
+    {% if customer %}
+    <a href="/customer/{{ assistant_id }}" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to {{ customer.company_name }}
+    </a>
+    {% else %}
+    <a href="/" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Dashboard
+    </a>
+    {% endif %}
+
     <!-- Breadcrumb -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm">

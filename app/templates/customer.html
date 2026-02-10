@@ -11,6 +11,12 @@
     </div>
     {% else %}
     
+    <!-- Back button with context -->
+    <a href="/" class="back-link">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Back to Dashboard
+    </a>
+
     <!-- Breadcrumb -->
     <nav class="mb-6">
         <ol class="flex items-center space-x-2 text-sm">
@@ -153,18 +159,18 @@
 
     <!-- Stats Grid -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-        <a href="/customer/{{ customer.assistant_id }}/contacts" class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer">
+        <a href="/customer/{{ customer.assistant_id }}/contacts" class="card card-hover hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer stagger-item" style="--i: 0">
             <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Contacts</div>
             <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_contacts }}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {{ stats.champions }} champions
             </div>
         </a>
-        <a href="/customer/{{ customer.assistant_id }}/opportunities" class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer">
+        <a href="/customer/{{ customer.assistant_id }}/opportunities" class="card card-hover hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer stagger-item" style="--i: 1">
             <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Opportunities</div>
             <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_opportunities }}</div>
         </a>
-        <div class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors relative group">
+        <div class="card card-hover hover:border-bb-blue dark:hover:border-bb-blue transition-colors relative group stagger-item" style="--i: 2">
             <button onclick="showNewMeetingModal(event)" 
                     class="w-6 h-6 rounded-full bg-bb-blue hover:bg-bb-blueDark text-white flex items-center justify-center shadow-md transition-all z-10"
                     style="position: absolute; top: 0.75rem; right: 0.75rem;"
@@ -178,14 +184,14 @@
                 <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_activities }}</div>
             </a>
         </div>
-        <a href="/customer/{{ customer.assistant_id }}/action-items" class="card hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer">
+        <a href="/customer/{{ customer.assistant_id }}/action-items" class="card card-hover hover:border-bb-blue dark:hover:border-bb-blue transition-colors cursor-pointer stagger-item" style="--i: 3">
             <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Action Items</div>
             <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">{{ stats.total_action_items or 0 }}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                 {{ stats.pending_action_items or 0 }} pending
             </div>
         </a>
-        <div class="card">
+        <div class="card card-hover stagger-item" style="--i: 4">
             <div class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Sales Value</div>
             <div class="text-2xl font-semibold text-gray-900 dark:text-white mt-1">
                 {% if total_sales_value %}${{ "{:,.0f}".format(total_sales_value) }}{% else %}--{% endif %}
@@ -273,7 +279,7 @@
         <!-- Main Content -->
         <div class="lg:col-span-2 space-y-8">
             <!-- Opportunities -->
-            <div class="card">
+            <div class="card stagger-item" style="--i: 5">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Opportunities</h2>
                     <a href="/customer/{{ customer.assistant_id }}/opportunities" class="text-sm text-bb-blue dark:text-bb-blue hover:underline">View all</a>
@@ -281,7 +287,7 @@
                 {% if opportunities %}
                 <div class="space-y-4">
                     {% for opp in opportunities %}
-                    <a href="/customer/{{ customer.assistant_id }}/opportunity/{{ opp.id }}" class="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+                    <a href="/customer/{{ customer.assistant_id }}/opportunity/{{ opp.id }}" class="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500 dark:hover:border-blue-500 transition-all hover:shadow-sm hover:-translate-y-0.5">
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="font-medium text-gray-900 dark:text-white">{{ opp.name }}</h3>

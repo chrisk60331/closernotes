@@ -12,7 +12,7 @@
 
     <!-- Primary CTA -->
     <div class="mb-8">
-        <button onclick="showRecordModal()" class="btn-primary w-full inline-flex items-center justify-center py-3 text-base">
+        <button onclick="showRecordModal()" class="btn-primary btn-press w-full inline-flex items-center justify-center py-3 text-base">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
             </svg>
@@ -27,8 +27,8 @@
 
     <!-- Stats -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <a href="/contacts" class="block">
-        <div class="card cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+        <a href="/contacts" class="block stagger-item" style="--i: 0">
+        <div class="card card-hover cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
             <div class="flex items-center">
                 <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                     <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,8 +45,8 @@
         </div>
         </a>
 
-        <a href="/opportunities" class="block">
-        <div class="card cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+        <a href="/opportunities" class="block stagger-item" style="--i: 1">
+        <div class="card card-hover cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
             <div class="flex items-center">
                 <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
                     <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,8 +63,8 @@
         </div>
         </a>
 
-        <a href="/activities" class="block">
-        <div class="card cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
+        <a href="/activities" class="block stagger-item" style="--i: 2">
+        <div class="card card-hover cursor-pointer hover:border-blue-500 dark:hover:border-blue-500 transition-colors">
             <div class="flex items-center">
                 <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
                     <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,19 +86,19 @@
     <div class="mb-8">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
         <div class="flex flex-wrap gap-4">
-            <button onclick="showIngestModal()" class="btn-secondary inline-flex items-center">
+            <button onclick="showIngestModal()" class="btn-secondary btn-press inline-flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Paste Transcript
             </button>
-            <button onclick="showBulkUploadModal()" class="btn-secondary inline-flex items-center">
+            <button onclick="showBulkUploadModal()" class="btn-secondary btn-press inline-flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5 5 5M12 5v12"></path>
                 </svg>
                 Bulk Upload Opportunities
             </button>
-            <button onclick="generateFollowups()" class="btn-secondary inline-flex items-center">
+            <button onclick="generateFollowups()" class="btn-secondary btn-press inline-flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
@@ -179,15 +179,41 @@
         </div>
 
         <!-- Empty state (hidden until loaded) -->
-        <div id="customers-empty" class="hidden text-center py-12">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No customers yet</h3>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by ingesting your first transcript.</p>
-            <div class="mt-6">
-                <button onclick="showIngestModal()" class="btn-primary">
-                    Ingest Transcript
+        <div id="customers-empty" class="hidden text-center py-16">
+            <!-- Themed Glengarry illustration -->
+            <div class="empty-float inline-block mb-6">
+                <svg class="mx-auto w-24 h-24" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Coffee cup wireframe -->
+                    <path d="M24 36h42v28a12 12 0 01-12 12H36a12 12 0 01-12-12V36z" stroke="currentColor" stroke-width="1.5" class="text-gray-300 dark:text-gray-600"/>
+                    <path d="M66 42h4a8 8 0 010 16h-4" stroke="currentColor" stroke-width="1.5" class="text-gray-300 dark:text-gray-600"/>
+                    <!-- Steam lines -->
+                    <path d="M36 28c0-4 2-6 0-10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="text-bb-blue/40 dark:text-bb-blue/30"/>
+                    <path d="M45 26c0-4 2-6 0-10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="text-bb-blue/40 dark:text-bb-blue/30"/>
+                    <path d="M54 28c0-4 2-6 0-10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" class="text-bb-blue/40 dark:text-bb-blue/30"/>
+                    <!-- Document icon overlay -->
+                    <rect x="56" y="52" width="20" height="26" rx="3" stroke="currentColor" stroke-width="1.5" fill="white" class="text-bb-blue dark:text-bb-blue/70" style="fill: var(--tw-bg-opacity, white)"/>
+                    <path d="M56 52h12l8 8v18a3 3 0 01-3 3H59a3 3 0 01-3-3V52z" stroke="currentColor" stroke-width="1.5" class="text-bb-blue dark:text-bb-blue/70" fill="#EDEFF7"/>
+                    <path class="dark:hidden" d="M56 52h12l8 8v18a3 3 0 01-3 3H59a3 3 0 01-3-3V52z" fill="#EDEFF7" stroke="#007BFC" stroke-width="1.5"/>
+                    <path class="hidden dark:block" d="M56 52h12l8 8v18a3 3 0 01-3 3H59a3 3 0 01-3-3V52z" fill="#2B2F3D" stroke="#007BFC" stroke-width="1.5"/>
+                    <path d="M62 66h8M62 70h6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" class="text-bb-blue/50 dark:text-bb-blue/40"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Ready to close some deals?</h3>
+            <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                Paste a meeting transcript or record a call to get started. We'll extract contacts, opportunities, and action items automatically.
+            </p>
+            <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button onclick="showRecordModal()" class="btn-primary btn-press inline-flex items-center px-6 py-3">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                    </svg>
+                    Record a Meeting
+                </button>
+                <button onclick="showIngestModal()" class="btn-secondary btn-press inline-flex items-center px-6 py-3">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    Paste Transcript
                 </button>
             </div>
         </div>
@@ -638,10 +664,149 @@
         </div>
     </div>
 </div>
+
+<!-- First-Time User Walkthrough Overlay -->
+<div id="walkthrough-overlay" class="hidden fixed inset-0 z-[300] bg-black/60 backdrop-blur-sm walkthrough-overlay">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="walkthrough-card bg-white dark:bg-bb-steelDark rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
+            <!-- Step indicator dots -->
+            <div class="flex justify-center gap-2 mb-6">
+                <div class="walkthrough-dot w-2 h-2 rounded-full bg-bb-blue transition-colors duration-200"></div>
+                <div class="walkthrough-dot w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-colors duration-200"></div>
+                <div class="walkthrough-dot w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-colors duration-200"></div>
+            </div>
+
+            <!-- Step content (swapped via JS) -->
+            <div id="walkthrough-step-0" class="walkthrough-step">
+                <div class="flex justify-center mb-5">
+                    <div class="w-16 h-16 bg-bb-blue/10 dark:bg-bb-blue/20 rounded-2xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-bb-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white text-center">Record or Paste</h3>
+                <p class="mt-3 text-gray-500 dark:text-gray-400 text-center text-sm leading-relaxed">
+                    Record a live meeting, upload audio, or paste a transcript. CloserNotes handles the rest.
+                </p>
+            </div>
+
+            <div id="walkthrough-step-1" class="walkthrough-step hidden">
+                <div class="flex justify-center mb-5">
+                    <div class="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white text-center">AI Extracts Everything</h3>
+                <p class="mt-3 text-gray-500 dark:text-gray-400 text-center text-sm leading-relaxed">
+                    Contacts, opportunities, action items, follow-ups, and competitive intel are pulled out automatically. Review and refine with one click.
+                </p>
+            </div>
+
+            <div id="walkthrough-step-2" class="walkthrough-step hidden">
+                <div class="flex justify-center mb-5">
+                    <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center">
+                        <svg class="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white text-center">Close More Deals</h3>
+                <p class="mt-3 text-gray-500 dark:text-gray-400 text-center text-sm leading-relaxed">
+                    Your CRM stays current, follow-ups never slip, and your pipeline stays clear. Coffee is for closers.
+                </p>
+            </div>
+
+            <!-- Navigation buttons -->
+            <div class="mt-8 flex items-center justify-between">
+                <button id="walkthrough-skip" onclick="dismissWalkthrough()" class="text-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
+                    Skip
+                </button>
+                <button id="walkthrough-next" onclick="nextWalkthroughStep()" class="btn-primary btn-press px-6 py-2.5">
+                    Next
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+    // ========================================
+    // First-Time Walkthrough
+    // ========================================
+    let walkthroughStep = 0;
+    const WALKTHROUGH_STEPS = 3;
+
+    function showWalkthrough() {
+        const overlay = document.getElementById('walkthrough-overlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+            updateWalkthroughDots();
+        }
+    }
+
+    function dismissWalkthrough() {
+        const overlay = document.getElementById('walkthrough-overlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                overlay.style.opacity = '';
+                overlay.style.transition = '';
+            }, 300);
+        }
+        localStorage.setItem('closernotes_walkthrough_done', 'true');
+    }
+
+    function nextWalkthroughStep() {
+        walkthroughStep++;
+        if (walkthroughStep >= WALKTHROUGH_STEPS) {
+            dismissWalkthrough();
+            return;
+        }
+
+        // Hide all steps, show current
+        document.querySelectorAll('.walkthrough-step').forEach((el, i) => {
+            el.classList.toggle('hidden', i !== walkthroughStep);
+            if (i === walkthroughStep) {
+                el.style.animation = 'none';
+                void el.offsetWidth;
+                el.style.animation = 'walkthrough-step-in 0.35s ease-out';
+            }
+        });
+
+        updateWalkthroughDots();
+
+        // Change button text on last step
+        if (walkthroughStep === WALKTHROUGH_STEPS - 1) {
+            document.getElementById('walkthrough-next').textContent = "Let's go!";
+        }
+    }
+
+    function updateWalkthroughDots() {
+        document.querySelectorAll('.walkthrough-dot').forEach((dot, i) => {
+            if (i === walkthroughStep) {
+                dot.classList.remove('bg-gray-300', 'dark:bg-gray-600');
+                dot.classList.add('bg-bb-blue');
+            } else {
+                dot.classList.remove('bg-bb-blue');
+                dot.classList.add('bg-gray-300', 'dark:bg-gray-600');
+            }
+        });
+    }
+
+    // Check if first-time user (show walkthrough after data loads)
+    function maybeShowWalkthrough() {
+        if (!localStorage.getItem('closernotes_walkthrough_done')) {
+            setTimeout(showWalkthrough, 800);
+        }
+    }
+
     // ========================================
     // Dashboard Data Loading
     // ========================================
@@ -847,14 +1012,21 @@
     }
 
     function renderDashboard(data) {
-        // Update stats
-        document.getElementById('stat-customer-count').textContent = data.customer_count;
+        // Update stats with pop animation
+        const statCustomer = document.getElementById('stat-customer-count');
+        const statOpportunity = document.getElementById('stat-opportunity-count');
+        const statActivity = document.getElementById('stat-activity-count');
+        
+        statCustomer.textContent = data.customer_count;
+        animateStatPop(statCustomer);
         
         const opportunityCount = data.customers.filter(c => c.opportunity_count > 0).length;
-        document.getElementById('stat-opportunity-count').textContent = opportunityCount;
+        statOpportunity.textContent = opportunityCount;
+        setTimeout(() => animateStatPop(statOpportunity), 80);
         
         const activityCount = data.customers.reduce((sum, c) => sum + c.activity_count, 0);
-        document.getElementById('stat-activity-count').textContent = activityCount;
+        statActivity.textContent = activityCount;
+        setTimeout(() => animateStatPop(statActivity), 160);
 
         // Render follow-ups if any
         if (data.todays_followups && data.todays_followups.length > 0) {
@@ -927,11 +1099,13 @@
         const emptyEl = document.getElementById('customers-empty');
         const tbody = document.getElementById('customer-table-body');
         
-        // Hide loading
-        loadingEl.classList.add('hidden');
+        // Crossfade: skeleton out, content in
+        loadingEl.classList.add('skeleton-fade-out');
+        setTimeout(() => loadingEl.classList.add('hidden'), 300);
         
         if (customers.length === 0) {
             emptyEl.classList.remove('hidden');
+            emptyEl.classList.add('content-fade-in');
             return;
         }
         
@@ -1017,6 +1191,13 @@
         
         tbody.innerHTML = html;
         tableContainer.classList.remove('hidden');
+        tableContainer.classList.add('content-fade-in');
+        
+        // Add stagger animation to rows
+        tbody.querySelectorAll('tr').forEach((row, i) => {
+            row.classList.add('stagger-row');
+            row.style.setProperty('--i', i);
+        });
         
         // Attach event listeners to new rows
         attachCustomerRowListeners();
@@ -1207,6 +1388,9 @@
 
     // Start loading data immediately
     loadDashboardData();
+
+    // Show walkthrough for first-time users
+    maybeShowWalkthrough();
 
     // ========================================
     // Modal functions
